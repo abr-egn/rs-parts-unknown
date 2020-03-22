@@ -1,0 +1,5 @@
+wasm-pack build --target web --out-dir wasm
+
+tsc
+
+py -m http.server
