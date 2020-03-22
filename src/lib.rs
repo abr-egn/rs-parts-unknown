@@ -7,26 +7,30 @@ mod world;
 
 use hex::Hex;
 use log::{Level, error, info};
+use serde_wasm_bindgen::to_value;
 use wasm_bindgen::prelude::*;
 
-use world::{Event, Meta, World};
+use world::World;
 
+#[wasm_bindgen]
 pub struct PartsUnknown {
     world: World,
     temp: Option<World>,
 }
 
+#[wasm_bindgen]
 impl PartsUnknown {
+    #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
         PartsUnknown { world: World::new(), temp: None }
     }
 
-    pub fn get_display(&self) -> display::Display {
-        display::Display::new(&self.world)
+    pub fn get_display(&self) -> JsValue {
+        to_value(&display::Display::new(&self.world)).unwrap()
     }
 
-    pub fn move_player(&mut self, x: i32, y: i32) -> Vec<Meta<Event>> {
-        self.world.move_player(Hex { x, y })
+    pub fn move_player(&mut self, x: i32, y: i32) -> JsValue {
+        to_value(&self.world.move_player(Hex { x, y })).unwrap()
     }
 
     pub fn start_check(&mut self) {
