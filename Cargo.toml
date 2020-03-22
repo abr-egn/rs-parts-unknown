@@ -11,3 +11,7 @@ crate-type = ["cdylib"]
 
 [dependencies]
 wasm-bindgen = "0.2.59"
+hex = { path = "../rs-hex" }
+thiserror = "1.0"
+fnv = "1.0"
+serde = { version = "1.0", features = ["derive"] }
