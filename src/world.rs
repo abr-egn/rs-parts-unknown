@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use hex::{self, Hex};
+use log::info;
 use serde::Serialize;
 
 use crate::creature::Creature;
@@ -18,9 +19,9 @@ pub struct World {
     pub logging: bool,
 }
 
-macro_rules! log {
+macro_rules! clog {
     ($self:ident, $($args:tt)*) => {
-        if $self.logging { /*godot_print!($($args)*)*/ }
+        if $self.logging { info!($($args)*) }
     };
 }
 
@@ -92,13 +93,13 @@ impl World {
     }
 
     fn resolve_mods(&mut self, action: &Meta<Action>) -> Meta<Event> {
-        log!(self, "ACTION: {:?}", action);
+        clog!(self, "ACTION: {:?}", action);
         let mut modded = action.clone();
-        for (_id, m) in self.mods.iter_mut() {
+        for (id, m) in self.mods.iter_mut() {
             let mut new = modded.clone();
             m.apply(&mut new);
             if new != modded {
-                log!(self, "  [{:} ({:?})] --> {:?}", m.name(), id, new);
+                clog!(self, "  [{:} ({:?})] --> {:?}", m.name(), id, new);
                 modded = new;
             }
         }
@@ -106,7 +107,7 @@ impl World {
             data: self.resolve_action(&modded.data),
             tags: modded.tags.clone(),
         };
-        log!(self, "  => {:?}", result);
+        clog!(self, "  => {:?}", result);
         result
     }
 
