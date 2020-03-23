@@ -1,4 +1,6 @@
 /target
 /www/js
 /www/wasm
+/www/node_modules
+/www/package-lock.json
 Cargo.lock

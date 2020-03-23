@@ -1,0 +1,10 @@
+{
+    "name": "parts-unknown-web",
+    "version": "0.1",
+    "devDependencies": {
+        "ts-interface-builder": "^0.2.1"
+    },
+    "dependencies": {
+        "ts-interface-checker": "^0.1.10"
+    }
+}
