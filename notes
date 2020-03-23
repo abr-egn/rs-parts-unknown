@@ -1,5 +1,3 @@
 wasm-pack build --target web --out-dir www/wasm
 
-tsc
-
-py -m http.server
+npm run <script>

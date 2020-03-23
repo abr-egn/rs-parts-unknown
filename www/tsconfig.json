@@ -3,10 +3,10 @@
         "target": "ES2020",
         "jsx": "preserve",
         "sourceMap": true,
-        "outDir": "www/js"
+        "outDir": "js"
     },
     "include": [
-        "www/ts/**/*"
+        "ts/**/*"
     ],
     "exclude": [
         "node_modules",
