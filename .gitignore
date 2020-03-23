@@ -1,4 +1,4 @@
-/js
 /target
-/wasm
+/www/js
+/www/wasm
 Cargo.lock

@@ -1,4 +1,4 @@
-wasm-pack build --target web --out-dir wasm
+wasm-pack build --target web --out-dir www/wasm
 
 tsc
 
