@@ -3,4 +3,5 @@
 /www/wasm
 /www/node_modules
 /www/package-lock.json
+/www/dist
 Cargo.lock

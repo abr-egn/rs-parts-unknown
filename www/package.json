@@ -1,14 +1,21 @@
 {
     "name": "parts-unknown-web",
     "version": "0.0.1",
+    "scripts": {
+        "build": "webpack",
+        "serve": "webpack-dev-server"
+    },
     "devDependencies": {
-        "ts-interface-builder": "^0.2.1"
+        "@wasm-tool/wasm-pack-plugin": "1.0.1",
+        "copy-webpack-plugin": "^5.0.0",
+        "ts-interface-builder": "^0.2.1",
+        "ts-loader": "^6.2.2",
+        "typescript": "^3.8.3",
+        "webpack": "^4.29.4",
+        "webpack-cli": "^3.1.1",
+        "webpack-dev-server": "^3.1.0"
     },
     "dependencies": {
         "ts-interface-checker": "^0.1.10"
-    },
-    "scripts": {
-        "build": "tsc",
-        "serve": "py -m http.server"
     }
 }

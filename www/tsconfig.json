@@ -1,15 +1,17 @@
 {
     "compilerOptions": {
-        "target": "ES2020",
-        "jsx": "preserve",
-        "sourceMap": true,
-        "outDir": "js"
+      "outDir": "./dist/",
+      "sourceMap": true,
+      "noImplicitAny": true,
+      "module": "esnext",
+      "target": "es6",
+      "moduleResolution": "node"
     },
     "include": [
-        "ts/**/*"
+      "ts/**/*"
     ],
     "exclude": [
-        "node_modules",
-        "**/node_modules/*"
+      "node_modules",
+      "**/node_modules/*"
     ]
-}
+  }
