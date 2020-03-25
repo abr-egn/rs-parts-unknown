@@ -21,6 +21,7 @@ export class Engine {
         this.ctx.closePath();
         this.ctx.lineWidth = 1.0;
         this.ctx.imageSmoothingEnabled = true;
+        this.ctx.strokeStyle = "#FFFFFF";
         this.ctx.stroke();
 
         window.requestAnimationFrame(() => this.draw());
