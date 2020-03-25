@@ -2,6 +2,7 @@ import {createCheckers} from "ts-interface-checker";
 
 import {Display} from "./data";
 import dataTI from "./data-ti";
+import * as Render from "./render";
 
 const CHECKERS = createCheckers(dataTI);
 
@@ -19,4 +20,5 @@ import('../wasm').then(rust => {
   let game = new rust.PartsUnknown();
   let display = asDisplay(game.get_display());
   console.log(display);
+  let engine = new Render.Engine(document.getElementById("mainCanvas") as HTMLCanvasElement)
 }).catch(console.error);
