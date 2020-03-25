@@ -1,20 +1,20 @@
-interface Hex {
+export interface Hex {
     x: number,
     y: number,
 }
 
-interface Tile {
+export interface Tile {
     space: "Empty" | "Wall",
-    creature: number | undefined,
+    creature?: number,
 }
 
-interface Creature {
+export interface Creature {
     hex: Hex,
     label: string,
 }
 
-interface Display {
+export interface Display {
     map: Array<[Hex, Tile]>,
     player_id: number,
-    creatures: any,  // Map<number, Creature>
+    creatures: Map<number, Creature>,
 }

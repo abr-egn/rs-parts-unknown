@@ -2,7 +2,7 @@
     "name": "parts-unknown-web",
     "version": "0.0.1",
     "scripts": {
-        "data": "ts-interface-builder ts/data.ts",
+        "data": "ts-interface-builder --ignore-generics ts/data.ts",
         "build": "webpack",
         "serve": "webpack-dev-server"
     },

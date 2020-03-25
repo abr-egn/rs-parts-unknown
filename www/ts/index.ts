@@ -1,11 +1,22 @@
 import {createCheckers} from "ts-interface-checker";
+
+import {Display} from "./data";
 import dataTI from "./data-ti";
 
-const {Display} = createCheckers(dataTI);
+const CHECKERS = createCheckers(dataTI);
+
+function asDisplay(display: any): Display {
+  try {
+    CHECKERS.Display.check(display);
+    return display;
+  } catch(err) {
+    console.error(display);
+    throw err;
+  }
+}
 
 import('../wasm').then(rust => {
   let game = new rust.PartsUnknown();
-  let display = game.get_display();
+  let display = asDisplay(game.get_display());
   console.log(display);
-  Display.check(display);
 }).catch(console.error);
