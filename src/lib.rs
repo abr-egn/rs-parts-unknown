@@ -57,6 +57,3 @@ pub fn wasm_start() {
 
     info!("Parts Unknown WASM initialized.");
 }
-
-#[wasm_bindgen]
-pub fn add(a: i32, b: i32) -> i32 { a + b }

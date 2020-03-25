@@ -1,17 +1,18 @@
 {
-    "compilerOptions": {
-      "outDir": "./dist/",
-      "sourceMap": true,
-      "noImplicitAny": true,
-      "module": "esnext",
-      "target": "es6",
-      "moduleResolution": "node"
-    },
-    "include": [
-      "ts/**/*"
-    ],
-    "exclude": [
-      "node_modules",
-      "**/node_modules/*"
-    ]
-  }
+  "compilerOptions": {
+    "outDir": "./dist/",
+    "sourceMap": true,
+    "noImplicitAny": true,
+    "module": "esnext",
+    "target": "es6",
+    "moduleResolution": "node",
+    "strict": true
+  },
+  "include": [
+    "ts/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "**/node_modules/*"
+  ]
+}
