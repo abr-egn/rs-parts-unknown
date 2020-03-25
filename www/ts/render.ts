@@ -2,6 +2,7 @@ export class Engine {
     private readonly ctx: CanvasRenderingContext2D;
     constructor(private readonly canvas: HTMLCanvasElement) {
         this.ctx = this.canvas.getContext('2d', {})!;
+        this.canvas.addEventListener("mousedown", (event) => this.onMouseDown(event));
         window.requestAnimationFrame(() => this.draw());
     }
 
@@ -25,5 +26,10 @@ export class Engine {
         this.ctx.stroke();
 
         window.requestAnimationFrame(() => this.draw());
+    }
+
+    onMouseDown(event: MouseEvent) {
+        console.log("click!");
+        console.log(event);
     }
 }

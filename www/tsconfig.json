@@ -6,7 +6,8 @@
     "module": "esnext",
     "target": "es6",
     "moduleResolution": "node",
-    "strict": true
+    "strict": true,
+    "noImplicitThis": true
   },
   "include": [
     "ts/**/*"
