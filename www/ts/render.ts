@@ -44,6 +44,17 @@ export class Engine {
             this.ctx.fill();
         }
 
+        if (tile.creature != undefined) {
+            this.ctx.font = "30px sans-serif";
+            var text = "C";
+            if (tile.creature == this.display.player_id) {
+                text = "P";
+            }
+            const measure = this.ctx.measureText(text);
+            const height = measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent;
+            this.ctx.fillText(text, -measure.width / 2, height / 2);
+        }
+
         this.ctx.restore();
     }
 
