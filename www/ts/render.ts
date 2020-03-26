@@ -2,75 +2,81 @@ import {Display, Hex, Tile} from "./data";
 
 const HEX_SIZE = 30;
 
+export interface Listener {
+    onTileClicked(hex: Hex): void,
+    onTileEntered(hex: Hex): void,
+    onTileExited(hex: Hex): void,
+}
+
 export class Engine {
-    private readonly ctx: CanvasRenderingContext2D;
-    constructor(private readonly canvas: HTMLCanvasElement, public display: Display) {
-        this.ctx = this.canvas.getContext('2d')!;
-        this.canvas.addEventListener("mousedown", (event) => this.onMouseDown(event));
-        window.requestAnimationFrame(() => this.draw());
+    private readonly _ctx: CanvasRenderingContext2D;
+    constructor(
+            private readonly _canvas: HTMLCanvasElement,
+            public display: Display,
+            private readonly _listener: Listener) {
+        this._ctx = this._canvas.getContext('2d')!;
+        this._canvas.addEventListener("mousedown", (event) => this._onMouseDown(event));
+        window.requestAnimationFrame(() => this._draw());
     }
 
-    private draw() {
-        this.canvas.width = this.canvas.width;
-        this.ctx.translate(this.canvas.width / 2, this.canvas.height / 2);
+    private _draw() {
+        this._canvas.width = this._canvas.width;
+        this._ctx.translate(this._canvas.width / 2, this._canvas.height / 2);
 
         for (var [hex, tile] of this.display.map) {
-            this.drawTile(hex, tile);
+            this._drawTile(hex, tile);
         }
 
-        window.requestAnimationFrame(() => this.draw());
+        window.requestAnimationFrame(() => this._draw());
     }
 
-    private drawTile(hex: Hex, tile: Tile) {
-        this.ctx.save();
+    private _drawTile(hex: Hex, tile: Tile) {
+        this._ctx.save();
 
         let point = hexToPixel(hex);
-        this.ctx.translate(point.x, point.y);
+        this._ctx.translate(point.x, point.y);
         const DELTA = Math.PI/3.0;
-        this.ctx.beginPath();
-        this.ctx.moveTo(Math.cos(0)*HEX_SIZE, Math.sin(0)*HEX_SIZE);
+        this._ctx.beginPath();
+        this._ctx.moveTo(Math.cos(0)*HEX_SIZE, Math.sin(0)*HEX_SIZE);
         for (let i = 1; i < 6; i++) {
             let x = Math.cos(i*DELTA)*HEX_SIZE;
             let y = Math.sin(i*DELTA)*HEX_SIZE;
-            this.ctx.lineTo(x, y);
+            this._ctx.lineTo(x, y);
         }
-        this.ctx.closePath();
-        this.ctx.lineWidth = 1.0;
-        this.ctx.strokeStyle = "#FFFFFF";
-        this.ctx.fillStyle = "#FFFFFF";
+        this._ctx.closePath();
+        this._ctx.lineWidth = 1.0;
+        this._ctx.strokeStyle = "#FFFFFF";
+        this._ctx.fillStyle = "#FFFFFF";
         if (tile.space == "Empty") {
-            this.ctx.stroke();
+            this._ctx.stroke();
         } else {
-            this.ctx.fill();
+            this._ctx.fill();
         }
 
         if (tile.creature != undefined) {
-            this.ctx.font = "30px sans-serif";
+            this._ctx.font = "30px sans-serif";
             var text = "C";
             if (tile.creature == this.display.player_id) {
                 text = "P";
             }
-            const measure = this.ctx.measureText(text);
+            const measure = this._ctx.measureText(text);
             const height = measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent;
-            this.ctx.fillText(text, -measure.width / 2, height / 2);
+            this._ctx.fillText(text, -measure.width / 2, height / 2);
         }
 
-        this.ctx.restore();
+        this._ctx.restore();
     }
 
-    private onMouseDown(event: MouseEvent) {
-        console.log("click!");
-        console.log(event);
-        const point = this.mouseCoords(event);
-        console.log(point);
-        console.log(pixelToHex(point));
+    private _onMouseDown(event: MouseEvent) {
+        const point = this._mouseCoords(event);
+        this._listener.onTileClicked(pixelToHex(point));
     }
 
-    private mouseCoords(event: MouseEvent): DOMPointReadOnly {
-        const rect = this.canvas.getBoundingClientRect();
+    private _mouseCoords(event: MouseEvent): DOMPointReadOnly {
+        const rect = this._canvas.getBoundingClientRect();
         const screenPoint = new DOMPointReadOnly(
             event.clientX - rect.left, event.clientY - rect.top);
-        return screenPoint.matrixTransform(this.ctx.getTransform().inverse());
+        return screenPoint.matrixTransform(this._ctx.getTransform().inverse());
     }   
 }
 
@@ -83,7 +89,7 @@ function hexToPixel(hex: Hex): DOMPointReadOnly {
 function pixelToHex(point: DOMPointReadOnly): Hex {
     const x = (2./3 * point.x) / HEX_SIZE;
     const y = (-1./3 * point.x + Math.sqrt(3)/3 * point.y) / HEX_SIZE;
-    return hexRound({x: x, y: y});
+    return hexRound({x, y});
 }
 
 function hexRound(hex: Hex): Hex {
