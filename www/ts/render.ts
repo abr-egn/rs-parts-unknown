@@ -37,7 +37,12 @@ export class Engine {
         this.ctx.closePath();
         this.ctx.lineWidth = 1.0;
         this.ctx.strokeStyle = "#FFFFFF";
-        this.ctx.stroke();
+        this.ctx.fillStyle = "#FFFFFF";
+        if (tile.space == "Empty") {
+            this.ctx.stroke();
+        } else {
+            this.ctx.fill();
+        }
 
         this.ctx.restore();
     }
