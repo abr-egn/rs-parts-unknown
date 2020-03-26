@@ -17,8 +17,9 @@ function asDisplay(display: any): Display {
 }
 
 import('../wasm').then(rust => {
-  let game = new rust.PartsUnknown();
-  let display = asDisplay(game.get_display());
+  const game = new rust.PartsUnknown();
+  const display = asDisplay(game.get_display());
   console.log(display);
-  let engine = new Render.Engine(document.getElementById("mainCanvas") as HTMLCanvasElement)
+  const engine = new Render.Engine(
+    document.getElementById("mainCanvas") as HTMLCanvasElement)
 }).catch(console.error);
