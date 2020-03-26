@@ -1,19 +1,31 @@
-import {Hex} from "./data";
+import {Display, Hex, Tile} from "./data";
 
 const HEX_SIZE = 30;
 
 export class Engine {
     private readonly ctx: CanvasRenderingContext2D;
-    constructor(private readonly canvas: HTMLCanvasElement) {
+    constructor(private readonly canvas: HTMLCanvasElement, public display: Display) {
         this.ctx = this.canvas.getContext('2d')!;
         this.canvas.addEventListener("mousedown", (event) => this.onMouseDown(event));
         window.requestAnimationFrame(() => this.draw());
     }
 
-    draw() {
+    private draw() {
         this.canvas.width = this.canvas.width;
         this.ctx.translate(this.canvas.width / 2, this.canvas.height / 2);
 
+        for (var [hex, tile] of this.display.map) {
+            this.drawTile(hex, tile);
+        }
+
+        window.requestAnimationFrame(() => this.draw());
+    }
+
+    private drawTile(hex: Hex, tile: Tile) {
+        this.ctx.save();
+
+        let point = hexToPixel(hex);
+        this.ctx.translate(point.x, point.y);
         const DELTA = Math.PI/3.0;
         this.ctx.beginPath();
         this.ctx.moveTo(Math.cos(0)*HEX_SIZE, Math.sin(0)*HEX_SIZE);
@@ -24,14 +36,13 @@ export class Engine {
         }
         this.ctx.closePath();
         this.ctx.lineWidth = 1.0;
-        this.ctx.imageSmoothingEnabled = true;
         this.ctx.strokeStyle = "#FFFFFF";
         this.ctx.stroke();
 
-        window.requestAnimationFrame(() => this.draw());
+        this.ctx.restore();
     }
 
-    onMouseDown(event: MouseEvent) {
+    private onMouseDown(event: MouseEvent) {
         console.log("click!");
         console.log(event);
         const point = this.mouseCoords(event);
@@ -39,7 +50,7 @@ export class Engine {
         console.log(pixelToHex(point));
     }
 
-    mouseCoords(event: MouseEvent): DOMPointReadOnly {
+    private mouseCoords(event: MouseEvent): DOMPointReadOnly {
         const rect = this.canvas.getBoundingClientRect();
         const screenPoint = new DOMPointReadOnly(
             event.clientX - rect.left, event.clientY - rect.top);

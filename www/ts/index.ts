@@ -16,10 +16,17 @@ function asDisplay(display: any): Display {
   }
 }
 
+declare global {
+  interface Window {
+    game: {engine: Render.Engine};
+  }
+}
+
 import('../wasm').then(rust => {
-  const game = new rust.PartsUnknown();
-  const display = asDisplay(game.get_display());
-  console.log(display);
+  const backend = new rust.PartsUnknown();
+  const display = asDisplay(backend.get_display());
   const engine = new Render.Engine(
-    document.getElementById("mainCanvas") as HTMLCanvasElement)
+    document.getElementById("mainCanvas") as HTMLCanvasElement,
+    display);
+  window.game = {engine: engine};
 }).catch(console.error);
