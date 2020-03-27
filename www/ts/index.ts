@@ -28,7 +28,7 @@ import('../wasm').then(rust => {
   const backend = new rust.PartsUnknown();
   const display = asDisplay(backend.get_display());
   const stack = new Stack();
-  stack.push(new States.Base());
+  stack.push(new States.Base(stack));
   const engine = new Render.Engine(
     document.getElementById("mainCanvas") as HTMLCanvasElement,
     display, stack);
