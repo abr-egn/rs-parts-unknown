@@ -49,4 +49,25 @@ class MovePlayer extends State {
         }
         game.render.highlight = highlight;
     }
+
+    onTileClicked(hex: Hex) {
+        const game = container.resolve(Game);
+        if (game.tileAt(hex) == undefined) {
+            return;
+        }
+        const events = game.backend.movePlayer(hex.x, hex.y) as Meta[];
+        if (events.length == 0 || "Failed" in events[0].data) {
+            return;
+        }
+        this.stack.swap(new Update(events));
+    }
+}
+
+class Update extends State {
+    constructor(private _events: Meta[]) { super(); }
+
+    onPushed() {
+        container.resolve(Game).updateDisplay();
+        this.stack.pop();
+    }
 }

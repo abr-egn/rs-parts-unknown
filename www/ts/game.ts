@@ -51,6 +51,12 @@ export class Game {
         return this._map[hex.x]?.[hex.y];
     }
 
+    updateDisplay() {
+        const display = asDisplay(this._backend.buildDisplay());
+        this._render.display = display;
+        this._buildMap();
+    }
+
     private _buildMap() {
         this._map = [];
         for (let [hex, tile] of this.display.map) {
