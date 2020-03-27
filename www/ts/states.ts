@@ -67,19 +67,10 @@ class Update extends State {
     constructor(private _events: Meta[]) { super(); }
 
     onPushed() {
-        this.tickTock().then(() => {
-            container.resolve(Game).updateDisplay();
+        let game = container.resolve(Game);
+        game.render.animateEvents(this._events).then(() => {
+            game.updateDisplay();
             this.stack.pop();
-        })
-    }
-
-    private async tickTock() {
-        const render = container.resolve(Game).render;
-        for (var i = 0; i < 60; ++i) {
-            await render.frame();
-            if (i % 10 == 0) {
-                console.log("tick: ", i);
-            }
-        }
+        });
     }
 }

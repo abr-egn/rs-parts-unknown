@@ -1,4 +1,4 @@
-import {Display, Hex, Tile} from "./data";
+import {Creature, Display, Hex, Meta, Tile} from "./data";
 
 const HEX_SIZE = 30;
 
@@ -13,11 +13,13 @@ export class Render {
     private readonly _ctx: CanvasRenderingContext2D;
     private _mouseHex?: Hex;
     private _tsMillis: DOMHighResTimeStamp;
-    private _frameWaits: any[] = [];
+    private _frameWaits: ((value: number) => void)[] = [];
+    private _creaturePos: Map<number, DOMPointReadOnly> = new Map();
     constructor(
             private readonly _canvas: HTMLCanvasElement,
-            public display: Display,
+            private _display: Display,
             private readonly _listener: Listener) {
+        this.display = _display;  // trigger setter update
         this._tsMillis = performance.now();
         this._ctx = this._canvas.getContext('2d')!;
         this._canvas.addEventListener("mousedown", (event) => this._onMouseDown(event));
@@ -25,8 +27,48 @@ export class Render {
         window.requestAnimationFrame((ts) => this._draw(ts));
     }
 
-    frame(): Promise<void> {
+    set display(d: Display) {
+        this._display = d;
+        this._creaturePos.clear();
+        for (let [id, c] of this._display.creatures) {
+            this._creaturePos.set(id, hexToPixel(c.hex));
+        }
+    }
+
+    get display(): Display { return this._display; }
+
+    async animateEvents(events: Meta[]) {
+        for (let event of events) {
+            if ("CreatureMoved" in event.data) {
+                const move = event.data.CreatureMoved;
+                // skip the first hex, as it's the current
+                for (let hex of move.path.slice(1)) {
+                    await this._moveCreatureTo(move.id, hexToPixel(hex));
+                }
+            }
+        }
+    }
+
+    private _nextFrame(): Promise<DOMHighResTimeStamp> {
         return new Promise((resolve) => this._frameWaits.push(resolve));
+    }
+
+    private async _moveCreatureTo(id: number, dest: DOMPointReadOnly) {
+        const MOVE_SPEED = 1.0;
+
+        let start = this._creaturePos.get(id);
+        if (start == undefined) { return; }
+        let progress = 0.0;
+        let prevTime = performance.now();
+        while (progress < 1.0) {
+            let time = await this._nextFrame();
+            let delta = time - prevTime;
+            prevTime = time;
+            progress = progress + MOVE_SPEED*(delta/1000);
+            let x = start.x + (dest.x - start.x)*progress;
+            let y = start.y + (dest.y - start.y)*progress;
+            this._creaturePos.set(id, new DOMPointReadOnly(x, y));
+        }
     }
 
     private _draw(tsMillis: DOMHighResTimeStamp) {
@@ -36,15 +78,18 @@ export class Render {
         this._canvas.width = this._canvas.width;
         this._ctx.translate(this._canvas.width / 2, this._canvas.height / 2);
 
-        for (var [hex, tile] of this.display.map) {
+        for (let [hex, tile] of this._display.map) {
             this._drawTile(hex, tile);
         }
-        for (var hex of this.highlight) {
+        for (let [id, pos] of this._creaturePos) {
+            this._drawCreature(id, pos);
+        }
+        for (let hex of this.highlight) {
             this._drawHighlight(hex, tsMillis);
         }
 
         for (let resolve of this._frameWaits) {
-            resolve();
+            resolve(tsMillis);
         }
         this._frameWaits = [];
         window.requestAnimationFrame((ts) => this._draw(ts));
@@ -73,16 +118,19 @@ export class Render {
             this._ctx.fill();
         }
 
-        if (tile.creature != undefined) {
-            this._ctx.font = "30px sans-serif";
-            var text = "C";
-            if (tile.creature == this.display.player_id) {
-                text = "P";
-            }
-            const measure = this._ctx.measureText(text);
-            const height = measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent;
-            this._ctx.fillText(text, -measure.width / 2, height / 2);
-        }
+        this._ctx.restore();
+    }
+
+    private _drawCreature(id: number, pos: DOMPointReadOnly) {
+        this._ctx.save();
+
+        this._ctx.translate(pos.x, pos.y);
+        this._ctx.font = "30px sans-serif";
+        this._ctx.fillStyle = "#FFFFFF";
+        var text = this._display.creatures.get(id)?.label || "??";
+        const measure = this._ctx.measureText(text);
+        const height = measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent;
+        this._ctx.fillText(text, -measure.width / 2, height / 2);
 
         this._ctx.restore();
     }
