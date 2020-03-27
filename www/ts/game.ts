@@ -29,7 +29,7 @@ export class Game {
         this._stack = new Stack();
         this._stack.push(new States.Base());
 
-        const display = asDisplay(this._backend.get_display());
+        const display = asDisplay(this._backend.buildDisplay());
         this._engine = new Render.Engine(
             document.getElementById("mainCanvas") as HTMLCanvasElement,
             display, this._stack);

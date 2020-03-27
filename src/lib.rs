@@ -25,14 +25,17 @@ impl PartsUnknown {
         PartsUnknown { world: World::new(), temp: None }
     }
 
-    pub fn get_display(&self) -> JsValue {
+    #[wasm_bindgen(js_name = buildDisplay)]
+    pub fn build_display(&self) -> JsValue {
         to_value(&display::Display::new(&self.world)).unwrap()
     }
 
+    #[wasm_bindgen(js_name = movePlayer)]
     pub fn move_player(&mut self, x: i32, y: i32) -> JsValue {
         to_value(&self.world.move_player(Hex { x, y })).unwrap()
     }
 
+    #[wasm_bindgen(js_name = startCheck)]
     pub fn start_check(&mut self) {
         if self.temp.is_some() {
             error!("start_check during check");
@@ -42,6 +45,7 @@ impl PartsUnknown {
         self.world.logging = false;
     }
 
+    #[wasm_bindgen(js_name = endCheck)]
     pub fn end_check(&mut self) {
         match self.temp.take() {
             Some(old) => self.world = old,
