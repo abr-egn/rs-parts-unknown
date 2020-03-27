@@ -1,5 +1,4 @@
 import {createCheckers} from "ts-interface-checker";
-import {container} from "tsyringe";
 
 import {PartsUnknown} from "../wasm";
 
@@ -24,7 +23,7 @@ function asDisplay(display: any): Display {
 export class Game {
     private _stack: Stack;
     private _engine: Render.Engine;
-    private _map: Array<Array<Tile>> = new Array();
+    private _map: Tile[][] = [];
     constructor(private _backend: PartsUnknown) {
         this._stack = new Stack();
         this._stack.push(new States.Base());
@@ -40,15 +39,23 @@ export class Game {
         return this._engine.display;
     }
 
+    get backend(): PartsUnknown {
+        return this._backend;
+    }
+
+    get engine(): Render.Engine {
+        return this._engine;
+    }
+
     tileAt(hex: Hex): Tile | undefined {
         return this._map[hex.x]?.[hex.y];
     }
 
     private _buildMap() {
-        this._map = new Array();
+        this._map = [];
         for (let [hex, tile] of this.display.map) {
             if (this._map[hex.x] == undefined) {
-                this._map[hex.x] = new Array();
+                this._map[hex.x] = [];
             }
             this._map[hex.x][hex.y] = tile;
         }

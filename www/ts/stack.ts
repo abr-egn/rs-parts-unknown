@@ -24,7 +24,7 @@ export class State {
 }
 
 export class Stack {
-    private _stack: Array<State> = new Array();
+    private _stack: State[] = [];
     push(state: State) {
         console.log("PUSH: ", state.constructor.name);
         this._top()?.onDeactivated();

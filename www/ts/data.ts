@@ -14,7 +14,28 @@ export interface Creature {
 }
 
 export interface Display {
-    map: Array<[Hex, Tile]>,
+    map: [Hex, Tile][],
     player_id: number,
     creatures: Map<number, Creature>,
+}
+
+export interface Meta {
+    data: GameEvent,
+    tags: string[],
+}
+
+export type GameEvent = EvCreatureMoved | EvFailed;
+
+export interface EvCreatureMoved {
+    CreatureMoved: {
+        id: number,
+        path: Hex[],
+    }
+}
+
+export interface EvFailed {
+    Failed: {
+        action: any,
+        reason: string,
+    }
 }

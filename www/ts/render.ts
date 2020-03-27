@@ -10,24 +10,30 @@ export interface Listener {
 
 export class Engine {
     private readonly _ctx: CanvasRenderingContext2D;
+    private _mouseHex?: Hex;
+    public highlight: Hex[] = [];
     constructor(
             private readonly _canvas: HTMLCanvasElement,
             public display: Display,
             private readonly _listener: Listener) {
         this._ctx = this._canvas.getContext('2d')!;
         this._canvas.addEventListener("mousedown", (event) => this._onMouseDown(event));
-        window.requestAnimationFrame(() => this._draw());
+        this._canvas.addEventListener("mousemove", (event) => this._onMouseMove(event));
+        window.requestAnimationFrame((ts) => this._draw(ts));
     }
 
-    private _draw() {
+    private _draw(tsMillis: DOMHighResTimeStamp) {
         this._canvas.width = this._canvas.width;
         this._ctx.translate(this._canvas.width / 2, this._canvas.height / 2);
 
         for (var [hex, tile] of this.display.map) {
             this._drawTile(hex, tile);
         }
+        for (var hex of this.highlight) {
+            // TODO
+        }
 
-        window.requestAnimationFrame(() => this._draw());
+        window.requestAnimationFrame((ts) => this._draw(ts));
     }
 
     private _drawTile(hex: Hex, tile: Tile) {
@@ -70,6 +76,17 @@ export class Engine {
     private _onMouseDown(event: MouseEvent) {
         const point = this._mouseCoords(event);
         this._listener.onTileClicked(pixelToHex(point));
+    }
+
+    private _onMouseMove(event: MouseEvent) {
+        const hex = pixelToHex(this._mouseCoords(event));
+        if (hex.x != this._mouseHex?.x || hex.y != this._mouseHex?.y) {
+            if (this._mouseHex) {
+                this._listener.onTileExited(this._mouseHex);
+            }
+            this._listener.onTileEntered(hex);
+            this._mouseHex = hex;
+        }
     }
 
     private _mouseCoords(event: MouseEvent): DOMPointReadOnly {

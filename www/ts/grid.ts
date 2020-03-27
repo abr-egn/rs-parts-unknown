@@ -1,7 +1,7 @@
 import {Display, Tile} from "./data";
 
 export class Grid {
-    private _map: Array<Array<Tile>> = new Array();
+    private _map: Tile[][] = [];
     constructor(private _display: Display) {
         this._update();
     }
@@ -13,7 +13,7 @@ export class Grid {
         this._update();
     }
     private _update() {
-        this._map = new Array();
+        this._map = [];
         for (let [hex, tile] of this._display.map) {
             
         }
