@@ -4,7 +4,7 @@ import {PartsUnknown} from "../wasm";
 
 import {Display, Hex, Tile} from "./data";
 import dataTI from "./data-ti";
-import * as Render from "./render";
+import {Render} from "./render";
 import {Stack} from "./stack";
 import * as States from "./states";
 
@@ -22,29 +22,29 @@ function asDisplay(display: any): Display {
 
 export class Game {
     private _stack: Stack;
-    private _engine: Render.Engine;
+    private _render: Render;
     private _map: Tile[][] = [];
     constructor(private _backend: PartsUnknown) {
         this._stack = new Stack();
         this._stack.push(new States.Base());
 
         const display = asDisplay(this._backend.buildDisplay());
-        this._engine = new Render.Engine(
+        this._render = new Render(
             document.getElementById("mainCanvas") as HTMLCanvasElement,
             display, this._stack);
         this._buildMap();
     }
 
     get display(): Display {
-        return this._engine.display;
+        return this._render.display;
     }
 
     get backend(): PartsUnknown {
         return this._backend;
     }
 
-    get engine(): Render.Engine {
-        return this._engine;
+    get render(): Render {
+        return this._render;
     }
 
     tileAt(hex: Hex): Tile | undefined {

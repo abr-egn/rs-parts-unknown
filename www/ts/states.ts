@@ -23,7 +23,7 @@ class MovePlayer extends State {
     constructor(private _from: Hex) { super(); }
 
     onPopped() {
-        container.resolve(Game).engine.highlight = [];
+        container.resolve(Game).render.highlight = [];
     }
 
     onTileEntered(hex: Hex) {
@@ -50,6 +50,6 @@ class MovePlayer extends State {
         if (!canMove) {
             highlight = [];
         }
-        game.engine.highlight = highlight;
+        game.render.highlight = highlight;
     }
 }

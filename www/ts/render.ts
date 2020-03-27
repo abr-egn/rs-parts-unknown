@@ -8,7 +8,7 @@ export interface Listener {
     onTileExited(hex: Hex): void,
 }
 
-export class Engine {
+export class Render {
     private readonly _ctx: CanvasRenderingContext2D;
     private _mouseHex?: Hex;
     public highlight: Hex[] = [];
