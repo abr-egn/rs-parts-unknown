@@ -10,8 +10,6 @@ const CHECKERS = createCheckers(dataTI);
 
 export class Base extends State {
     onTileClicked(hex: Hex) {
-        console.log("base click");
-        console.log(hex);
         const game = container.resolve(Game);
         if (game.tileAt(hex)?.creature == game.display.player_id) {
             this.stack.push(new MovePlayer(hex));
@@ -34,7 +32,6 @@ class MovePlayer extends State {
         game.backend.startCheck();
         const events = game.backend.movePlayer(hex.x, hex.y) as Meta[];
         game.backend.endCheck();
-        console.log(events);
         let canMove = true;
         let highlight: Hex[] = [];
         for (let event of events) {

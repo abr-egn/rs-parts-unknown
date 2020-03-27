@@ -9,13 +9,15 @@ export interface Listener {
 }
 
 export class Render {
+    public highlight: Hex[] = [];
     private readonly _ctx: CanvasRenderingContext2D;
     private _mouseHex?: Hex;
-    public highlight: Hex[] = [];
+    private _tsMillis: DOMHighResTimeStamp;
     constructor(
             private readonly _canvas: HTMLCanvasElement,
             public display: Display,
             private readonly _listener: Listener) {
+        this._tsMillis = performance.now();
         this._ctx = this._canvas.getContext('2d')!;
         this._canvas.addEventListener("mousedown", (event) => this._onMouseDown(event));
         this._canvas.addEventListener("mousemove", (event) => this._onMouseMove(event));
@@ -23,6 +25,9 @@ export class Render {
     }
 
     private _draw(tsMillis: DOMHighResTimeStamp) {
+        const deltaMillis = tsMillis - this._tsMillis;
+        this._tsMillis = tsMillis;
+
         this._canvas.width = this._canvas.width;
         this._ctx.translate(this._canvas.width / 2, this._canvas.height / 2);
 
@@ -30,7 +35,7 @@ export class Render {
             this._drawTile(hex, tile);
         }
         for (var hex of this.highlight) {
-            // TODO
+            this._drawHighlight(hex, deltaMillis);
         }
 
         window.requestAnimationFrame((ts) => this._draw(ts));
@@ -69,6 +74,27 @@ export class Render {
             const height = measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent;
             this._ctx.fillText(text, -measure.width / 2, height / 2);
         }
+
+        this._ctx.restore();
+    }
+
+    private _drawHighlight(hex: Hex, deltaMillis: DOMHighResTimeStamp) {
+        this._ctx.save();
+
+        let point = hexToPixel(hex);
+        this._ctx.translate(point.x, point.y);
+        const DELTA = Math.PI/3.0;
+        this._ctx.beginPath();
+        this._ctx.moveTo(Math.cos(0)*HEX_SIZE, Math.sin(0)*HEX_SIZE);
+        for (let i = 1; i < 6; i++) {
+            let x = Math.cos(i*DELTA)*HEX_SIZE;
+            let y = Math.sin(i*DELTA)*HEX_SIZE;
+            this._ctx.lineTo(x, y);
+        }
+        this._ctx.closePath();
+        this._ctx.lineWidth = 1.0;
+        this._ctx.strokeStyle = "#FFFF00";
+        this._ctx.stroke();
 
         this._ctx.restore();
     }
