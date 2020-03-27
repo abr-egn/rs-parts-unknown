@@ -1,3 +1,5 @@
+import {singleton} from "tsyringe";
+
 import {Hex} from "./data";
 
 export class State {
@@ -10,6 +12,7 @@ export class State {
     onTileExited(hex: Hex) {}
 }
 
+@singleton()
 export class Stack {
     private _stack: Array<State> = new Array();
     push(state: State) {

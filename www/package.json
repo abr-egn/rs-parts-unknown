@@ -17,6 +17,8 @@
         "webpack-dev-server": "^3.1.0"
     },
     "dependencies": {
-        "ts-interface-checker": "^0.1.10"
+        "reflect-metadata": "^0.1.13",
+        "ts-interface-checker": "^0.1.10",
+        "tsyringe": "^4.1.0"
     }
 }

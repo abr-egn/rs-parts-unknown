@@ -1,5 +1,8 @@
 import {createCheckers} from "ts-interface-checker";
+import "reflect-metadata";
+import {container} from "tsyringe";
 
+import {Crate} from "./crate";
 import {Display} from "./data";
 import dataTI from "./data-ti";
 import * as Render from "./render";
@@ -25,9 +28,11 @@ declare global {
 }
 
 import('../wasm').then(rust => {
+  const crate = new Crate(rust);
+  container.register<Crate>(Crate, {useValue: crate});
   const backend = new rust.PartsUnknown();
   const display = asDisplay(backend.get_display());
-  const stack = new Stack();
+  const stack = container.resolve(Stack);
   stack.push(new States.Base(stack));
   const engine = new Render.Engine(
     document.getElementById("mainCanvas") as HTMLCanvasElement,
