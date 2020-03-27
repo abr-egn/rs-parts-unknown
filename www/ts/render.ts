@@ -13,6 +13,7 @@ export class Render {
     private readonly _ctx: CanvasRenderingContext2D;
     private _mouseHex?: Hex;
     private _tsMillis: DOMHighResTimeStamp;
+    private _frameWaits: any[] = [];
     constructor(
             private readonly _canvas: HTMLCanvasElement,
             public display: Display,
@@ -22,6 +23,10 @@ export class Render {
         this._canvas.addEventListener("mousedown", (event) => this._onMouseDown(event));
         this._canvas.addEventListener("mousemove", (event) => this._onMouseMove(event));
         window.requestAnimationFrame((ts) => this._draw(ts));
+    }
+
+    frame(): Promise<void> {
+        return new Promise((resolve) => this._frameWaits.push(resolve));
     }
 
     private _draw(tsMillis: DOMHighResTimeStamp) {
@@ -38,6 +43,10 @@ export class Render {
             this._drawHighlight(hex, tsMillis);
         }
 
+        for (let resolve of this._frameWaits) {
+            resolve();
+        }
+        this._frameWaits = [];
         window.requestAnimationFrame((ts) => this._draw(ts));
     }
 
