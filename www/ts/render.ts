@@ -35,7 +35,7 @@ export class Render {
             this._drawTile(hex, tile);
         }
         for (var hex of this.highlight) {
-            this._drawHighlight(hex, deltaMillis);
+            this._drawHighlight(hex, tsMillis);
         }
 
         window.requestAnimationFrame((ts) => this._draw(ts));
@@ -78,21 +78,29 @@ export class Render {
         this._ctx.restore();
     }
 
-    private _drawHighlight(hex: Hex, deltaMillis: DOMHighResTimeStamp) {
+    private _drawHighlight(hex: Hex, tsMillis: DOMHighResTimeStamp) {
         this._ctx.save();
+
+        const SCALE_MIN = 1.0;
+        const SCALE_MAX = 1.2;
+        const SCALE_RANGE = SCALE_MAX - SCALE_MIN;
+        const SCALE_RATE = 0.25;
+
+        const scale = SCALE_MIN + ((tsMillis/1000 * SCALE_RATE) % SCALE_RANGE);
+        const size = HEX_SIZE * scale;
 
         let point = hexToPixel(hex);
         this._ctx.translate(point.x, point.y);
         const DELTA = Math.PI/3.0;
         this._ctx.beginPath();
-        this._ctx.moveTo(Math.cos(0)*HEX_SIZE, Math.sin(0)*HEX_SIZE);
+        this._ctx.moveTo(Math.cos(0)*size, Math.sin(0)*size);
         for (let i = 1; i < 6; i++) {
-            let x = Math.cos(i*DELTA)*HEX_SIZE;
-            let y = Math.sin(i*DELTA)*HEX_SIZE;
+            let x = Math.cos(i*DELTA)*size;
+            let y = Math.sin(i*DELTA)*size;
             this._ctx.lineTo(x, y);
         }
         this._ctx.closePath();
-        this._ctx.lineWidth = 1.0;
+        this._ctx.lineWidth = 2.0;
         this._ctx.strokeStyle = "#FFFF00";
         this._ctx.stroke();
 
