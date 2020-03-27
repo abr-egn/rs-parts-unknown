@@ -6,7 +6,7 @@ use serde::Serialize;
 
 use crate::creature::Creature;
 use crate::id_map::{Id, IdMap};
-use crate::map::Map;
+use crate::map::{Tile, Map, Space};
 use crate::player::Player;
 
 #[derive(Debug, Clone)]
@@ -52,6 +52,25 @@ impl World {
     pub fn move_player(&mut self, to: Hex) -> Vec<Meta<Event>> {
         let id = self.player.creature_id();
         self.execute(&Meta::new(Action::MoveCreature { id, to }))
+    }
+
+    pub fn end_turn(&mut self) -> Vec<Meta<Event>> {
+        for &id in self.creatures.map().keys() {
+            if id == self.player.creature_id() { continue }
+            let hex = match self.map.creatures().get(&id) {
+                Some(v) => v,
+                None => continue,
+            };
+            let mut neighbors: Vec<_> = hex.neighbors()
+                .filter(|n| match self.map.tiles().get(n) {
+                    Some(Tile { space: Space::Empty, creature: None }) => true,
+                    _ => false,
+                })
+                .collect();
+            neighbors.sort_by(|a, b| hex.distance_to(*a).cmp(&hex.distance_to(*b)));
+            // TODO: move to neighbors[0]
+        }
+        vec![]
     }
 
     fn execute(&mut self, action: &Meta<Action>) -> Vec<Meta<Event>> {

@@ -35,6 +35,11 @@ impl PartsUnknown {
         to_value(&self.world.move_player(Hex { x, y })).unwrap()
     }
 
+    #[wasm_bindgen(js_name = endTurn)]
+    pub fn end_turn(&mut self) -> JsValue {
+        to_value(&self.world.end_turn()).unwrap()
+    }
+
     #[wasm_bindgen(js_name = startCheck)]
     pub fn start_check(&mut self) {
         if self.temp.is_some() {
