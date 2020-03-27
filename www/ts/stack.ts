@@ -3,6 +3,8 @@ import {singleton} from "tsyringe";
 import {Hex} from "./data";
 
 export class State {
+    private _stack?: Stack;
+
     onPushed() {}
     onPopped() {}
     onActivated() {}
@@ -10,6 +12,15 @@ export class State {
     onTileClicked(hex: Hex) {}
     onTileEntered(hex: Hex) {}
     onTileExited(hex: Hex) {}
+
+    get stack(): Stack {
+        return this._stack!;
+    }
+
+    _onPushed(stack: Stack) {
+        this._stack = stack;
+        this.onPushed();
+    }
 }
 
 @singleton()
@@ -19,7 +30,7 @@ export class Stack {
         console.log("PUSH: ", state.constructor.name);
         this._top()?.onDeactivated();
         this._stack.push(state);
-        state.onPushed();
+        state._onPushed(this);
         state.onActivated();
     }
     pop() {
@@ -46,7 +57,7 @@ export class Stack {
         top.onPopped();
         this._stack.pop();
         this._stack.push(state);
-        state.onPushed();
+        state._onPushed(this);
         state.onActivated();
     }
     onTileClicked(hex: Hex) {

@@ -6,7 +6,7 @@ import {Crate} from "./crate";
 import {Display} from "./data";
 import dataTI from "./data-ti";
 import * as Render from "./render";
-import {Stack} from "./state";
+import {Stack} from "./stack";
 import * as States from "./states";
 
 const CHECKERS = createCheckers(dataTI);
@@ -28,12 +28,14 @@ declare global {
 }
 
 import('../wasm').then(rust => {
-  const crate = new Crate(rust);
-  container.register<Crate>(Crate, {useValue: crate});
   const backend = new rust.PartsUnknown();
-  const display = asDisplay(backend.get_display());
+  const crate = new Crate(rust, backend);
+  container.register<Crate>(Crate, {useValue: crate});
+
   const stack = container.resolve(Stack);
-  stack.push(new States.Base(stack));
+  stack.push(new States.Base());
+  
+  const display = asDisplay(backend.get_display());
   const engine = new Render.Engine(
     document.getElementById("mainCanvas") as HTMLCanvasElement,
     display, stack);
