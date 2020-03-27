@@ -23,7 +23,6 @@ export class State {
     }
 }
 
-@singleton()
 export class Stack {
     private _stack: Array<State> = new Array();
     push(state: State) {

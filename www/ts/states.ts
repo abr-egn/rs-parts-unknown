@@ -1,31 +1,24 @@
 import {container, injectable} from "tsyringe";
 
-import {Crate} from "./crate";
 import {Hex} from "./data";
-import {Stack, State} from "./stack";
+import {Game} from "./game";
+import {State} from "./stack";
 
-@injectable()
 export class Base extends State {
     onTileClicked(hex: Hex) {
         console.log("base click");
         console.log(hex);
-        this.stack.push(container.resolve(MovePlayer).from(hex));
+        const game = container.resolve(Game);
+        const tile = game.tileAt(hex);
+        if (tile == undefined) {
+            return;
+        }
+        if (tile.creature == game.display.player_id) {
+            this.stack.push(new MovePlayer(hex));
+        }
     }
 }
 
-@injectable()
-class MovePlayer {
-    constructor(private _crate: Crate) { }
-    from(from: Hex) {
-        return new MovePlayerState(this._crate, from);
-    }
-}
-
-class MovePlayerState extends State {
-    constructor(
-        private _crate: Crate,
-        private _from: Hex,
-    ) {
-        super();
-    }
+class MovePlayer extends State {
+    constructor(private _from: Hex) { super(); }
 }
