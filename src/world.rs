@@ -55,9 +55,12 @@ impl World {
     }
 
     pub fn end_turn(&mut self) -> Vec<Meta<Event>> {
+        let player_id = self.player().creature_id();
+        let player_hex = self.map.creatures().get(&player_id).unwrap();
+
         let mut moves = vec![];
         for &id in self.creatures.map().keys() {
-            if id == self.player.creature_id() { continue }
+            if id == player_id { continue }
             let hex = match self.map.creatures().get(&id) {
                 Some(v) => v,
                 None => continue,
@@ -68,11 +71,15 @@ impl World {
                     _ => false,
                 })
                 .collect();
-            neighbors.sort_by(|a, b| hex.distance_to(*a).cmp(&hex.distance_to(*b)));
+            neighbors.sort_by(|a, b|
+                player_hex.distance_to(*a).cmp(&player_hex.distance_to(*b))
+            );
+            info!("end turn: {:?} => {:?}", id, neighbors);
             if let Some(&to) = neighbors.get(0) {
                 moves.push((id, to));
             }
         }
+
         let mut events = vec![];
         for (id, to) in moves {
             events.extend(self.execute(&Meta::new(
