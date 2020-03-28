@@ -2,7 +2,7 @@ import {createCheckers} from "ts-interface-checker";
 
 import {PartsUnknown} from "../wasm";
 
-import {Display, Hex, Tile} from "./data";
+import {Display, Hex, Meta, Tile} from "./data";
 import dataTI from "./data-ti";
 import {Render} from "./render";
 import {Stack} from "./stack";
@@ -35,6 +35,8 @@ export class Game {
         this._buildMap();
     }
 
+    // Accessors
+
     get display(): Display {
         return this._render.display;
     }
@@ -51,11 +53,21 @@ export class Game {
         return this._map[hex.x]?.[hex.y];
     }
 
+    // Mutators
+
     updateDisplay() {
         const display = asDisplay(this._backend.buildDisplay());
         this._render.display = display;
         this._buildMap();
     }
+
+    async endTurn() {
+        let events = this._backend.endTurn() as Meta[];
+        await this._render.animateEvents(events);
+        this.updateDisplay();
+    }
+
+    // Private
 
     private _buildMap() {
         this._map = [];
