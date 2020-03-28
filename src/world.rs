@@ -74,7 +74,6 @@ impl World {
             neighbors.sort_by(|a, b|
                 player_hex.distance_to(*a).cmp(&player_hex.distance_to(*b))
             );
-            info!("end turn: {:?} => {:?}", id, neighbors);
             if let Some(&to) = neighbors.get(0) {
                 moves.push((id, to));
             }

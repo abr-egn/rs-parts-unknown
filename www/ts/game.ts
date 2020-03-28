@@ -61,12 +61,6 @@ export class Game {
         this._buildMap();
     }
 
-    async endTurn() {
-        let events = this._backend.endTurn() as Meta[];
-        await this._render.animateEvents(events);
-        this.updateDisplay();
-    }
-
     // Private
 
     private _buildMap() {

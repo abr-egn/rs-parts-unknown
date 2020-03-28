@@ -74,3 +74,11 @@ class Update extends State {
         });
     }
 }
+
+class EndTurn extends State {
+    onPushed() {
+        let game = container.resolve(Game);
+        let events = game.backend.endTurn() as Meta[];
+        this.stack.swap(new Update(events));
+    }
+}
