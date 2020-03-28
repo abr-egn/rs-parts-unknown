@@ -11,7 +11,7 @@ const CHECKERS = createCheckers(dataTI);
 export class Base extends State {
     onTileClicked(hex: Hex) {
         const game = container.resolve(Game);
-        if (game.tileAt(hex)?.creature == game.display.player_id) {
+        if (game.tileAt(hex)?.creature == game.world.player_id) {
             this.stack.push(new MovePlayer(hex));
         }
     }
@@ -69,7 +69,7 @@ class Update extends State {
     onPushed() {
         let game = container.resolve(Game);
         game.render.animateEvents(this._events).then(() => {
-            game.updateDisplay();
+            game.updateWorld();
             this.stack.pop();
         });
     }

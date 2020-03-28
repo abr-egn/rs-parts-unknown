@@ -1,4 +1,4 @@
-import {Creature, Display, Hex, Meta, Tile} from "./data";
+import {Creature, World, Hex, Meta, Tile} from "./data";
 
 const HEX_SIZE = 30;
 
@@ -17,9 +17,9 @@ export class Render {
     private _creaturePos: Map<number, DOMPointReadOnly> = new Map();
     constructor(
             private readonly _canvas: HTMLCanvasElement,
-            private _display: Display,
+            private _world: World,
             private readonly _listener: Listener) {
-        this.display = _display;  // trigger setter update
+        this.world = _world;  // trigger setter update
         this._tsMillis = performance.now();
         this._ctx = this._canvas.getContext('2d')!;
         this._canvas.addEventListener("mousedown", (event) => this._onMouseDown(event));
@@ -27,15 +27,15 @@ export class Render {
         window.requestAnimationFrame((ts) => this._draw(ts));
     }
 
-    set display(d: Display) {
-        this._display = d;
+    set world(d: World) {
+        this._world = d;
         this._creaturePos.clear();
-        for (let [id, c] of this._display.creatures) {
+        for (let [id, c] of this._world.creatures) {
             this._creaturePos.set(id, hexToPixel(c.hex));
         }
     }
 
-    get display(): Display { return this._display; }
+    get world(): World { return this._world; }
 
     async animateEvents(events: Meta[]) {
         for (let event of events) {
@@ -78,7 +78,7 @@ export class Render {
         this._canvas.width = this._canvas.width;
         this._ctx.translate(this._canvas.width / 2, this._canvas.height / 2);
 
-        for (let [hex, tile] of this._display.map) {
+        for (let [hex, tile] of this._world.map) {
             this._drawTile(hex, tile);
         }
         for (let [id, pos] of this._creaturePos) {
@@ -127,7 +127,7 @@ export class Render {
         this._ctx.translate(pos.x, pos.y);
         this._ctx.font = "30px sans-serif";
         this._ctx.fillStyle = "#FFFFFF";
-        var text = this._display.creatures.get(id)?.label || "??";
+        var text = this._world.creatures.get(id)?.label || "??";
         const measure = this._ctx.measureText(text);
         const height = measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent;
         this._ctx.fillText(text, -measure.width / 2, height / 2);

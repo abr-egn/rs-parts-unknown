@@ -13,7 +13,7 @@ export interface Creature {
     label: string,
 }
 
-export interface Display {
+export interface World {
     map: [Hex, Tile][],
     player_id: number,
     creatures: Map<number, Creature>,

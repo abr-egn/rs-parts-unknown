@@ -2,7 +2,7 @@ import {createCheckers} from "ts-interface-checker";
 
 import {PartsUnknown} from "../wasm";
 
-import {Display, Hex, Meta, Tile} from "./data";
+import {World, Hex, Meta, Tile} from "./data";
 import dataTI from "./data-ti";
 import {Render} from "./render";
 import {Stack} from "./stack";
@@ -10,14 +10,14 @@ import * as States from "./states";
 
 const CHECKERS = createCheckers(dataTI);
 
-function asDisplay(display: any): Display {
-  try {
-    CHECKERS.Display.check(display);
-    return display;
-  } catch(err) {
-    console.error(display);
-    throw err;
-  }
+function checkWorld(world: any): World {
+    try {
+        CHECKERS.World.check(world);
+        return world;
+    } catch (err) {
+        console.error(world);
+        throw err;
+    }
 }
 
 export class Game {
@@ -28,17 +28,17 @@ export class Game {
         this._stack = new Stack();
         this._stack.push(new States.Base());
 
-        const display = asDisplay(this._backend.buildDisplay());
+        const world = checkWorld(this._backend.buildDisplay());
         this._render = new Render(
             document.getElementById("mainCanvas") as HTMLCanvasElement,
-            display, this._stack);
+            world, this._stack);
         this._buildMap();
     }
 
     // Accessors
 
-    get display(): Display {
-        return this._render.display;
+    get world(): World {
+        return this._render.world;
     }
 
     get backend(): PartsUnknown {
@@ -55,9 +55,9 @@ export class Game {
 
     // Mutators
 
-    updateDisplay() {
-        const display = asDisplay(this._backend.buildDisplay());
-        this._render.display = display;
+    updateWorld() {
+        const world = checkWorld(this._backend.buildDisplay());
+        this._render.world = world;
         this._buildMap();
     }
 
@@ -65,7 +65,7 @@ export class Game {
 
     private _buildMap() {
         this._map = [];
-        for (let [hex, tile] of this.display.map) {
+        for (let [hex, tile] of this.world.map) {
             if (this._map[hex.x] == undefined) {
                 this._map[hex.x] = [];
             }
