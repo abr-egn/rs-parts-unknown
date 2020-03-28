@@ -8,6 +8,17 @@ import {State} from "./stack";
 const CHECKERS = createCheckers(dataTI);
 
 export class Base extends State {
+    private _div: HTMLDivElement;
+    constructor() {
+        super();
+        this._div = document.getElementById("baseRight") as HTMLDivElement;
+    }
+    onActivated() {
+        this._div.hidden = false;
+    }
+    onDeactivated() {
+        this._div.hidden = true;
+    }
     onTileClicked(hex: Hex) {
         if (this.game.tileAt(hex)?.creature == this.game.world.player_id) {
             this.game.stack.push(new MovePlayer(hex));
