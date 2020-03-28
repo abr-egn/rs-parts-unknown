@@ -15,6 +15,8 @@ export class Base extends State {
     }
     onActivated() {
         this._div.hidden = false;
+        const button = document.getElementById("endTurn") as HTMLButtonElement;
+        button.onclick = () => this.game.stack.push(new EndTurn());
     }
     onDeactivated() {
         this._div.hidden = true;
