@@ -55,6 +55,7 @@ impl World {
     }
 
     pub fn end_turn(&mut self) -> Vec<Meta<Event>> {
+        let mut moves = vec![];
         for &id in self.creatures.map().keys() {
             if id == self.player.creature_id() { continue }
             let hex = match self.map.creatures().get(&id) {
@@ -68,9 +69,17 @@ impl World {
                 })
                 .collect();
             neighbors.sort_by(|a, b| hex.distance_to(*a).cmp(&hex.distance_to(*b)));
-            // TODO: move to neighbors[0]
+            if let Some(&to) = neighbors.get(0) {
+                moves.push((id, to));
+            }
         }
-        vec![]
+        let mut events = vec![];
+        for (id, to) in moves {
+            events.extend(self.execute(&Meta::new(
+                Action::MoveCreature { id, to }
+            )));
+        }
+        events
     }
 
     fn execute(&mut self, action: &Meta<Action>) -> Vec<Meta<Event>> {
