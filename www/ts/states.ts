@@ -2,7 +2,6 @@ import {createCheckers} from "ts-interface-checker";
 
 import {Hex, Meta} from "./data";
 import dataTI from "./data-ti";
-import {Game} from "./game";
 import {State} from "./stack";
 
 const CHECKERS = createCheckers(dataTI);

@@ -9,10 +9,12 @@
     "strict": true,
     "noImplicitThis": true,
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true
+    "emitDecoratorMetadata": true,
+    "jsx": "react"
   },
   "include": [
-    "ts/**/*"
+    "ts/**/*",
+    "tsx/**/*"
   ],
   "exclude": [
     "node_modules",
