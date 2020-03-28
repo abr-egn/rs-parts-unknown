@@ -26,8 +26,6 @@ export class Game {
     private _map: Tile[][] = [];
     constructor(private _backend: PartsUnknown) {
         this._stack = new Stack();
-        this._stack.push(new States.Base());
-
         const world = checkWorld(this._backend.buildDisplay());
         this._render = new Render(
             document.getElementById("mainCanvas") as HTMLCanvasElement,
@@ -47,6 +45,10 @@ export class Game {
 
     get render(): Render {
         return this._render;
+    }
+
+    get stack(): Stack {
+        return this._stack;
     }
 
     tileAt(hex: Hex): Tile | undefined {

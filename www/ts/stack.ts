@@ -1,9 +1,13 @@
-import {singleton} from "tsyringe";
+import {container} from "tsyringe";
 
+import {Game} from "./game";
 import {Hex} from "./data";
 
 export class State {
-    private _stack?: Stack;
+    private _game: Game;
+    constructor() {
+        this._game = container.resolve(Game);
+    }
 
     onPushed() {}
     onPopped() {}
@@ -13,13 +17,8 @@ export class State {
     onTileEntered(hex: Hex) {}
     onTileExited(hex: Hex) {}
 
-    get stack(): Stack {
-        return this._stack!;
-    }
-
-    _onPushed(stack: Stack) {
-        this._stack = stack;
-        this.onPushed();
+    get game(): Game {
+        return this._game;
     }
 }
 
@@ -29,7 +28,7 @@ export class Stack {
         console.log("PUSH: ", state.constructor.name);
         this._top()?.onDeactivated();
         this._stack.push(state);
-        state._onPushed(this);
+        state.onPushed();
         state.onActivated();
     }
     pop() {
@@ -56,7 +55,7 @@ export class Stack {
         top.onPopped();
         this._stack.pop();
         this._stack.push(state);
-        state._onPushed(this);
+        state.onPushed();
         state.onActivated();
     }
     onTileClicked(hex: Hex) {
