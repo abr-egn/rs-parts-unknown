@@ -53,7 +53,6 @@ class EndTurn extends React.Component<EndTurnProps, {}> {
     container.resolve(Game).stack.push(new States.EndTurn());
   }
   render() {
-    if (!this.props.active) { return null; }
-    return <button onClick={this.onClick}>End Turn</button>
+    return <button onClick={this.onClick} disabled={!this.props.active}>End Turn</button>
   }
 }
