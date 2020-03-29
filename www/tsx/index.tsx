@@ -1,8 +1,10 @@
 import produce from "immer";
 import * as React from "react";
+import {container} from "tsyringe";
 
+import {Game} from "../ts/game";
 import {StateKey, StateUI} from "../ts/stack";
-import {Base} from "../ts/states";
+import * as States from "../ts/states";
 
 export function index(): [JSX.Element, React.RefObject<Index>] {
     let ref = React.createRef<Index>();
@@ -34,7 +36,7 @@ export class Index extends React.Component<{}, IndexState> {
         <div id="leftSide" className="side"></div>
         <canvas id="mainCanvas" width="800" height="800"></canvas>
         <div className="side">
-          <EndTurn active={this.state.stack.get(Base)?.active}/>
+          <EndTurn active={this.state.stack.get(States.Base)?.active}/>
         </div>
       </div>
     );
@@ -43,7 +45,15 @@ export class Index extends React.Component<{}, IndexState> {
 
 interface EndTurnProps {active: boolean};
 class EndTurn extends React.Component<EndTurnProps, {}> {
+  constructor(props: EndTurnProps) {
+    super(props);
+    this.onClick = this.onClick.bind(this);  // JS this is still terrible
+  }
+  onClick() {
+    container.resolve(Game).stack.push(new States.EndTurn());
+  }
   render() {
-    return <button hidden={!this.props.active}>End Turn</button>
+    if (!this.props.active) { return null; }
+    return <button onClick={this.onClick}>End Turn</button>
   }
 }

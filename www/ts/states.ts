@@ -69,7 +69,7 @@ class Update extends State {
     }
 }
 
-class EndTurn extends State {
+export class EndTurn extends State {
     onPushed() {
         let events = this.game.backend.endTurn() as Meta[];
         this.game.stack.swap(new Update(events));
