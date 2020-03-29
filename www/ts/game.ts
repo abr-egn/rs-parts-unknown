@@ -2,10 +2,10 @@ import {createCheckers} from "ts-interface-checker";
 
 import {PartsUnknown} from "../wasm";
 
-import {World, Hex, Meta, Tile} from "./data";
+import {World, Hex, Tile} from "./data";
 import dataTI from "./data-ti";
 import {Render} from "./render";
-import {Stack} from "./stack";
+import {Stack, StateKey, StateUI} from "./stack";
 
 import {Index} from "../tsx/index";
 
@@ -65,6 +65,10 @@ export class Game {
         const world = checkWorld(this._backend.buildDisplay());
         this._render.world = world;
         this._buildMap();
+    }
+
+    updateUI<T extends StateUI>(key: StateKey<T>, update: (draft: T) => void) {
+        this._index.updateStack(key, update);
     }
 
     // Private

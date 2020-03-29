@@ -1,10 +1,13 @@
+import {enableAllPlugins} from "immer";
+import * as ReactDOM from "react-dom";
 import "reflect-metadata";
 import {container} from "tsyringe";
-import * as ReactDOM from "react-dom";
 
 import {Game} from "./game";
 import {Base} from "./states";
 import {index} from "../tsx/index";
+
+enableAllPlugins();
 
 declare global {
   interface Window {

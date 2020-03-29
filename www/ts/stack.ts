@@ -3,10 +3,15 @@ import {container} from "tsyringe";
 import {Game} from "./game";
 import {Hex} from "./data";
 
-export class State {
+export interface StateUI {
+    active: boolean,
+}
+
+export class State<T extends StateUI = StateUI> {
     private _game: Game;
     constructor() {
         this._game = container.resolve(Game);
+        this.updateUI(_ => ({active: false}));
     }
 
     onPushed() {}
@@ -20,16 +25,34 @@ export class State {
     get game(): Game {
         return this._game;
     }
+
+    updateUI(update: (draft: T) => void) {
+        this._game.updateUI(this.constructor as StateKey<T>, update);
+    }
+
+    _onActivated() {
+        this.updateUI(ui => { ui.active = true; });
+        this.onActivated();
+    }
+
+    _onDeactivated() {
+        this.updateUI(ui => { ui.active = false; });
+        this.onDeactivated();
+    }
+}
+
+export type StateKey<T extends StateUI> = {
+    new (...args: any[]): State<T>;
 }
 
 export class Stack {
     private _stack: State[] = [];
     push(state: State) {
         console.log("PUSH: %s", state.constructor.name);
-        this._top()?.onDeactivated();
+        this._top()?._onDeactivated();
         this._stack.push(state);
         state.onPushed();
-        state.onActivated();
+        state._onActivated();
     }
     pop() {
         if (this._stack.length < 2) {
@@ -39,10 +62,10 @@ export class Stack {
         const top = this._top()!;
         console.log("POP: %s --> %s", top.constructor.name,
             this._stack[this._stack.length - 2].constructor.name);
-        top.onDeactivated();
+        top._onDeactivated();
         top.onPopped();
         this._stack.pop();
-        this._top()!.onActivated();
+        this._top()!._onActivated();
     }
     swap(state: State) {
         if (this._stack.length < 1) {
@@ -51,12 +74,12 @@ export class Stack {
         const top = this._top()!;
         console.log("SWAP: %s --> %s", top.constructor.name,
             state.constructor.name);
-        top.onDeactivated();
+        top._onDeactivated();
         top.onPopped();
         this._stack.pop();
         this._stack.push(state);
         state.onPushed();
-        state.onActivated();
+        state._onActivated();
     }
     onTileClicked(hex: Hex) {
         this._top()?.onTileClicked(hex);
