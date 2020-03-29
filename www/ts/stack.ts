@@ -28,7 +28,8 @@ export class State<T extends StateUI = StateUI> {
     }
 
     updateUI(update: (draft: T) => void) {
-        this._game.updateUI(this.constructor as StateKey<T>, update);
+        const key = this.constructor as StateKey<T>;
+        this._game.updateUI(key, update);
     }
 
     _onActivated() {

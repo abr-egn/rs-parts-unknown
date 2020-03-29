@@ -1,3 +1,4 @@
+import {RefObject} from "react";
 import {createCheckers} from "ts-interface-checker";
 
 import {PartsUnknown} from "../wasm";
@@ -27,7 +28,7 @@ export class Game {
     private _map: Tile[][] = [];
     constructor(
         private _backend: PartsUnknown,
-        private _index: Index,
+        private _index: RefObject<Index>,
     ) {
         this._stack = new Stack();
         const world = checkWorld(this._backend.buildDisplay());
@@ -68,7 +69,7 @@ export class Game {
     }
 
     updateUI<T extends StateUI>(key: StateKey<T>, update: (draft: T) => void) {
-        this._index.updateStack(key, update);
+        this._index.current!.updateStack(key, update);
     }
 
     // Private

@@ -23,9 +23,9 @@ export class Index extends React.Component<{}, IndexState> {
   }
 
   updateStack<T extends StateUI>(key: StateKey<T>, update: (draft: T) => void) {
-    this.setState(state => {
-      state.stack.set(key, produce(state.stack.get(key), update));
-    });
+    this.setState(produce((draft: IndexState) => {
+      draft.stack.set(key, produce(draft.stack.get(key), update));
+    }));
   }
 
   render() {
@@ -44,7 +44,6 @@ export class Index extends React.Component<{}, IndexState> {
 interface EndTurnProps {active: boolean};
 class EndTurn extends React.Component<EndTurnProps, {}> {
   render() {
-    if (!this.props.active) { return null; }
-    return <button>End Turn</button>
+    return <button hidden={!this.props.active}>End Turn</button>
   }
 }

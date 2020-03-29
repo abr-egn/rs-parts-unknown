@@ -20,7 +20,7 @@ import('../wasm').then(rust => {
   ReactDOM.render(content, document.getElementById("root"));
 
   const backend = new rust.PartsUnknown();
-  const game = new Game(backend, ref.current!);
+  const game = new Game(backend, ref);
   container.register(Game, {useValue: game});
   game.stack.push(new Base());
 
