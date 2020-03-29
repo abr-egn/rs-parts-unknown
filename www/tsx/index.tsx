@@ -2,6 +2,7 @@ import produce from "immer";
 import * as React from "react";
 
 import {StateKey, StateUI} from "../ts/stack";
+import {Base} from "../ts/states";
 
 export function index(): [JSX.Element, React.RefObject<Index>] {
     let ref = React.createRef<Index>();
@@ -33,11 +34,17 @@ export class Index extends React.Component<{}, IndexState> {
         <div id="leftSide" className="side"></div>
         <canvas id="mainCanvas" width="800" height="800"></canvas>
         <div className="side">
-          <div id="baseRight" hidden>
-            <button id="endTurn">End Turn</button>
-          </div>
+          <EndTurn active={this.state.stack.get(Base)?.active}/>
         </div>
       </div>
     );
+  }
+}
+
+interface EndTurnProps {active: boolean};
+class EndTurn extends React.Component<EndTurnProps, {}> {
+  render() {
+    if (!this.props.active) { return null; }
+    return <button>End Turn</button>
   }
 }

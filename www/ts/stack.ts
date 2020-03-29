@@ -9,9 +9,10 @@ export interface StateUI {
 
 export class State<T extends StateUI = StateUI> {
     private _game: Game;
-    constructor() {
+    constructor(init: any = {}) {
         this._game = container.resolve(Game);
-        this.updateUI(_ => ({active: false}));
+        init.active = false;
+        this.updateUI(_ => init);
     }
 
     onPushed() {}
