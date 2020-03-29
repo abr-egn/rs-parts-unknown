@@ -13,11 +13,13 @@ declare global {
 }
 
 import('../wasm').then(rust => {
-  ReactDOM.render(index, document.getElementById("root"));
+  let [content, ref] = index();
+  ReactDOM.render(content, document.getElementById("root"));
 
   const backend = new rust.PartsUnknown();
-  const game = new Game(backend);
-  window.game = game;
+  const game = new Game(backend, ref.current!);
   container.register(Game, {useValue: game});
   game.stack.push(new Base());
+
+  window.game = game;
 }).catch(console.error);

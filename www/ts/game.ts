@@ -6,7 +6,8 @@ import {World, Hex, Meta, Tile} from "./data";
 import dataTI from "./data-ti";
 import {Render} from "./render";
 import {Stack} from "./stack";
-import * as States from "./states";
+
+import {Index} from "../tsx/index";
 
 const CHECKERS = createCheckers(dataTI);
 
@@ -24,7 +25,10 @@ export class Game {
     private _stack: Stack;
     private _render: Render;
     private _map: Tile[][] = [];
-    constructor(private _backend: PartsUnknown) {
+    constructor(
+        private _backend: PartsUnknown,
+        private _index: Index,
+    ) {
         this._stack = new Stack();
         const world = checkWorld(this._backend.buildDisplay());
         this._render = new Render(
