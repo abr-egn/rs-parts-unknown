@@ -1,3 +1,4 @@
+mod card;
 mod creature;
 mod display;
 mod id_map;
@@ -11,6 +12,11 @@ use serde_wasm_bindgen::to_value;
 use wasm_bindgen::prelude::*;
 
 use world::World;
+
+#[wasm_bindgen(raw_module = "../ts/for_rust")]
+extern "C" {
+    fn js_greet(name: &str);
+}
 
 #[wasm_bindgen]
 pub struct PartsUnknown {
@@ -65,4 +71,5 @@ pub fn wasm_start() {
     console_log::init_with_level(Level::Debug).expect("error initializing console_log");
 
     info!("Parts Unknown WASM initialized.");
+    js_greet("User");
 }

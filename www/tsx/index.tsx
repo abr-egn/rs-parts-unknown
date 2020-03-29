@@ -47,7 +47,7 @@ interface EndTurnProps {active: boolean};
 class EndTurn extends React.Component<EndTurnProps, {}> {
   constructor(props: EndTurnProps) {
     super(props);
-    this.onClick = this.onClick.bind(this);  // JS this is still terrible
+    this.onClick = this.onClick.bind(this);  // JS `this` is still terrible
   }
   onClick() {
     container.resolve(Game).stack.push(new States.EndTurn());

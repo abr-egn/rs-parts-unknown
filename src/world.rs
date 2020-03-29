@@ -45,9 +45,13 @@ impl World {
         }
     }
 
+    // Accessors
+
     pub fn map(&self) -> &Map { &self.map }
     pub fn player(&self) -> &Player { &self.player }
     //pub fn creatures(&self) -> &IdMap<Creature> { &self.creatures }
+
+    // Mutators
 
     pub fn move_player(&mut self, to: Hex) -> Vec<Meta<Event>> {
         let id = self.player.creature_id();
@@ -87,6 +91,8 @@ impl World {
         }
         events
     }
+
+    // Private
 
     fn execute(&mut self, action: &Meta<Action>) -> Vec<Meta<Event>> {
         let mut out = vec![];
