@@ -25,7 +25,7 @@ export class State {
 export class Stack {
     private _stack: State[] = [];
     push(state: State) {
-        console.log("PUSH: ", state.constructor.name);
+        console.log("PUSH: %s", state.constructor.name);
         this._top()?.onDeactivated();
         this._stack.push(state);
         state.onPushed();
@@ -37,7 +37,7 @@ export class Stack {
             return;
         }
         const top = this._top()!;
-        console.log("POP: ", top.constructor.name, " --> ",
+        console.log("POP: %s --> %s", top.constructor.name,
             this._stack[this._stack.length - 2].constructor.name);
         top.onDeactivated();
         top.onPopped();
@@ -49,7 +49,7 @@ export class Stack {
             console.error("swap() length=", this._stack.length);
         }
         const top = this._top()!;
-        console.log("SWAP: ", top.constructor.name, " --> ",
+        console.log("SWAP: %s --> %s", top.constructor.name,
             state.constructor.name);
         top.onDeactivated();
         top.onPopped();

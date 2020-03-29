@@ -4,7 +4,7 @@ import * as ReactDOM from "react-dom";
 
 import {Game} from "./game";
 import {Base} from "./states";
-import {element} from "../tsx/first";
+import {index} from "../tsx/index";
 
 declare global {
   interface Window {
@@ -13,10 +13,11 @@ declare global {
 }
 
 import('../wasm').then(rust => {
+  ReactDOM.render(index, document.getElementById("root"));
+
   const backend = new rust.PartsUnknown();
   const game = new Game(backend);
   window.game = game;
   container.register(Game, {useValue: game});
   game.stack.push(new Base());
-  ReactDOM.render(element, document.getElementById("leftSide"));
 }).catch(console.error);
