@@ -88,10 +88,10 @@ export class Render {
         for (let [id, pos] of this._creaturePos) {
             this._drawCreature(id, pos);
         }
-        for (let hex of this.highlight) {
-            this._drawHighlight(hex, tsMillis);
-        }
         for (let hex of this._creatureRange) {
+            this._drawRange(hex);
+        }
+        for (let hex of this.highlight) {
             this._drawHighlight(hex, tsMillis);
         }
 
@@ -105,17 +105,7 @@ export class Render {
     private _drawTile(hex: Hex, tile: Tile) {
         this._ctx.save();
 
-        let point = hexToPixel(hex);
-        this._ctx.translate(point.x, point.y);
-        const DELTA = Math.PI/3.0;
-        this._ctx.beginPath();
-        this._ctx.moveTo(Math.cos(0)*HEX_SIZE, Math.sin(0)*HEX_SIZE);
-        for (let i = 1; i < 6; i++) {
-            let x = Math.cos(i*DELTA)*HEX_SIZE;
-            let y = Math.sin(i*DELTA)*HEX_SIZE;
-            this._ctx.lineTo(x, y);
-        }
-        this._ctx.closePath();
+        this._pathHex(hex, HEX_SIZE);
         this._ctx.lineWidth = 1.0;
         this._ctx.strokeStyle = "#FFFFFF";
         this._ctx.fillStyle = "#FFFFFF";
@@ -148,8 +138,6 @@ export class Render {
     }
 
     private _drawHighlight(hex: Hex, tsMillis: DOMHighResTimeStamp) {
-        this._ctx.save();
-
         const SCALE_MIN = 1.0;
         const SCALE_MAX = 1.2;
         const SCALE_RANGE = SCALE_MAX - SCALE_MIN;
@@ -158,6 +146,28 @@ export class Render {
         const scale = SCALE_MIN + ((tsMillis/1000 * SCALE_RATE) % SCALE_RANGE);
         const size = HEX_SIZE * scale;
 
+        this._ctx.save();
+
+        this._pathHex(hex, size);
+        this._ctx.lineWidth = 2.0;
+        this._ctx.strokeStyle = "#A0A0FF";
+        this._ctx.stroke();
+
+        this._ctx.restore();
+    }
+
+    private _drawRange(hex: Hex) {
+        this._ctx.save();
+
+        this._pathHex(hex, HEX_SIZE);
+        this._ctx.lineWidth = 2.0;
+        this._ctx.strokeStyle = "#808000";
+        this._ctx.stroke();
+
+        this._ctx.restore();
+    }
+
+    private _pathHex(hex: Hex, size: number) {
         let point = hexToPixel(hex);
         this._ctx.translate(point.x, point.y);
         const DELTA = Math.PI/3.0;
@@ -169,11 +179,6 @@ export class Render {
             this._ctx.lineTo(x, y);
         }
         this._ctx.closePath();
-        this._ctx.lineWidth = 2.0;
-        this._ctx.strokeStyle = "#FFFF00";
-        this._ctx.stroke();
-
-        this._ctx.restore();
     }
 
     private _onMouseDown(event: MouseEvent) {
