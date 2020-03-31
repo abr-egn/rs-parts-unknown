@@ -14,23 +14,6 @@ impl Creature {
     pub fn kind(&self) -> &Kind { &self.kind }
 }
 
-#[wasm_bindgen]
-impl Creature {
-    #[wasm_bindgen(getter)]
-    pub fn player(&self) -> Option<Player> {
-        match &self.kind {
-            Kind::Player(p) => Some(p.clone()),
-            _ => None,
-        }
-    }
-    #[wasm_bindgen(getter)]
-    pub fn npc(&self) -> Option<NPC> {
-        match &self.kind {
-            Kind::NPC(c) => Some(c.clone()),
-            _ => None,
-        }
-    }
-}
 
 #[derive(Debug, Clone)]
 pub enum Kind {
@@ -51,11 +34,35 @@ pub struct NPC {
     pub attack_range: i32,
 }
 
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-impl NPC {
-    #[wasm_bindgen(getter)]
-    pub fn moveRange(&self) -> i32 { self.move_range }
-    #[wasm_bindgen(getter)]
-    pub fn attack_range(&self) -> i32 { self.attack_range }
+mod wasm {
+    use wasm_bindgen::prelude::*;
+
+    use super::*;
+
+    #[wasm_bindgen]
+    impl Creature {
+        #[wasm_bindgen(getter)]
+        pub fn player(&self) -> Option<Player> {
+            match &self.kind {
+                Kind::Player(p) => Some(p.clone()),
+                _ => None,
+            }
+        }
+        #[wasm_bindgen(getter)]
+        pub fn npc(&self) -> Option<NPC> {
+            match &self.kind {
+                Kind::NPC(c) => Some(c.clone()),
+                _ => None,
+            }
+        }
+    }
+
+    #[allow(non_snake_case)]
+    #[wasm_bindgen]
+    impl NPC {
+        #[wasm_bindgen(getter = moveRange)]
+        pub fn move_range(&self) -> i32 { self.move_range }
+        #[wasm_bindgen(getter = attackRange)]
+        pub fn attack_range(&self) -> i32 { self.attack_range }
+    }
 }

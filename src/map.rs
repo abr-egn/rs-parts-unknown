@@ -209,14 +209,18 @@ pub struct Tile {
 }
 
 #[wasm_bindgen]
-impl Tile {
-    #[wasm_bindgen(getter)]
-    pub fn creature(&self) -> Option<u32> { self.creature.map(|id| id.value()) }
-}
-
-#[wasm_bindgen]
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Space {
     Empty,
     Wall,
+}
+
+mod wasm {
+    use super::*;
+
+    #[wasm_bindgen]
+    impl Tile {
+        #[wasm_bindgen(getter)]
+        pub fn creature(&self) -> Option<u32> { self.creature.map(|id| id.value()) }
+    }
 }
