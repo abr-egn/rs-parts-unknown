@@ -36,7 +36,12 @@ impl World {
         let pc_id = creatures.add(Creature::new(Kind::Player(creature::Player {})));
         let mut map = Map::new();
         map.place_at(pc_id, hex::ORIGIN).unwrap();
-        let enemy_id = creatures.add(Creature::new(Kind::NPC(creature::NPC {})));
+        let enemy_id = creatures.add(Creature::new(Kind::NPC(
+            creature::NPC {
+                move_range: 3,
+                attack_range: 1,
+            }
+        )));
         map.place_at(enemy_id, Hex { x: -4, y: 1 }).unwrap();
         World {
             map: map,

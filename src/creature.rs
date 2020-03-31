@@ -44,4 +44,18 @@ pub struct Player {}
 
 #[wasm_bindgen]
 #[derive(Debug, Clone)]
-pub struct NPC {}
+pub struct NPC {
+    #[wasm_bindgen(skip)]
+    pub move_range: i32,
+    #[wasm_bindgen(skip)]
+    pub attack_range: i32,
+}
+
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+impl NPC {
+    #[wasm_bindgen(getter)]
+    pub fn moveRange(&self) -> i32 { self.move_range }
+    #[wasm_bindgen(getter)]
+    pub fn attack_range(&self) -> i32 { self.attack_range }
+}
