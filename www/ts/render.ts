@@ -15,6 +15,7 @@ export class Render {
     private _tsMillis: DOMHighResTimeStamp;
     private _frameWaits: ((value: number) => void)[] = [];
     private _creaturePos: Map<number, DOMPointReadOnly> = new Map();
+    private _creatureRange: Hex[] = [];
     constructor(
             private readonly _canvas: HTMLCanvasElement,
             private _world: World,
@@ -30,9 +31,12 @@ export class Render {
     set world(d: World) {
         this._world = d;
         this._creaturePos.clear();
+        let range: Hex[] = [];
         for (let [id, hex] of this._world.getCreatureMap()) {
             this._creaturePos.set(id, hexToPixel(hex));
+            range = range.concat(this._world.getCreatureRange(id));
         }
+        this._creatureRange = range;
     }
 
     get world(): World { return this._world; }
@@ -85,6 +89,9 @@ export class Render {
             this._drawCreature(id, pos);
         }
         for (let hex of this.highlight) {
+            this._drawHighlight(hex, tsMillis);
+        }
+        for (let hex of this._creatureRange) {
             this._drawHighlight(hex, tsMillis);
         }
 

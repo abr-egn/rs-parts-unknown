@@ -1,6 +1,6 @@
 use std::collections::{
     hash_map::{Entry, OccupiedEntry, VacantEntry},
-    HashMap,
+    HashMap, HashSet, VecDeque,
 };
 
 use fnv::FnvHashSet;
@@ -74,7 +74,7 @@ impl Map {
             let mut out = vec![];
             for neighbor in hex.neighbors() {
                 match tiles.get(&neighbor) {
-                    Some(Tile { space: Space::Empty, creature: None }) => (),
+                    Some(t) if is_open(t) => (),
                     _ => continue,
                 }
                 out.push(neighbor)
@@ -87,7 +87,7 @@ impl Map {
         };
         for coord in path.iter().skip(1) {
             let tile = self.tiles.get(coord).ok_or(Error::OutOfBounds)?;
-            if tile.space != Space::Empty || tile.creature.is_some() {
+            if !is_open(tile) {
                 return Err(Error::Obstructed);
             }
         }
@@ -97,6 +97,42 @@ impl Map {
         self.tiles.get_mut(from).unwrap().creature = None;
         cr_entry.insert(to);
         Ok(path)
+    }
+
+    pub fn range_from(&self, start: Hex, range: i32) -> HashSet<Hex> {
+        let mut out = HashSet::new();
+        let mut pending: VecDeque<(Hex, i32)> = VecDeque::new();
+        pending.push_back((start, range));
+        while !pending.is_empty() {
+            let (current, remaining_range) = pending.pop_front().unwrap();
+            if !out.insert(current) { continue }
+            if remaining_range > 0 {
+                for hex in self.open_neighbors(current) {
+                    if out.contains(&hex) { continue }
+                    pending.push_back((hex, remaining_range-1));
+                }
+            }
+        }
+        out
+    }
+
+    fn open_neighbors(&self, pos: Hex) -> Vec<Hex> {
+        let mut out = vec![];
+        for hex in pos.neighbors() {
+            if let Some(t) = self.tiles.get(&hex) {
+                if is_open(t) {
+                    out.push(hex)
+                }
+            }
+        }
+        out
+    }
+}
+
+fn is_open(tile: &Tile) -> bool {
+    match tile {
+        Tile { space: Space::Empty, creature: None } => true,
+        _ => false,
     }
 }
 

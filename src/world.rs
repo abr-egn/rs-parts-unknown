@@ -211,6 +211,25 @@ impl World {
         self.creatures.map().get(&Id::synthesize(id)).cloned()
     }
 
+    pub fn getCreatureRange(&self, id: u32) -> Array /* Hex[] */ {
+        let id = Id::synthesize(id);
+        let range = match self.creatures.map().get(&id) {
+            Some(c) => match c.kind() {
+                Kind::NPC(npc) => npc.move_range,
+                _ => return Array::new(),
+            },
+            None => return Array::new(),
+        };
+        let start = match self.map.creatures().get(&id) {
+            Some(h) => h,
+            None => return Array::new(),
+        };
+        self.map.range_from(*start, range).into_iter()
+            .map(|h| display::Hex::new(&h))
+            .map(JsValue::from)
+            .collect()
+    }
+
     // Mutators
 
     pub fn movePlayer(&mut self, x: i32, y: i32) -> Array /* Event[] */ {
