@@ -107,21 +107,11 @@ impl Map {
             let (current, remaining_range) = pending.pop_front().unwrap();
             if !out.insert(current) { continue }
             if remaining_range > 0 {
-                for hex in self.open_neighbors(current) {
+                for hex in current.neighbors() {
                     if out.contains(&hex) { continue }
-                    pending.push_back((hex, remaining_range-1));
-                }
-            }
-        }
-        out
-    }
-
-    fn open_neighbors(&self, pos: Hex) -> Vec<Hex> {
-        let mut out = vec![];
-        for hex in pos.neighbors() {
-            if let Some(t) = self.tiles.get(&hex) {
-                if is_open(t) {
-                    out.push(hex)
+                    if let Some(Tile { space: Space::Empty, .. }) = self.tiles.get(&hex) {
+                        pending.push_back((hex, remaining_range-1));
+                    }
                 }
             }
         }
