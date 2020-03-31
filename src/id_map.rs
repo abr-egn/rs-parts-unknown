@@ -52,6 +52,7 @@ impl<T> Id<T> {
         self.value += 1;
         out
     }
+    pub fn value(&self) -> u32 { self.value }
 }
 
 impl<T> fmt::Debug for Id<T> {

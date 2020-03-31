@@ -15,7 +15,7 @@ export interface Creature {
 
 export interface World {
     map: [Hex, Tile][],
-    player_id: number,
+    playerId: number,
     creatures: Map<number, Creature>,
 }
 

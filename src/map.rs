@@ -7,6 +7,7 @@ use fnv::FnvHashSet;
 use hex::Hex;
 use serde::Serialize;
 use thiserror::Error;
+use wasm_bindgen::prelude::*;
 
 use crate::creature::Creature;
 use crate::id_map::Id;
@@ -173,13 +174,17 @@ fn occupied_or<K, V, E>(e: Entry<K, V>, err: E) -> Result<OccupiedEntry<K, V>, E
     }
 }
 
+#[wasm_bindgen]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Tile {
+    #[wasm_bindgen(readonly)]
     pub space: Space,
+    #[wasm_bindgen(skip)]
     pub creature: Option<Id<Creature>>,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[wasm_bindgen]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize)]
 pub enum Space {
     Empty,
     Wall,

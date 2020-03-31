@@ -10,6 +10,7 @@ use log::{Level, error, info};
 use serde_wasm_bindgen::to_value;
 use wasm_bindgen::prelude::*;
 
+use display::Display;
 use world::World;
 
 #[wasm_bindgen(raw_module = "../ts/for_rust")]
@@ -32,7 +33,12 @@ impl PartsUnknown {
 
     #[wasm_bindgen(js_name = buildDisplay)]
     pub fn build_display(&self) -> JsValue {
-        to_value(&display::Display::new(&self.world)).unwrap()
+        to_value(&Display::new(&self.world)).unwrap()
+    }
+
+    #[wasm_bindgen(js_name = buildRawDisplay)]
+    pub fn build_raw_display(&self) -> Display {
+        Display::new(&self.world)
     }
 
     #[wasm_bindgen(js_name = movePlayer)]
