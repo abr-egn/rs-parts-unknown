@@ -5,7 +5,7 @@ use js_sys::Array;
 use serde::{Serialize};
 use wasm_bindgen::prelude::*;
 
-use crate::creature::Creature;
+use crate::creature;
 use crate::id_map::Id;
 use crate::map::Tile;
 use crate::world::World;
@@ -17,7 +17,7 @@ pub struct Display {
     #[wasm_bindgen(readonly)]
     pub playerId: u32,
     map: Vec<(Hex, Tile)>,
-    creatures: HashMap<Id<Creature>, DisplayCreature>,
+    creatures: HashMap<Id<creature::Creature>, Creature>,
 }
 
 #[wasm_bindgen]
@@ -34,7 +34,7 @@ impl Display {
         let mut creatures = HashMap::new();
         for (id, hex) in world.map().creatures() {
             let label = String::from(if *id == player_id { "P" } else { "X" });
-            creatures.insert(*id, DisplayCreature { hex: Hex::new(hex), label });
+            creatures.insert(*id, Creature { hex: Hex::new(hex), label });
         }
         Display {
             playerId: player_id.value(),
@@ -49,7 +49,7 @@ impl Display {
 // Projections
 
 #[wasm_bindgen]
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize)]
 pub struct Hex {
     #[wasm_bindgen(readonly)]
     pub x: i32,
@@ -58,13 +58,22 @@ pub struct Hex {
 }
 
 impl Hex {
-    fn new(source: &hex::Hex) -> Self {
+    pub fn new(source: &hex::Hex) -> Self {
         Hex { x: source.x, y: source.y }
     }
 }
 
+#[wasm_bindgen]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-pub struct DisplayCreature {
-    hex: Hex,
-    label: String,
+pub struct Creature {
+    #[wasm_bindgen(readonly)]
+    pub hex: Hex,
+    #[wasm_bindgen(skip)]
+    pub label: String,
+}
+
+#[wasm_bindgen]
+impl Creature {
+    #[wasm_bindgen(getter)]
+    pub fn label(&self) -> String { self.label.clone() }
 }

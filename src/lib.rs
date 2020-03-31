@@ -41,6 +41,9 @@ impl PartsUnknown {
         Display::new(&self.world)
     }
 
+    #[wasm_bindgen(js_name = cloneWorld)]
+    pub fn clone_world(&self) -> World { self.world.clone() }
+
     #[wasm_bindgen(js_name = movePlayer)]
     pub fn move_player(&mut self, x: i32, y: i32) -> JsValue {
         to_value(&self.world.move_player(Hex { x, y })).unwrap()

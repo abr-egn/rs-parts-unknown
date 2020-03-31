@@ -1,13 +1,17 @@
 use std::collections::HashSet;
 
 use hex::{self, Hex};
+use js_sys::Array;
 use log::info;
 use serde::Serialize;
+use wasm_bindgen::prelude::*;
 
 use crate::creature::{Creature, Kind};
+use crate::display;
 use crate::id_map::{Id, IdMap};
 use crate::map::{Tile, Map, Space};
 
+#[wasm_bindgen]
 #[derive(Debug, Clone)]
 pub struct World {
     map: Map,
@@ -155,6 +159,54 @@ impl World {
                 Ok(path) => Event::CreatureMoved { id, path },
                 Err(_) => Event::Failed { action: action.clone(), reason: String::from("??") },
             }
+        }
+    }
+}
+
+#[allow(non_snake_case)]
+#[wasm_bindgen]
+impl World {
+    #[wasm_bindgen(getter)]
+    pub fn playerId(&self) -> u32 { self.player_id.value() }
+
+    pub fn getTiles(&self) -> Array /* [display::Hex, Tile][] */ {
+        self.map.tiles().iter()
+            .map(|(h, t)| {
+                let tuple = Array::new();
+                tuple.push(&JsValue::from(display::Hex::new(h)));
+                tuple.push(&JsValue::from(t.clone()));
+                tuple
+            })
+            .collect()
+    }
+
+    pub fn getTile(&self, hex: display::Hex) -> Option<Tile> {
+        self.map.tiles().get(&Hex { x: hex.x, y: hex.y }).cloned()
+    }
+
+    pub fn getCreatures(&self) -> Array /* [display::Hex, display::Creature][] */ {
+        let out = Array::new();
+
+        for (id, hex) in self.map.creatures() {
+            let tuple = Array::new();
+            tuple.push(&JsValue::from(id.value()));
+            tuple.push(&JsValue::from(self.new_creature(id, hex)));
+            out.push(&JsValue::from(tuple));
+        }
+
+        out
+    }
+
+    pub fn getCreature(&self, id: u32) -> Option<display::Creature> {
+        let id: Id<Creature> = Id::synthesize(id);
+        self.map.creatures().get(&id).map(|hex| self.new_creature(&id, hex))
+    }
+
+    fn new_creature(&self, id: &Id<Creature>, hex: &Hex) -> display::Creature {
+        let label = String::from(if *id == self.player_id { "P" } else { "X" });
+        display::Creature {
+            hex: display::Hex::new(hex),
+            label,
         }
     }
 }

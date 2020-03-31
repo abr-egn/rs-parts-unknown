@@ -8,7 +8,7 @@ const CHECKERS = createCheckers(dataTI);
 
 export class Base extends State {
     onTileClicked(hex: Hex) {
-        if (this.game.tileAt(hex)?.creature == this.game.world.player_id) {
+        if (this.game.tileAt(hex)?.creature == this.game.world.playerId) {
             this.game.stack.push(new MovePlayer(hex));
         }
     }
