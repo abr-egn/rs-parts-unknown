@@ -1,7 +1,7 @@
 import {container} from "tsyringe";
 
 import {Game} from "./game";
-import {Hex} from "./data";
+import {Hex} from "../wasm";
 
 export interface StateUI {
     active: boolean,

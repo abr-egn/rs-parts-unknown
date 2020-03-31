@@ -3,6 +3,7 @@ import * as ReactDOM from "react-dom";
 import "reflect-metadata";
 import {container} from "tsyringe";
 
+import {PartsUnknown} from "../wasm";
 import {Game} from "./game";
 import {Base} from "./states";
 import {index} from "../tsx/index";
@@ -15,14 +16,16 @@ declare global {
   }
 }
 
-import('../wasm').then(rust => {
+function main() {
   let [content, ref] = index();
   ReactDOM.render(content, document.getElementById("root"));
 
-  const backend = new rust.PartsUnknown();
+  const backend = new PartsUnknown();
   const game = new Game(backend, ref);
   container.register(Game, {useValue: game});
   game.stack.push(new Base());
 
   window.game = game;
-}).catch(console.error);
+}
+
+main();

@@ -180,7 +180,7 @@ impl World {
             .collect()
     }
 
-    pub fn getTile(&self, hex: display::Hex) -> Option<Tile> {
+    pub fn getTile(&self, hex: &display::Hex) -> Option<Tile> {
         self.map.tiles().get(&Hex { x: hex.x, y: hex.y }).cloned()
     }
 

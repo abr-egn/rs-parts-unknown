@@ -4,7 +4,7 @@ const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
 const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 module.exports = {
-    entry: './ts/index.ts',
+    entry: './ts/bootstrap.ts',
     devtool: 'inline-source-map',
     module: {
         rules: [

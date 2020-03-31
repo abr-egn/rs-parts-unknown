@@ -1,47 +1,29 @@
 import {RefObject} from "react";
-import {createCheckers} from "ts-interface-checker";
 
-import {PartsUnknown} from "../wasm";
-
-import {World, Hex, Tile} from "./data";
-import dataTI from "./data-ti";
+import {PartsUnknown, World, Hex, Tile} from "../wasm";
 import {Render} from "./render";
 import {Stack, StateKey, StateUI} from "./stack";
-
 import {Index} from "../tsx/index";
 
-const CHECKERS = createCheckers(dataTI);
-
-function checkWorld(world: any): World {
-    try {
-        CHECKERS.World.check(world);
-        return world;
-    } catch (err) {
-        console.error(world);
-        throw err;
-    }
-}
-
 export class Game {
+    private _world: World;
     private _stack: Stack;
     private _render: Render;
-    private _map: Tile[][] = [];
     constructor(
         private _backend: PartsUnknown,
         private _index: RefObject<Index>,
     ) {
+        this._world = this._backend.cloneWorld();
         this._stack = new Stack();
-        const world = checkWorld(this._backend.buildDisplay());
         this._render = new Render(
             document.getElementById("mainCanvas") as HTMLCanvasElement,
-            world, this._stack);
-        this._buildMap();
+            this._world, this._stack);
     }
 
     // Accessors
 
     get world(): World {
-        return this._render.world;
+        return this._world;
     }
 
     get backend(): PartsUnknown {
@@ -57,30 +39,17 @@ export class Game {
     }
 
     tileAt(hex: Hex): Tile | undefined {
-        return this._map[hex.x]?.[hex.y];
+        return this._world.getTile(hex);
     }
 
     // Mutators
 
     updateWorld() {
-        const world = checkWorld(this._backend.buildDisplay());
-        this._render.world = world;
-        this._buildMap();
+        this._world = this._backend.cloneWorld();
+        this._render.world = this._world;
     }
 
     updateUI<T extends StateUI>(key: StateKey<T>, update: (draft: T) => void) {
         this._index.current!.updateStack(key, update);
-    }
-
-    // Private
-
-    private _buildMap() {
-        this._map = [];
-        for (let [hex, tile] of this.world.map) {
-            if (this._map[hex.x] == undefined) {
-                this._map[hex.x] = [];
-            }
-            this._map[hex.x][hex.y] = tile;
-        }
     }
 }

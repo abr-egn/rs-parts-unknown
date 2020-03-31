@@ -1,4 +1,4 @@
-import {Creature, World, Hex, Meta, Tile} from "./data";
+import {World, Hex, Tile, Space} from "../wasm";
 
 const HEX_SIZE = 30;
 
@@ -30,14 +30,14 @@ export class Render {
     set world(d: World) {
         this._world = d;
         this._creaturePos.clear();
-        for (let [id, c] of this._world.creatures) {
+        for (let [id, c] of this._world.getCreatures()) {
             this._creaturePos.set(id, hexToPixel(c.hex));
         }
     }
 
     get world(): World { return this._world; }
 
-    async animateEvents(events: Meta[]) {
+    async animateEvents(events: any[]) {  // TODO
         for (let event of events) {
             if ("CreatureMoved" in event.data) {
                 const move = event.data.CreatureMoved;
@@ -78,7 +78,7 @@ export class Render {
         this._canvas.width = this._canvas.width;
         this._ctx.translate(this._canvas.width / 2, this._canvas.height / 2);
 
-        for (let [hex, tile] of this._world.map) {
+        for (let [hex, tile] of this._world.getTiles()) {
             this._drawTile(hex, tile);
         }
         for (let [id, pos] of this._creaturePos) {
@@ -112,7 +112,7 @@ export class Render {
         this._ctx.lineWidth = 1.0;
         this._ctx.strokeStyle = "#FFFFFF";
         this._ctx.fillStyle = "#FFFFFF";
-        if (tile.space == "Empty") {
+        if (tile.space == Space.Empty) {
             this._ctx.stroke();
         } else {
             this._ctx.fill();
@@ -127,7 +127,7 @@ export class Render {
         this._ctx.translate(pos.x, pos.y);
         this._ctx.font = "30px sans-serif";
         this._ctx.fillStyle = "#FFFFFF";
-        var text = this._world.creatures.get(id)?.label || "??";
+        var text = this._world.getCreature(id)?.label || "??";
         const measure = this._ctx.measureText(text);
         const height = measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent;
         this._ctx.fillText(text, -measure.width / 2, height / 2);
@@ -197,7 +197,7 @@ function hexToPixel(hex: Hex): DOMPointReadOnly {
 function pixelToHex(point: DOMPointReadOnly): Hex {
     const x = (2./3 * point.x) / HEX_SIZE;
     const y = (-1./3 * point.x + Math.sqrt(3)/3 * point.y) / HEX_SIZE;
-    return hexRound({x, y});
+    return hexRound(new Hex(x, y));
 }
 
 function hexRound(hex: Hex): Hex {
@@ -218,5 +218,5 @@ function hexRound(hex: Hex): Hex {
         rz = -rx-ry;
     }
 
-    return {x: rx, y: ry};
+    return new Hex(rx, ry);
 }

@@ -64,6 +64,14 @@ impl Hex {
 }
 
 #[wasm_bindgen]
+impl Hex {
+    #[wasm_bindgen(constructor)]
+    pub fn make(x: i32, y: i32) -> Self {
+        Hex { x, y }
+    }
+}
+
+#[wasm_bindgen]
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Creature {
     #[wasm_bindgen(readonly)]
