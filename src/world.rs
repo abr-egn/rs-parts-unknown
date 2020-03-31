@@ -4,15 +4,14 @@ use hex::{self, Hex};
 use log::info;
 use serde::Serialize;
 
-use crate::creature::Creature;
+use crate::creature::{Creature, Kind};
 use crate::id_map::{Id, IdMap};
 use crate::map::{Tile, Map, Space};
-use crate::player::Player;
 
 #[derive(Debug, Clone)]
 pub struct World {
     map: Map,
-    player: Player,
+    player_id: Id<Creature>,
     creatures: IdMap<Creature>,
     mods: IdMap<Box<dyn Mod>>,
     triggers: IdMap<Box<dyn Trigger>>,
@@ -30,14 +29,14 @@ impl World {
         let mut mods: IdMap<Box<dyn Mod>> = IdMap::new();
         mods.add(Box::new(ModDebugTag));
         let mut creatures = IdMap::new();
-        let pc_id = creatures.add(Creature {});
+        let pc_id = creatures.add(Creature::new(Kind::Player {}));
         let mut map = Map::new();
         map.place_at(pc_id, hex::ORIGIN).unwrap();
-        let enemy_id = creatures.add(Creature {});
+        let enemy_id = creatures.add(Creature::new(Kind::NPC {}));
         map.place_at(enemy_id, Hex { x: -4, y: 1 }).unwrap();
         World {
             map: map,
-            player: Player::new(pc_id),
+            player_id: pc_id,
             creatures: creatures,
             mods: mods,
             triggers: IdMap::new(),
@@ -48,23 +47,21 @@ impl World {
     // Accessors
 
     pub fn map(&self) -> &Map { &self.map }
-    pub fn player(&self) -> &Player { &self.player }
+    pub fn player_id(&self) -> Id<Creature> { self.player_id }
     //pub fn creatures(&self) -> &IdMap<Creature> { &self.creatures }
 
     // Mutators
 
     pub fn move_player(&mut self, to: Hex) -> Vec<Meta<Event>> {
-        let id = self.player.creature_id();
-        self.execute(&Meta::new(Action::MoveCreature { id, to }))
+        self.execute(&Meta::new(Action::MoveCreature { id: self.player_id, to }))
     }
 
     pub fn end_turn(&mut self) -> Vec<Meta<Event>> {
-        let player_id = self.player().creature_id();
-        let player_hex = self.map.creatures().get(&player_id).unwrap();
+        let player_hex = self.map.creatures().get(&self.player_id).unwrap();
 
         let mut moves = vec![];
         for &id in self.creatures.map().keys() {
-            if id == player_id { continue }
+            if id == self.player_id { continue }
             let hex = match self.map.creatures().get(&id) {
                 Some(v) => v,
                 None => continue,

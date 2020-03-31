@@ -1,3 +1,5 @@
+#![allow(unused)]
+
 pub struct Card {
     name: String,
     behavior: Box<dyn Behavior>,

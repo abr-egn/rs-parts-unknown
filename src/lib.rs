@@ -3,7 +3,6 @@ mod creature;
 mod display;
 mod id_map;
 mod map;
-mod player;
 mod world;
 
 use hex::Hex;
