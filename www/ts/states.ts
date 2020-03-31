@@ -1,4 +1,4 @@
-import {Hex, Event} from "../wasm";
+import {Hex, Event, World} from "../wasm";
 import {State} from "./stack";
 
 export class Base extends State {
@@ -20,9 +20,9 @@ class MovePlayer extends State {
         if (this.game.tileAt(hex) == undefined) {
             return;
         }
-        this.game.backend.startCheck();
-        const events = this.game.backend.movePlayer(hex.x, hex.y) as Event[];
-        this.game.backend.endCheck();
+        const checkWorld = this.game.world.clone();
+        checkWorld.logging = false;
+        const events = checkWorld.movePlayer(hex.x, hex.y) as Event[];
         let canMove = true;
         let highlight: Hex[] = [];
         for (let event of events) {
@@ -44,20 +44,24 @@ class MovePlayer extends State {
         if (this.game.tileAt(hex) == undefined) {
             return;
         }
-        const events = this.game.backend.movePlayer(hex.x, hex.y) as Event[];
+        const nextWorld = this.game.world.clone();
+        const events = nextWorld.movePlayer(hex.x, hex.y) as Event[];
         if (events.length == 0 || "Failed" in events[0].data) {
             return;
         }
-        this.game.stack.swap(new Update(events));
+        this.game.stack.swap(new Update(events, nextWorld));
     }
 }
 
 class Update extends State {
-    constructor(private _events: Event[]) { super(); }
+    constructor(
+        private _events: Event[],
+        private _nextWorld: World,
+    ) { super(); }
 
     onPushed() {
         this.game.render.animateEvents(this._events).then(() => {
-            this.game.updateWorld();
+            this.game.updateWorld(this._nextWorld);
             this.game.stack.pop();
         });
     }
@@ -65,7 +69,8 @@ class Update extends State {
 
 export class EndTurn extends State {
     onPushed() {
-        let events = this.game.backend.endTurn() as Event[];
-        this.game.stack.swap(new Update(events));
+        const nextWorld = this.game.world.clone();
+        let events = nextWorld.endTurn() as Event[];
+        this.game.stack.swap(new Update(events, nextWorld));
     }
 }

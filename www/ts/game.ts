@@ -1,6 +1,6 @@
 import {RefObject} from "react";
 
-import {PartsUnknown, World, Hex, Tile} from "../wasm";
+import {World, Hex, Tile} from "../wasm";
 import {Render} from "./render";
 import {Stack, StateKey, StateUI} from "./stack";
 import {Index} from "../tsx/index";
@@ -10,10 +10,9 @@ export class Game {
     private _stack: Stack;
     private _render: Render;
     constructor(
-        private _backend: PartsUnknown,
         private _index: RefObject<Index>,
     ) {
-        this._world = this._backend.cloneWorld();
+        this._world = new World();
         this._stack = new Stack();
         this._render = new Render(
             document.getElementById("mainCanvas") as HTMLCanvasElement,
@@ -24,10 +23,6 @@ export class Game {
 
     get world(): World {
         return this._world;
-    }
-
-    get backend(): PartsUnknown {
-        return this._backend;
     }
 
     get render(): Render {
@@ -44,8 +39,8 @@ export class Game {
 
     // Mutators
 
-    updateWorld() {
-        this._world = this._backend.cloneWorld();
+    updateWorld(world: World) {
+        this._world = world;
         this._render.world = this._world;
     }
 

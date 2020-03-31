@@ -52,7 +52,6 @@ impl World {
 
     pub fn map(&self) -> &Map { &self.map }
     pub fn player_id(&self) -> Id<Creature> { self.player_id }
-    //pub fn creatures(&self) -> &IdMap<Creature> { &self.creatures }
 
     // Mutators
 
@@ -166,6 +165,14 @@ impl World {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 impl World {
+    #[wasm_bindgen(constructor)]
+    pub fn js_new() -> Self { World::new() }
+
+    #[wasm_bindgen(js_name = clone)]
+    pub fn js_clone(&self) -> Self { self.clone() }
+
+    // Accessors
+
     #[wasm_bindgen(getter)]
     pub fn playerId(&self) -> u32 { self.player_id.value() }
 
@@ -201,6 +208,24 @@ impl World {
         let id: Id<Creature> = Id::synthesize(id);
         self.map.creatures().get(&id).map(|hex| self.new_creature(&id, hex))
     }
+
+    // Mutators
+
+    pub fn movePlayer(&mut self, x: i32, y: i32) -> Array /* Event[] */ {
+        self.move_player(Hex { x, y }).into_iter()
+            .map(display::Event::new)
+            .map(JsValue::from)
+            .collect()
+    }
+
+    pub fn endTurn(&mut self) -> Array /* Event[] */ {
+        self.end_turn().into_iter()
+            .map(display::Event::new)
+            .map(JsValue::from)
+            .collect()
+    }
+
+    // Private
 
     fn new_creature(&self, id: &Id<Creature>, hex: &Hex) -> display::Creature {
         let label = String::from(if *id == self.player_id { "P" } else { "X" });
