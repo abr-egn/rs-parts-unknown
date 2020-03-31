@@ -30,8 +30,8 @@ export class Render {
     set world(d: World) {
         this._world = d;
         this._creaturePos.clear();
-        for (let [id, c] of this._world.getCreatures()) {
-            this._creaturePos.set(id, hexToPixel(c.hex));
+        for (let [id, hex] of this._world.getCreatureMap()) {
+            this._creaturePos.set(id, hexToPixel(hex));
         }
     }
 
@@ -127,7 +127,12 @@ export class Render {
         this._ctx.translate(pos.x, pos.y);
         this._ctx.font = "30px sans-serif";
         this._ctx.fillStyle = "#FFFFFF";
-        var text = this._world.getCreature(id)?.label || "??";
+        const creature = this._world.getCreature(id);
+        if (!creature) { throw "invalid id"; }
+        var text = "X";
+        if (creature.player) {
+            text = "P";
+        }
         const measure = this._ctx.measureText(text);
         const height = measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent;
         this._ctx.fillText(text, -measure.width / 2, height / 2);

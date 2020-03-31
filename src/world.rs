@@ -5,7 +5,7 @@ use js_sys::Array;
 use log::info;
 use wasm_bindgen::prelude::*;
 
-use crate::creature::{Creature, Kind};
+use crate::creature::{self, Creature, Kind};
 use crate::display;
 use crate::event::{Mod, Trigger, Meta, Event, Action, TriggerId};
 use crate::id_map::{Id, IdMap};
@@ -33,10 +33,10 @@ impl World {
         let mut mods: IdMap<Box<dyn Mod>> = IdMap::new();
         mods.add(Box::new(ModDebugTag));
         let mut creatures = IdMap::new();
-        let pc_id = creatures.add(Creature::new(Kind::Player {}));
+        let pc_id = creatures.add(Creature::new(Kind::Player(creature::Player {})));
         let mut map = Map::new();
         map.place_at(pc_id, hex::ORIGIN).unwrap();
-        let enemy_id = creatures.add(Creature::new(Kind::NPC {}));
+        let enemy_id = creatures.add(Creature::new(Kind::NPC(creature::NPC {})));
         map.place_at(enemy_id, Hex { x: -4, y: 1 }).unwrap();
         World {
             map: map,
@@ -191,22 +191,19 @@ impl World {
         self.map.tiles().get(&Hex { x: hex.x, y: hex.y }).cloned()
     }
 
-    pub fn getCreatures(&self) -> Array /* [display::Hex, display::Creature][] */ {
-        let out = Array::new();
-
-        for (id, hex) in self.map.creatures() {
-            let tuple = Array::new();
-            tuple.push(&JsValue::from(id.value()));
-            tuple.push(&JsValue::from(self.new_creature(id, hex)));
-            out.push(&JsValue::from(tuple));
-        }
-
-        out
+    pub fn getCreatureMap(&self) -> Array /* [Id<Creature>, Hex][] */ {
+        self.map.creatures().iter()
+            .map(|(id, hex)| {
+                let tuple = Array::new();
+                tuple.push(&JsValue::from(id.value()));
+                tuple.push(&JsValue::from(display::Hex::new(hex)));
+                tuple
+            })
+            .collect()
     }
 
-    pub fn getCreature(&self, id: u32) -> Option<display::Creature> {
-        let id: Id<Creature> = Id::synthesize(id);
-        self.map.creatures().get(&id).map(|hex| self.new_creature(&id, hex))
+    pub fn getCreature(&self, id: u32) -> Option<Creature> {
+        self.creatures.map().get(&Id::synthesize(id)).cloned()
     }
 
     // Mutators
@@ -223,16 +220,6 @@ impl World {
             .map(display::Event::new)
             .map(JsValue::from)
             .collect()
-    }
-
-    // Private
-
-    fn new_creature(&self, id: &Id<Creature>, hex: &Hex) -> display::Creature {
-        let label = String::from(if *id == self.player_id { "P" } else { "X" });
-        display::Creature {
-            hex: display::Hex::new(hex),
-            label,
-        }
     }
 }
 

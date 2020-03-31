@@ -29,21 +29,6 @@ impl Hex {
 }
 
 #[wasm_bindgen]
-#[derive(Debug, Clone, PartialEq, Eq)]
-pub struct Creature {
-    #[wasm_bindgen(readonly)]
-    pub hex: Hex,
-    #[wasm_bindgen(skip)]
-    pub label: String,
-}
-
-#[wasm_bindgen]
-impl Creature {
-    #[wasm_bindgen(getter)]
-    pub fn label(&self) -> String { self.label.clone() }
-}
-
-#[wasm_bindgen]
 pub struct Event {
     wrapped: event::Meta<event::Event>,
 }
