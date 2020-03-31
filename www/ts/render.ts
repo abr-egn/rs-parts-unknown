@@ -85,14 +85,14 @@ export class Render {
         for (let [hex, tile] of this._world.getTiles()) {
             this._drawTile(hex, tile);
         }
-        for (let [id, pos] of this._creaturePos) {
-            this._drawCreature(id, pos);
-        }
         for (let hex of this._creatureRange) {
             this._drawRange(hex);
         }
         for (let hex of this.highlight) {
             this._drawHighlight(hex, tsMillis);
+        }
+        for (let [id, pos] of this._creaturePos) {
+            this._drawCreature(id, pos);
         }
 
         for (let resolve of this._frameWaits) {
