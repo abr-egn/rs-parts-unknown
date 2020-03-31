@@ -1,12 +1,10 @@
 use std::collections::HashSet;
 
 use hex::{self, Hex};
-use js_sys::Array;
 use log::info;
 use wasm_bindgen::prelude::*;
 
 use crate::creature::{self, Creature, Kind};
-use crate::display;
 use crate::event::{Mod, Trigger, Meta, Event, Action, TriggerId};
 use crate::id_map::{Id, IdMap};
 use crate::map::{Tile, Map, Space};
@@ -167,86 +165,6 @@ impl World {
     }
 }
 
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-impl World {
-    #[wasm_bindgen(constructor)]
-    pub fn js_new() -> Self { World::new() }
-
-    #[wasm_bindgen(js_name = clone)]
-    pub fn js_clone(&self) -> Self { self.clone() }
-
-    // Accessors
-
-    #[wasm_bindgen(getter)]
-    pub fn playerId(&self) -> u32 { self.player_id.value() }
-
-    pub fn getTiles(&self) -> Array /* [display::Hex, Tile][] */ {
-        self.map.tiles().iter()
-            .map(|(h, t)| {
-                let tuple = Array::new();
-                tuple.push(&JsValue::from(display::Hex::new(h)));
-                tuple.push(&JsValue::from(t.clone()));
-                tuple
-            })
-            .collect()
-    }
-
-    pub fn getTile(&self, hex: &display::Hex) -> Option<Tile> {
-        self.map.tiles().get(&Hex { x: hex.x, y: hex.y }).cloned()
-    }
-
-    pub fn getCreatureMap(&self) -> Array /* [Id<Creature>, Hex][] */ {
-        self.map.creatures().iter()
-            .map(|(id, hex)| {
-                let tuple = Array::new();
-                tuple.push(&JsValue::from(id.value()));
-                tuple.push(&JsValue::from(display::Hex::new(hex)));
-                tuple
-            })
-            .collect()
-    }
-
-    pub fn getCreature(&self, id: u32) -> Option<Creature> {
-        self.creatures.map().get(&Id::synthesize(id)).cloned()
-    }
-
-    pub fn getCreatureRange(&self, id: u32) -> Array /* Hex[] */ {
-        let id = Id::synthesize(id);
-        let range = match self.creatures.map().get(&id) {
-            Some(c) => match c.kind() {
-                Kind::NPC(npc) => npc.move_range,
-                _ => return Array::new(),
-            },
-            None => return Array::new(),
-        };
-        let start = match self.map.creatures().get(&id) {
-            Some(h) => h,
-            None => return Array::new(),
-        };
-        self.map.range_from(*start, range).into_iter()
-            .map(|h| display::Hex::new(&h))
-            .map(JsValue::from)
-            .collect()
-    }
-
-    // Mutators
-
-    pub fn movePlayer(&mut self, x: i32, y: i32) -> Array /* Event[] */ {
-        self.move_player(Hex { x, y }).into_iter()
-            .map(display::Event::new)
-            .map(JsValue::from)
-            .collect()
-    }
-
-    pub fn endTurn(&mut self) -> Array /* Event[] */ {
-        self.end_turn().into_iter()
-            .map(display::Event::new)
-            .map(JsValue::from)
-            .collect()
-    }
-}
-
 #[derive(Clone, Debug)]
 struct ModDebugTag;
 
@@ -256,5 +174,98 @@ impl Mod for ModDebugTag {
     }
     fn apply(&mut self, action: &mut Meta<Action>) {
         action.tags.insert("debug".into());
+    }
+}
+
+mod wasm {
+    use hex::Hex;
+    use js_sys::Array;
+    use wasm_bindgen::prelude::*;
+
+    use crate::creature::{Creature, Kind};
+    use crate::display;
+    use crate::id_map::Id;
+    use crate::map::Tile;
+
+    use super::World;
+
+    #[allow(non_snake_case)]
+    #[wasm_bindgen]
+    impl World {
+        #[wasm_bindgen(constructor)]
+        pub fn js_new() -> Self { World::new() }
+    
+        #[wasm_bindgen(js_name = clone)]
+        pub fn js_clone(&self) -> Self { self.clone() }
+    
+        // Accessors
+    
+        #[wasm_bindgen(getter)]
+        pub fn playerId(&self) -> u32 { self.player_id.value() }
+    
+        pub fn getTiles(&self) -> Array /* [display::Hex, Tile][] */ {
+            self.map.tiles().iter()
+                .map(|(h, t)| {
+                    let tuple = Array::new();
+                    tuple.push(&JsValue::from(display::Hex::new(h)));
+                    tuple.push(&JsValue::from(t.clone()));
+                    tuple
+                })
+                .collect()
+        }
+    
+        pub fn getTile(&self, hex: &display::Hex) -> Option<Tile> {
+            self.map.tiles().get(&Hex { x: hex.x, y: hex.y }).cloned()
+        }
+    
+        pub fn getCreatureMap(&self) -> Array /* [Id<Creature>, Hex][] */ {
+            self.map.creatures().iter()
+                .map(|(id, hex)| {
+                    let tuple = Array::new();
+                    tuple.push(&JsValue::from(id.value()));
+                    tuple.push(&JsValue::from(display::Hex::new(hex)));
+                    tuple
+                })
+                .collect()
+        }
+    
+        pub fn getCreature(&self, id: u32) -> Option<Creature> {
+            self.creatures.map().get(&Id::synthesize(id)).cloned()
+        }
+    
+        pub fn getCreatureRange(&self, id: u32) -> Array /* Hex[] */ {
+            let id = Id::synthesize(id);
+            let range = match self.creatures.map().get(&id) {
+                Some(c) => match c.kind() {
+                    Kind::NPC(npc) => npc.move_range,
+                    _ => return Array::new(),
+                },
+                None => return Array::new(),
+            };
+            let start = match self.map.creatures().get(&id) {
+                Some(h) => h,
+                None => return Array::new(),
+            };
+            self.map.range_from(*start, range).into_iter()
+                .map(|h| display::Hex::new(&h))
+                .map(JsValue::from)
+                .collect()
+        }
+    
+        // Mutators
+    
+        pub fn movePlayer(&mut self, x: i32, y: i32) -> Array /* Event[] */ {
+            self.move_player(Hex { x, y }).into_iter()
+                .map(display::Event::new)
+                .map(JsValue::from)
+                .collect()
+        }
+    
+        pub fn endTurn(&mut self) -> Array /* Event[] */ {
+            self.end_turn().into_iter()
+                .map(display::Event::new)
+                .map(JsValue::from)
+                .collect()
+        }
     }
 }
