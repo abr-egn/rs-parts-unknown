@@ -1,4 +1,4 @@
-import {World, Hex, Tile, Space} from "../wasm";
+import {World, Hex, Tile, Space, Event} from "../wasm";
 
 const HEX_SIZE = 30;
 
@@ -37,7 +37,7 @@ export class Render {
 
     get world(): World { return this._world; }
 
-    async animateEvents(events: any[]) {  // TODO
+    async animateEvents(events: Event[]) {
         for (let event of events) {
             if ("CreatureMoved" in event.data) {
                 const move = event.data.CreatureMoved;
@@ -194,20 +194,25 @@ function hexToPixel(hex: Hex): DOMPointReadOnly {
     return new DOMPointReadOnly(x, y);
 }
 
-function pixelToHex(point: DOMPointReadOnly): Hex {
-    const x = (2./3 * point.x) / HEX_SIZE;
-    const y = (-1./3 * point.x + Math.sqrt(3)/3 * point.y) / HEX_SIZE;
-    return hexRound(new Hex(x, y));
+interface FHex {
+    fx: number,
+    fy: number,
 }
 
-function hexRound(hex: Hex): Hex {
-    const z = -hex.x - hex.y;
-    var rx = Math.round(hex.x);
-    var ry = Math.round(hex.y);
+function pixelToHex(point: DOMPointReadOnly): Hex {
+    const fx = (2./3 * point.x) / HEX_SIZE;
+    const fy = (-1./3 * point.x + Math.sqrt(3)/3 * point.y) / HEX_SIZE;
+    return hexRound({fx, fy});
+}
+
+function hexRound(hex: FHex): Hex {
+    const z = -hex.fx - hex.fy;
+    var rx = Math.round(hex.fx);
+    var ry = Math.round(hex.fy);
     var rz = Math.round(z);
 
-    const x_diff = Math.abs(rx - hex.x);
-    const y_diff = Math.abs(ry - hex.y);
+    const x_diff = Math.abs(rx - hex.fx);
+    const y_diff = Math.abs(ry - hex.fy);
     const z_diff = Math.abs(rz - z);
 
     if (x_diff > y_diff && x_diff > z_diff) {

@@ -1,6 +1,4 @@
-import {createCheckers} from "ts-interface-checker";
-
-import {Hex} from "../wasm";
+import {Hex, Event} from "../wasm";
 import {State} from "./stack";
 
 export class Base extends State {
@@ -23,7 +21,7 @@ class MovePlayer extends State {
             return;
         }
         this.game.backend.startCheck();
-        const events = this.game.backend.movePlayer(hex.x, hex.y) as any[];  // TODO
+        const events = this.game.backend.movePlayer(hex.x, hex.y) as Event[];
         this.game.backend.endCheck();
         let canMove = true;
         let highlight: Hex[] = [];
@@ -46,7 +44,7 @@ class MovePlayer extends State {
         if (this.game.tileAt(hex) == undefined) {
             return;
         }
-        const events = this.game.backend.movePlayer(hex.x, hex.y) as any[];  // TODO
+        const events = this.game.backend.movePlayer(hex.x, hex.y) as Event[];
         if (events.length == 0 || "Failed" in events[0].data) {
             return;
         }
@@ -55,7 +53,7 @@ class MovePlayer extends State {
 }
 
 class Update extends State {
-    constructor(private _events: any[]) { super(); }  // TODO
+    constructor(private _events: Event[]) { super(); }
 
     onPushed() {
         this.game.render.animateEvents(this._events).then(() => {
@@ -67,7 +65,7 @@ class Update extends State {
 
 export class EndTurn extends State {
     onPushed() {
-        let events = this.game.backend.endTurn() as any[];  // TODO
+        let events = this.game.backend.endTurn() as Event[];
         this.game.stack.swap(new Update(events));
     }
 }

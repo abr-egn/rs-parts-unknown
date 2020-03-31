@@ -3,11 +3,11 @@ use std::collections::HashSet;
 use hex::{self, Hex};
 use js_sys::Array;
 use log::info;
-use serde::Serialize;
 use wasm_bindgen::prelude::*;
 
 use crate::creature::{Creature, Kind};
 use crate::display;
+use crate::event::{Mod, Trigger, Meta, Event, Action, TriggerId};
 use crate::id_map::{Id, IdMap};
 use crate::map::{Tile, Map, Space};
 
@@ -211,56 +211,6 @@ impl World {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-pub struct Meta<T> {
-    data: T,
-    tags: HashSet<String>,
-}
-
-impl<T> Meta<T> {
-    pub fn new(data: T) -> Self {
-        Meta {
-            data,
-            tags: HashSet::new(),
-        }
-    }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-pub enum Action {
-    MoveCreature { id: Id<Creature>, to: Hex },
-}
-
-#[derive(Debug, Clone, Serialize)]
-pub enum Event {
-    CreatureMoved { id: Id<Creature>, path: Vec<Hex>, },
-    Failed { action: Action, reason: String },
-}
-
-pub trait Mod: ModClone + std::fmt::Debug + Send {
-    fn name(&self) -> &'static str;
-    fn apply(&mut self, action: &mut Meta<Action>);
-}
-
-pub trait ModClone {
-    fn clone_box(&self) -> Box<dyn Mod>;
-}
-
-impl<T> ModClone for T
-where
-    T: 'static + Mod + Clone,
-{
-    fn clone_box(&self) -> Box<dyn Mod> {
-        Box::new(self.clone())
-    }
-}
-
-impl Clone for Box<dyn Mod> {
-    fn clone(&self) -> Self {
-        self.clone_box()
-    }
-}
-
 #[derive(Clone, Debug)]
 struct ModDebugTag;
 
@@ -270,31 +220,5 @@ impl Mod for ModDebugTag {
     }
     fn apply(&mut self, action: &mut Meta<Action>) {
         action.tags.insert("debug".into());
-    }
-}
-
-pub trait Trigger: TriggerClone + std::fmt::Debug + Send {
-    fn name(&self) -> &'static str;
-    fn apply(&mut self, event: &Meta<Event>) -> Vec<Meta<Action>>;
-}
-
-type TriggerId = Id<Box<dyn Trigger>>;
-
-pub trait TriggerClone {
-    fn clone_box(&self) -> Box<dyn Trigger>;
-}
-
-impl<T> TriggerClone for T
-where
-    T: 'static + Trigger + Clone,
-{
-    fn clone_box(&self) -> Box<dyn Trigger> {
-        Box::new(self.clone())
-    }
-}
-
-impl Clone for Box<dyn Trigger> {
-    fn clone(&self) -> Self {
-        self.clone_box()
     }
 }

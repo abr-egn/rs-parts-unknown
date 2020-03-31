@@ -1,55 +1,12 @@
-use std::collections::HashMap;
-
 use hex;
 use js_sys::Array;
-use serde::{Serialize};
+use serde_wasm_bindgen::to_value;
 use wasm_bindgen::prelude::*;
 
-use crate::creature;
-use crate::id_map::Id;
-use crate::map::Tile;
-use crate::world::World;
+use crate::event;
 
 #[wasm_bindgen]
-#[allow(non_snake_case)]
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-pub struct Display {
-    #[wasm_bindgen(readonly)]
-    pub playerId: u32,
-    map: Vec<(Hex, Tile)>,
-    creatures: HashMap<Id<creature::Creature>, Creature>,
-}
-
-#[wasm_bindgen]
-impl Display {
-    #[wasm_bindgen(getter)]
-    pub fn map(&self) -> Array {
-        self.map.iter().map(|(h, _)| JsValue::from(h.clone())).collect()
-    }
-}
-
-impl Display {
-    pub fn new(world: &World) -> Self {
-        let player_id = world.player_id();
-        let mut creatures = HashMap::new();
-        for (id, hex) in world.map().creatures() {
-            let label = String::from(if *id == player_id { "P" } else { "X" });
-            creatures.insert(*id, Creature { hex: Hex::new(hex), label });
-        }
-        Display {
-            playerId: player_id.value(),
-            map: world.map().tiles().iter()
-                .map(|(h, t)| (Hex::new(h), t.clone()))
-                .collect(),
-            creatures,
-        }
-    }
-}
-
-// Projections
-
-#[wasm_bindgen]
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub struct Hex {
     #[wasm_bindgen(readonly)]
     pub x: i32,
@@ -72,7 +29,7 @@ impl Hex {
 }
 
 #[wasm_bindgen]
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Creature {
     #[wasm_bindgen(readonly)]
     pub hex: Hex,
@@ -84,4 +41,30 @@ pub struct Creature {
 impl Creature {
     #[wasm_bindgen(getter)]
     pub fn label(&self) -> String { self.label.clone() }
+}
+
+#[wasm_bindgen]
+pub struct Event {
+    wrapped: event::Meta<event::Event>,
+}
+
+impl Event {
+    pub fn new(wrapped: event::Meta<event::Event>) -> Self {
+        Event { wrapped }
+    }
+}
+
+#[wasm_bindgen]
+impl Event {
+    #[wasm_bindgen(getter)]
+    pub fn tags(&self) -> Array /* string[] */ {
+        self.wrapped.tags.iter()
+            .map(|s| JsValue::from(s))
+            .collect()
+    }
+
+    #[wasm_bindgen(getter)]
+    pub fn data(&self) -> JsValue {
+        to_value(&self.wrapped.data).unwrap()
+    }
 }

@@ -5,7 +5,6 @@ use std::collections::{
 
 use fnv::FnvHashSet;
 use hex::Hex;
-use serde::Serialize;
 use thiserror::Error;
 use wasm_bindgen::prelude::*;
 
@@ -175,7 +174,7 @@ fn occupied_or<K, V, E>(e: Entry<K, V>, err: E) -> Result<OccupiedEntry<K, V>, E
 }
 
 #[wasm_bindgen]
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Tile {
     #[wasm_bindgen(readonly)]
     pub space: Space,
@@ -190,7 +189,7 @@ impl Tile {
 }
 
 #[wasm_bindgen]
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum Space {
     Empty,
     Wall,
