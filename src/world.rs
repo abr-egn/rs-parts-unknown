@@ -234,6 +234,12 @@ mod wasm {
         pub fn getCreature(&self, id: u32) -> Option<Creature> {
             self.creatures.map().get(&Id::synthesize(id)).cloned()
         }
+
+        pub fn getCreatureHex(&self, id: u32) -> Option<display::Hex> {
+            self.map.creatures().get(&Id::synthesize(id))
+                .cloned()
+                .map(display::Hex::new)
+        }
     
         pub fn getCreatureRange(&self, id: u32) -> Array /* Hex[] */ {
             let id = Id::synthesize(id);

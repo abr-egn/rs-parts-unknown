@@ -9,6 +9,7 @@ export interface Listener {
 }
 
 export class Render {
+    public preview: Event[] = [];
     public highlight: Hex[] = [];
     private readonly _ctx: CanvasRenderingContext2D;
     private _mouseHex?: Hex;
@@ -88,6 +89,7 @@ export class Render {
         for (let hex of this._creatureRange) {
             this._drawRange(hex);
         }
+        this._drawPreview(tsMillis);
         for (let hex of this.highlight) {
             this._drawHighlight(hex, tsMillis);
         }
@@ -135,6 +137,10 @@ export class Render {
         this._ctx.fillText(text, -measure.width / 2, height / 2);
 
         this._ctx.restore();
+    }
+
+    private _drawPreview(tsMillis: DOMHighResTimeStamp) {
+
     }
 
     private _drawHighlight(hex: Hex, tsMillis: DOMHighResTimeStamp) {
@@ -188,6 +194,7 @@ export class Render {
 
     private _onMouseMove(event: MouseEvent) {
         const hex = pixelToHex(this._mouseCoords(event));
+        if (this._world.getTile(hex) == undefined) { return; }
         if (hex.x != this._mouseHex?.x || hex.y != this._mouseHex?.y) {
             if (this._mouseHex) {
                 this._listener.onTileExited(this._mouseHex);

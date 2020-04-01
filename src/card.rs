@@ -85,7 +85,7 @@ impl Walk {
         Card {
             name: "Walk".into(),
             ap_cost: 1,
-            start_play: |world, source| Walk::behavior(world, source, 5),
+            start_play: |world, source| Walk::behavior(world, source, 2),
         }
     }
 }
