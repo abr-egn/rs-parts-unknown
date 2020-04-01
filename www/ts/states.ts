@@ -1,10 +1,7 @@
 import {Card, Event, Hex, World} from "../wasm";
 import {State, StateUI} from "./stack";
 
-export interface BaseUI extends StateUI {
-    cards: Card[],
-}
-
+export interface BaseUI extends StateUI { cards: Card[] }
 export class Base extends State<BaseUI> {
     constructor() {
         super({
@@ -16,13 +13,23 @@ export class Base extends State<BaseUI> {
             draft.cards = cards;
         });
     }
+    /*
     onTileClicked(hex: Hex) {
         if (this.game.tileAt(hex)?.creature == this.game.world.playerId) {
             this.game.stack.push(new MovePlayer(hex));
         }
     }
+    */
 }
 
+export interface PlayCardUI extends StateUI { card: Card }
+export class PlayCard extends State {
+    constructor(private _card: Card) {
+        super({card: _card});
+    }
+}
+
+/*
 class MovePlayer extends State {
     constructor(private _from: Hex) { super(); }
 
@@ -66,6 +73,7 @@ class MovePlayer extends State {
         this.game.stack.swap(new Update(events, nextWorld));
     }
 }
+*/
 
 class Update extends State {
     constructor(

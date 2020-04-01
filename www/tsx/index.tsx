@@ -33,10 +33,14 @@ export class Index extends React.Component<{}, IndexState> {
 
   render() {
     const base = this.state.stack.get(States.Base);
+    const play = this.state.stack.get(States.PlayCard);
     return (
       <div className="center">
         <div id="leftSide" className="side">
-          <CardList cards={base?.cards || []}/>
+          <CardList active={base?.active} cards={base?.cards || []}/>
+          {play &&
+            <div>Playing: {play.card.name}</div>
+          }
         </div>
         <canvas id="mainCanvas" width="800" height="800"></canvas>
         <div className="side">
@@ -61,12 +65,22 @@ class EndTurn extends React.Component<EndTurnProps, {}> {
   }
 }
 
-interface CardListProps {cards: Card[]};
+interface CardListProps {
+  active: boolean,
+  cards: Card[],
+};
 class CardList extends React.Component<CardListProps, {}> {
+  onClick(card: Card) {
+    container.resolve(Game).stack.push(new States.PlayCard(card));
+  }
   render() {
     const list = this.props.cards.map((card) =>
       <li key={card.name}>
-        <button>Play</button>
+        <button
+          onClick={this.onClick.bind(this, card)}
+          disabled={!this.props.active}>
+          Play
+        </button>
         [{card.apCost}] {card.name}
       </li>
     );
