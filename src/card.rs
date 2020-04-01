@@ -16,6 +16,15 @@ pub struct Card {
     start_play: fn(&World, &Id<Creature>) -> Box<dyn Behavior>,
 }
 
+impl std::fmt::Debug for Card {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Card")
+            .field("name", &self.name)
+            .field("ap_cost", &self.ap_cost)
+            .finish()
+    }
+}
+
 impl Card {
     pub fn name(&self) -> &str { &self.name }
     pub fn start_play(&self, world: &World, source: &Id<Creature>) -> Box<dyn Behavior> {
@@ -26,7 +35,7 @@ impl Card {
 // TODO: power scaling
 pub trait Behavior: BehaviorClone {
     fn highlight(&self, world: &World, cursor: Hex) -> Vec<Hex>;
-    fn lowlight(&self, world: &World, cursor: Hex) -> Vec<Hex>;
+    // TODO: allow for multiple targets
     fn target_valid(&self, world: &World, cursor: Hex) -> bool;
     fn apply(&self, world: &mut World, target: Hex) -> Vec<Meta<Event>>;
 }
@@ -53,15 +62,7 @@ pub struct Walk {
 }
 
 impl Behavior for Walk {
-    fn highlight(&self, world: &World, cursor: Hex) -> Vec<Hex> {
-        let path = world.map().path_to(self.start, cursor).unwrap_or(vec![]);
-        if path.len() > self.range.try_into().unwrap() {
-            vec![]
-        } else {
-            path
-        }
-    }
-    fn lowlight(&self, world: &World, _: Hex) -> Vec<Hex> {
+    fn highlight(&self, world: &World, _: Hex) -> Vec<Hex> {
         world.map().range_from(self.start, self.range).into_iter().collect()
     }
     fn target_valid(&self, world: &World, cursor: Hex) -> bool {
@@ -90,6 +91,8 @@ impl Walk {
 }
 
 mod wasm {
+    use crate::display;
+
     use super::*;
 
     #[wasm_bindgen]
@@ -100,5 +103,10 @@ mod wasm {
         pub fn js_name(&self) -> String { self.name.clone() }
         #[wasm_bindgen(getter = apCost)]
         pub fn ap_cost(&self) -> i32 { self.ap_cost }
+        #[wasm_bindgen(js_name = startPlay)]
+        pub fn js_start_play(&self, world: &World, source: u32) -> display::Behavior {
+            let id: Id<Creature> = Id::synthesize(source);
+            display::Behavior::new(self.start_play(world, &id))
+        }
     }
 }

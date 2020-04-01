@@ -1,5 +1,7 @@
 use wasm_bindgen::prelude::*;
 
+use crate::card::Card;
+
 #[wasm_bindgen]
 #[derive(Debug, Clone)]
 pub struct Creature {
@@ -23,7 +25,17 @@ pub enum Kind {
 
 #[wasm_bindgen]
 #[derive(Debug, Clone)]
-pub struct Player {}
+pub struct Player {
+    cards: Vec<Card>,
+}
+
+impl Player {
+    pub fn new(cards: Vec<Card>) -> Self {
+        Player { cards }
+    }
+
+    pub fn cards(&self) -> &[Card] { &self.cards }
+}
 
 #[wasm_bindgen]
 #[derive(Debug, Clone)]
@@ -35,6 +47,7 @@ pub struct NPC {
 }
 
 mod wasm {
+    use js_sys::Array;
     use wasm_bindgen::prelude::*;
 
     use super::*;
@@ -64,5 +77,15 @@ mod wasm {
         pub fn move_range(&self) -> i32 { self.move_range }
         #[wasm_bindgen(getter = attackRange)]
         pub fn attack_range(&self) -> i32 { self.attack_range }
+    }
+
+    #[wasm_bindgen]
+    impl Player {
+        #[wasm_bindgen(getter = cards)]
+        pub fn js_cards(&self) -> Array /* Card[] */ {
+            self.cards().iter().cloned()
+                .map(JsValue::from)
+                .collect()
+        }
     }
 }

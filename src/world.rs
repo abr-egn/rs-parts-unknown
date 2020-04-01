@@ -4,6 +4,7 @@ use hex::{self, Hex};
 use log::info;
 use wasm_bindgen::prelude::*;
 
+use crate::card::Walk;
 use crate::creature::{self, Creature, Kind};
 use crate::event::{Mod, Trigger, Meta, Event, Action, TriggerId};
 use crate::id_map::{Id, IdMap};
@@ -31,7 +32,8 @@ impl World {
         let mut mods: IdMap<Box<dyn Mod>> = IdMap::new();
         mods.add(Box::new(ModDebugTag));
         let mut creatures = IdMap::new();
-        let pc_id = creatures.add(Creature::new(Kind::Player(creature::Player {})));
+        let player = creature::Player::new(vec![Walk::card()]);
+        let pc_id = creatures.add(Creature::new(Kind::Player(player)));
         let mut map = Map::new();
         map.place_at(pc_id, hex::ORIGIN).unwrap();
         let enemy_id = creatures.add(Creature::new(Kind::NPC(

@@ -80,12 +80,6 @@ impl Behavior {
             .map(JsValue::from)
             .collect()
     }
-    pub fn lowlight(&self, world: &World, cursor: &Hex) -> Array /* Hex[] */ {
-        self.wrapped.lowlight(world, cursor.old()).into_iter()
-            .map(Hex::new)
-            .map(JsValue::from)
-            .collect()
-    }
     pub fn targetValid(&self, world: &World, cursor: &Hex) -> bool {
         self.wrapped.target_valid(world, cursor.old())
     }
