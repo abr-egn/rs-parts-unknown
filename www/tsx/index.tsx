@@ -23,12 +23,17 @@ export class Index extends React.Component<{}, IndexState> {
     this.state = {
       stack: new Map(),
     };
+    this.cancelPlay = this.cancelPlay.bind(this);
   }
 
   updateStack<T extends StateUI>(key: StateKey<T>, update: (draft: T) => void) {
     this.setState(produce((draft: IndexState) => {
       draft.stack.set(key, produce(draft.stack.get(key), update));
     }));
+  }
+
+  cancelPlay() {
+    container.resolve(Game).stack.pop();
   }
 
   render() {
@@ -38,9 +43,10 @@ export class Index extends React.Component<{}, IndexState> {
       <div className="center">
         <div id="leftSide" className="side">
           <CardList active={base?.active} cards={base?.cards || []}/>
-          {play?.active &&
+          {play?.active && <div>
             <div>Playing: {play.card.name}</div>
-          }
+            <div><button onClick={this.cancelPlay}>Cancel</button></div>
+          </div>}
         </div>
         <canvas id="mainCanvas" width="800" height="800"></canvas>
         <div className="side">
