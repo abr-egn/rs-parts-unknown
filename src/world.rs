@@ -159,6 +159,7 @@ impl World {
     fn resolve_action(&mut self, action: &Action) -> Event {
         use Action::*;
         match *action {
+            // TODO: move move_to logic out of map
             MoveCreature { id, to } => match self.map.move_to(id, to) {
                 Ok(path) => Event::CreatureMoved { id, path },
                 Err(_) => Event::Failed { action: action.clone(), reason: String::from("??") },
