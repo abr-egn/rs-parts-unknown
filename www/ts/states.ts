@@ -13,13 +13,6 @@ export class Base extends State<BaseUI> {
             draft.cards = cards;
         });
     }
-    /*
-    onTileClicked(hex: Hex) {
-        if (this.game.tileAt(hex)?.creature == this.game.world.playerId) {
-            this.game.stack.push(new MovePlayer(hex));
-        }
-    }
-    */
 }
 
 export interface PlayCardUI extends StateUI { card: Card }
@@ -60,52 +53,6 @@ export class PlayCard extends State {
         this.game.stack.swap(new Update(events, world));
     }
 }
-
-/*
-class MovePlayer extends State {
-    constructor(private _from: Hex) { super(); }
-
-    onPopped() {
-        this.game.render.highlight = [];
-    }
-
-    onTileEntered(hex: Hex) {
-        if (this.game.tileAt(hex) == undefined) {
-            return;
-        }
-        const checkWorld = this.game.world.clone();
-        checkWorld.logging = false;
-        const events = checkWorld.movePlayer(hex.x, hex.y) as Event[];
-        let canMove = true;
-        let highlight: Hex[] = [];
-        for (let event of events) {
-            if ("Failed" in event.data) {
-                canMove = false;
-                break;
-            }
-            if ("CreatureMoved" in event.data) {
-                highlight.push(...event.data.CreatureMoved.path);
-            }
-        }
-        if (!canMove) {
-            highlight = [];
-        }
-        this.game.render.highlight = highlight;
-    }
-
-    onTileClicked(hex: Hex) {
-        if (this.game.tileAt(hex) == undefined) {
-            return;
-        }
-        const nextWorld = this.game.world.clone();
-        const events = nextWorld.movePlayer(hex.x, hex.y) as Event[];
-        if (events.length == 0 || "Failed" in events[0].data) {
-            return;
-        }
-        this.game.stack.swap(new Update(events, nextWorld));
-    }
-}
-*/
 
 class Update extends State {
     constructor(
