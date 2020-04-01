@@ -262,13 +262,6 @@ mod wasm {
     
         // Mutators
     
-        pub fn movePlayer(&mut self, x: i32, y: i32) -> Array /* Event[] */ {
-            self.move_player(Hex { x, y }).into_iter()
-                .map(display::Event::new)
-                .map(JsValue::from)
-                .collect()
-        }
-    
         pub fn endTurn(&mut self) -> Array /* Event[] */ {
             self.end_turn().into_iter()
                 .map(display::Event::new)
