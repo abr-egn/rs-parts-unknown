@@ -98,5 +98,7 @@ mod wasm {
         pub fn js_clone(&self) -> Card { self.clone() }
         #[wasm_bindgen(getter = name)]
         pub fn js_name(&self) -> String { self.name.clone() }
+        #[wasm_bindgen(getter = apCost)]
+        pub fn ap_cost(&self) -> i32 { self.ap_cost }
     }
 }

@@ -207,7 +207,7 @@ mod wasm {
             self.map.tiles().iter()
                 .map(|(h, t)| {
                     let tuple = Array::new();
-                    tuple.push(&JsValue::from(display::Hex::new(h)));
+                    tuple.push(&JsValue::from(display::Hex::new(*h)));
                     tuple.push(&JsValue::from(t.clone()));
                     tuple
                 })
@@ -223,7 +223,7 @@ mod wasm {
                 .map(|(id, hex)| {
                     let tuple = Array::new();
                     tuple.push(&JsValue::from(id.value()));
-                    tuple.push(&JsValue::from(display::Hex::new(hex)));
+                    tuple.push(&JsValue::from(display::Hex::new(*hex)));
                     tuple
                 })
                 .collect()
@@ -247,7 +247,7 @@ mod wasm {
                 None => return Array::new(),
             };
             self.map.range_from(*start, range).into_iter()
-                .map(|h| display::Hex::new(&h))
+                .map(display::Hex::new)
                 .map(JsValue::from)
                 .collect()
         }
