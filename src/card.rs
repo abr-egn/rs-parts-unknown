@@ -1,9 +1,10 @@
-#![allow(unused)]
+use std::convert::TryInto;
 
 use hex::Hex;
 use wasm_bindgen::prelude::*;
 
 use crate::creature::Creature;
+use crate::event::{Event, Meta};
 use crate::id_map::Id;
 use crate::world::World;
 
@@ -27,7 +28,7 @@ pub trait Behavior: BehaviorClone {
     fn highlight(&self, world: &World, cursor: Hex) -> Vec<Hex>;
     fn lowlight(&self, world: &World, cursor: Hex) -> Vec<Hex>;
     fn target_valid(&self, world: &World, cursor: Hex) -> bool;
-    fn apply(&self, world: &mut World, target: Hex);
+    fn apply(&self, world: &mut World, target: Hex) -> Vec<Meta<Event>>;
 }
 
 pub trait BehaviorClone {
@@ -53,16 +54,24 @@ pub struct Walk {
 
 impl Behavior for Walk {
     fn highlight(&self, world: &World, cursor: Hex) -> Vec<Hex> {
-        unimplemented!()
+        let path = world.map().path_to(self.start, cursor).unwrap_or(vec![]);
+        if path.len() > self.range.try_into().unwrap() {
+            vec![]
+        } else {
+            path
+        }
     }
-    fn lowlight(&self, world: &World, cursor: Hex) -> Vec<Hex> {
-        unimplemented!()
+    fn lowlight(&self, world: &World, _: Hex) -> Vec<Hex> {
+        world.map().range_from(self.start, self.range).into_iter().collect()
     }
     fn target_valid(&self, world: &World, cursor: Hex) -> bool {
-        unimplemented!()
+        match world.map().path_to(self.start, cursor) {
+            Ok(path) => path.len() <= self.range.try_into().unwrap(),
+            _ => false,
+        }
     }
-    fn apply(&self, world: &mut World, target: Hex) {
-        unimplemented!()
+    fn apply(&self, world: &mut World, target: Hex) -> Vec<Meta<Event>> {
+        world.move_player(target)
     }
 }
 

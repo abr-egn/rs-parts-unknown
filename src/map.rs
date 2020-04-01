@@ -1,5 +1,5 @@
 use std::collections::{
-    hash_map::{Entry, OccupiedEntry, VacantEntry},
+    hash_map::{Entry, VacantEntry},
     HashMap, HashSet, VecDeque,
 };
 
@@ -41,62 +41,14 @@ impl Map {
         Map { tiles, creatures: HashMap::new() }
     }
 
+    // Accessors
+
     pub fn tiles(&self) -> &HashMap<Hex, Tile> {
         &self.tiles
     }
 
     pub fn creatures(&self) -> &HashMap<Id<Creature>, Hex> {
         &self.creatures
-    }
-
-    pub fn place_at(&mut self, creature_id: Id<Creature>, at: Hex) -> Result<(), Error> {
-        let tile = self.tiles.get_mut(&at).ok_or(Error::OutOfBounds)?;
-        if tile.creature.is_some() { return Err(Error::Obstructed) }
-        let c_ent = vacant_or(self.creatures.entry(creature_id), Error::Obstructed)?;
-        tile.creature = Some(creature_id);
-        c_ent.insert(at);
-        Ok(())
-    }
-
-    pub fn move_to(&mut self, creature_id: Id<Creature>, to: Hex) -> Result<Vec<Hex>, Error> {
-        // Check
-        let mut cr_entry = occupied_or(self.creatures.entry(creature_id), Error::NoSuchCreature)?;
-        let from: &Hex = cr_entry.get();
-        if self.tiles.get(from).ok_or(Error::OutOfBounds)?.creature != Some(creature_id) {
-            return Err(Error::NoSuchCreature);
-        }
-        let to_tile = self.tiles.get(&to).ok_or(Error::OutOfBounds)?;
-        if to_tile.space != Space::Empty || to_tile.creature.is_some() {
-            return Err(Error::Obstructed);
-        }
-        let tiles = &self.tiles;
-        let neighbors = |hex: Hex| -> Vec<Hex> {
-            let mut out = vec![];
-            for neighbor in hex.neighbors() {
-                match tiles.get(&neighbor) {
-                    Some(t) if is_open(t) => (),
-                    _ => continue,
-                }
-                out.push(neighbor)
-            }
-            out
-        };
-        let path: Vec<_> = match a_star(*from, to, neighbors) {
-            Some(p) => p,
-            None => return Err(Error::Obstructed),
-        };
-        for coord in path.iter().skip(1) {
-            let tile = self.tiles.get(coord).ok_or(Error::OutOfBounds)?;
-            if !is_open(tile) {
-                return Err(Error::Obstructed);
-            }
-        }
-
-        // Commit
-        self.tiles.get_mut(&to).unwrap().creature = Some(creature_id);
-        self.tiles.get_mut(from).unwrap().creature = None;
-        cr_entry.insert(to);
-        Ok(path)
     }
 
     pub fn range_from(&self, start: Hex, range: i32) -> HashSet<Hex> {
@@ -116,6 +68,62 @@ impl Map {
             }
         }
         out
+    }
+
+    pub fn path_to(&self, from: Hex, to: Hex) -> Result<Vec<Hex>, Error> {
+        let to_tile = self.tiles.get(&to).ok_or(Error::OutOfBounds)?;
+        if to_tile.space != Space::Empty || to_tile.creature.is_some() {
+            return Err(Error::Obstructed);
+        }
+        let tiles = &self.tiles;
+        let neighbors = |hex: Hex| -> Vec<Hex> {
+            let mut out = vec![];
+            for neighbor in hex.neighbors() {
+                match tiles.get(&neighbor) {
+                    Some(t) if is_open(t) => (),
+                    _ => continue,
+                }
+                out.push(neighbor)
+            }
+            out
+        };
+        let path: Vec<_> = match a_star(from, to, neighbors) {
+            Some(p) => p,
+            None => return Err(Error::Obstructed),
+        };
+        for coord in path.iter().skip(1) {
+            let tile = self.tiles.get(coord).ok_or(Error::OutOfBounds)?;
+            if !is_open(tile) {
+                return Err(Error::Obstructed);
+            }
+        }
+        Ok(path)
+    }
+
+    // Mutators
+
+    pub fn place_at(&mut self, creature_id: Id<Creature>, at: Hex) -> Result<(), Error> {
+        let tile = self.tiles.get_mut(&at).ok_or(Error::OutOfBounds)?;
+        if tile.creature.is_some() { return Err(Error::Obstructed) }
+        let c_ent = vacant_or(self.creatures.entry(creature_id), Error::Obstructed)?;
+        tile.creature = Some(creature_id);
+        c_ent.insert(at);
+        Ok(())
+    }
+
+    pub fn move_to(&mut self, creature_id: Id<Creature>, to: Hex) -> Result<Vec<Hex>, Error> {
+        // Check
+        let from: &Hex = self.creatures.get(&creature_id).ok_or(Error::NoSuchCreature)?;
+        if self.tiles.get(from).ok_or(Error::OutOfBounds)?.creature != Some(creature_id) {
+            return Err(Error::NoSuchCreature);
+        }
+        let path = self.path_to(*from, to)?;
+
+        // Commit
+        self.tiles.get_mut(&to).unwrap().creature = Some(creature_id);
+        self.tiles.get_mut(from).unwrap().creature = None;
+        self.creatures.insert(creature_id, to);
+        Ok(path)
     }
 }
 
@@ -189,13 +197,6 @@ fn vacant_or<K, V, E>(e: Entry<K, V>, err: E) -> Result<VacantEntry<K, V>, E> {
     match e {
         Entry::Occupied(_) => Err(err),
         Entry::Vacant(v) => Ok(v),
-    }
-}
-
-fn occupied_or<K, V, E>(e: Entry<K, V>, err: E) -> Result<OccupiedEntry<K, V>, E> {
-    match e {
-        Entry::Occupied(v) => Ok(v),
-        Entry::Vacant(_) => Err(err),
     }
 }
 

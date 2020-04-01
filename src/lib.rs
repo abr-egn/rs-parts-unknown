@@ -21,4 +21,6 @@ pub fn wasm_start() {
 
     info!("Parts Unknown WASM initialized.");
     js_greet("User");
+
+    card::Walk::card();
 }
