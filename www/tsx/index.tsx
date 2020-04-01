@@ -38,7 +38,7 @@ export class Index extends React.Component<{}, IndexState> {
       <div className="center">
         <div id="leftSide" className="side">
           <CardList active={base?.active} cards={base?.cards || []}/>
-          {play &&
+          {play?.active &&
             <div>Playing: {play.card.name}</div>
           }
         </div>

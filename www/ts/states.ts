@@ -50,6 +50,15 @@ export class PlayCard extends State {
             this.game.render.preview = [];
         }
     }
+
+    onTileClicked(hex: Hex) {
+        if (!this._behavior.targetValid(this.game.world, hex)) {
+            return;
+        }
+        const world = this.game.world.clone();
+        const events = this._behavior.apply(world, hex);
+        this.game.stack.swap(new Update(events, world));
+    }
 }
 
 /*
