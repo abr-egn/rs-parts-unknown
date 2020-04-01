@@ -1,7 +1,21 @@
-import {Hex, Event, World} from "../wasm";
-import {State} from "./stack";
+import {Card, Event, Hex, World} from "../wasm";
+import {State, StateUI} from "./stack";
 
-export class Base extends State {
+export interface BaseUI extends StateUI {
+    cards: Card[],
+}
+
+export class Base extends State<BaseUI> {
+    constructor() {
+        super({
+            cards: []
+        })
+        const world = this.game.world;
+        const cards = world.getCreature(world.playerId)!.player!.cards;
+        this.updateUI((draft) => {
+            draft.cards = cards;
+        });
+    }
     onTileClicked(hex: Hex) {
         if (this.game.tileAt(hex)?.creature == this.game.world.playerId) {
             this.game.stack.push(new MovePlayer(hex));

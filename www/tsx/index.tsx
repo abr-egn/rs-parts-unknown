@@ -2,6 +2,7 @@ import produce from "immer";
 import * as React from "react";
 import {container} from "tsyringe";
 
+import {Card} from "../wasm";
 import {Game} from "../ts/game";
 import {StateKey, StateUI} from "../ts/stack";
 import * as States from "../ts/states";
@@ -31,12 +32,15 @@ export class Index extends React.Component<{}, IndexState> {
   }
 
   render() {
+    const base = this.state.stack.get(States.Base);
     return (
       <div className="center">
-        <div id="leftSide" className="side"></div>
+        <div id="leftSide" className="side">
+          <CardList cards={base?.cards || []}/>
+        </div>
         <canvas id="mainCanvas" width="800" height="800"></canvas>
         <div className="side">
-          <EndTurn active={this.state.stack.get(States.Base)?.active}/>
+          <EndTurn active={base?.active}/>
         </div>
       </div>
     );
@@ -54,5 +58,15 @@ class EndTurn extends React.Component<EndTurnProps, {}> {
   }
   render() {
     return <button onClick={this.onClick} disabled={!this.props.active}>End Turn</button>
+  }
+}
+
+interface CardListProps {cards: Card[]};
+class CardList extends React.Component<CardListProps, {}> {
+  render() {
+    const list = this.props.cards.map((card) =>
+      <li key={card.name}>{card.name}</li>
+    );
+    return <ul>{list}</ul>;
   }
 }
