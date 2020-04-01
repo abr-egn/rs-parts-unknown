@@ -42,6 +42,13 @@ export class PlayCard extends State {
     onTileEntered(hex: Hex) {
         let highlight: Hex[] = this._behavior.highlight(this.game.world, hex);
         this.game.render.highlight = highlight;
+        const check = this.game.world.clone();
+        check.logging = false;
+        if (this._behavior.targetValid(check, hex)) {
+            this.game.render.preview = this._behavior.apply(check, hex);
+        } else {
+            this.game.render.preview = [];
+        }
     }
 }
 

@@ -66,8 +66,9 @@ impl Behavior for Walk {
         world.map().range_from(self.start, self.range).into_iter().collect()
     }
     fn target_valid(&self, world: &World, cursor: Hex) -> bool {
+        let range: usize = self.range.try_into().unwrap();
         match world.map().path_to(self.start, cursor) {
-            Ok(path) => path.len() <= self.range.try_into().unwrap(),
+            Ok(path) => path.len() <= range + 1,
             _ => false,
         }
     }

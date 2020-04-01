@@ -91,7 +91,7 @@ export class Render {
         }
         this._drawPreview(tsMillis);
         for (let hex of this.highlight) {
-            this._drawHighlight(hex, tsMillis);
+            this._drawHighlight(hex);
         }
         for (let [id, pos] of this._creaturePos) {
             this._drawCreature(id, pos);
@@ -140,10 +140,6 @@ export class Render {
     }
 
     private _drawPreview(tsMillis: DOMHighResTimeStamp) {
-
-    }
-
-    private _drawHighlight(hex: Hex, tsMillis: DOMHighResTimeStamp) {
         const SCALE_MIN = 1.0;
         const SCALE_MAX = 1.2;
         const SCALE_RANGE = SCALE_MAX - SCALE_MIN;
@@ -152,11 +148,28 @@ export class Render {
         const scale = SCALE_MIN + ((tsMillis/1000 * SCALE_RATE) % SCALE_RANGE);
         const size = HEX_SIZE * scale;
 
+        let moves: Hex[] = [];
+        for (let event of this.preview) {
+            if ("CreatureMoved" in event.data) {
+                moves.push(...event.data.CreatureMoved.path);
+            }
+        }
+        for (let hex of moves) {
+            this._ctx.save();
+            this._pathHex(hex, size);
+            this._ctx.lineWidth = 2.0;
+            this._ctx.strokeStyle = "#A0A0FF";
+            this._ctx.stroke();
+            this._ctx.restore();
+        }
+    }
+
+    private _drawHighlight(hex: Hex) {
         this._ctx.save();
 
-        this._pathHex(hex, size);
+        this._pathHex(hex, HEX_SIZE);
         this._ctx.lineWidth = 2.0;
-        this._ctx.strokeStyle = "#A0A0FF";
+        this._ctx.strokeStyle = "#0000FF";
         this._ctx.stroke();
 
         this._ctx.restore();

@@ -83,7 +83,7 @@ impl Behavior {
     pub fn targetValid(&self, world: &World, cursor: &Hex) -> bool {
         self.wrapped.target_valid(world, cursor.old())
     }
-    pub fn apply(&self, world: &mut World, target: Hex) -> Array /* Event[] */ {
+    pub fn apply(&self, world: &mut World, target: &Hex) -> Array /* Event[] */ {
         self.wrapped.apply(world, target.old()).into_iter()
             .map(Event::new)
             .map(JsValue::from)
