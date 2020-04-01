@@ -65,7 +65,10 @@ interface CardListProps {cards: Card[]};
 class CardList extends React.Component<CardListProps, {}> {
   render() {
     const list = this.props.cards.map((card) =>
-      <li key={card.name}>{card.name}</li>
+      <li key={card.name}>
+        <button>Play</button>
+        [{card.apCost}] {card.name}
+      </li>
     );
     return <ul>{list}</ul>;
   }
