@@ -19,6 +19,12 @@ impl<T> Meta<T> {
             tags: HashSet::new(),
         }
     }
+    pub fn tagged(data: T, tags: &[&str]) -> Self {
+        Meta {
+            data,
+            tags: tags.iter().map(|&s| s.into()).collect(),
+        }
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]

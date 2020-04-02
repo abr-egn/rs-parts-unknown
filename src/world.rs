@@ -192,16 +192,11 @@ impl Mod for ModDebugTag {
 }
 
 mod wasm {
-    use hex::Hex;
     use js_sys::Array;
-    use wasm_bindgen::prelude::*;
 
-    use crate::creature::{Creature, Kind};
     use crate::display;
-    use crate::id_map::Id;
-    use crate::map::Tile;
 
-    use super::World;
+    use super::*;
 
     #[allow(non_snake_case)]
     #[wasm_bindgen]
@@ -270,6 +265,19 @@ mod wasm {
                 .map(display::Hex::new)
                 .map(JsValue::from)
                 .collect()
+        }
+
+        pub fn checkSpendAP(&self, creature_id: u32, ap: i32) -> bool {
+            let id: Id<Creature> = Id::synthesize(creature_id);
+            let mut check = self.clone();
+            check.logging = false;
+            let tag = "checkSpendAP";
+            let result = check.execute(&Meta::tagged(
+                Action::SpendAP { id, ap },
+                &[tag],
+            ));
+
+            unimplemented!()
         }
     
         // Mutators
