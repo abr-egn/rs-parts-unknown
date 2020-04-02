@@ -8,6 +8,8 @@ pub enum Error {
     OutOfBounds,
     #[error("no such creature")]
     NoSuchCreature,
+    #[error("not enough AP")]
+    NotEnoughAP,
 }
 
 pub type Result<T> = std::result::Result<T, Error>;

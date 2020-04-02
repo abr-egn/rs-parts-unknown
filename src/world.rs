@@ -171,6 +171,14 @@ impl World {
                 self.map.move_to(id, to)?;
                 return Ok(Event::CreatureMoved { id, from, to });
             }
+            SpendAP { id, ap } => {
+                let creature = self.creatures.get_mut(&id).ok_or(Error::NoSuchCreature)?;
+                if creature.spend_ap(ap) {
+                    return Ok(Event::SpentAP { id, ap })
+                } else {
+                    return Err(Error::NotEnoughAP)
+                }
+            }
         }
     }
 }
