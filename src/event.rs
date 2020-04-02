@@ -1,9 +1,9 @@
 use std::collections::HashSet;
 
 use hex::Hex;
-use wasm_bindgen::prelude::*;
 
 use crate::creature::Creature;
+use crate::error::Error;
 use crate::id_map::Id;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
@@ -23,13 +23,19 @@ impl<T> Meta<T> {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Action {
+    Nothing,
     MoveCreature { id: Id<Creature>, to: Hex },
 }
 
 #[derive(Debug, Clone)]
 pub enum Event {
+    Nothing,
     Failed { action: Action, reason: String },
     CreatureMoved { id: Id<Creature>, from: Hex, to: Hex, },
+}
+
+pub fn failure(err: Error) -> Meta<Event> {
+    Meta::new(Event::Failed { action: Action::Nothing, reason: format!("{:?}", err) })
 }
 
 pub trait Mod: ModClone + std::fmt::Debug + Send {

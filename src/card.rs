@@ -4,7 +4,8 @@ use hex::Hex;
 use wasm_bindgen::prelude::*;
 
 use crate::creature::Creature;
-use crate::event::{Event, Meta};
+use crate::error::Error;
+use crate::event::{self, Event, Meta};
 use crate::id_map::Id;
 use crate::world::World;
 
@@ -73,7 +74,26 @@ impl Behavior for Walk {
         }
     }
     fn apply(&self, world: &mut World, target: Hex) -> Vec<Meta<Event>> {
-        world.move_player(target)
+        let path = match world.map().path_to(self.start, target) {
+            Ok(p) => p,
+            Err(e) => return vec![event::failure(e)],
+        };
+        let mut out = vec![];
+        for (from, to) in path.iter().zip(path.iter().skip(1)) {
+            let actual = match world.map().creatures().get(&self.creature_id) {
+                Some(h) => h,
+                None => {
+                    out.push(event::failure(Error::NoSuchCreature));
+                    return out;
+                }
+            };
+            if actual != from && actual.distance_to(*to) > 1 {
+                out.push(event::failure(Error::Obstructed));
+                return out;
+            }
+            out.append(&mut world.move_player(*to));
+        }
+        out
     }
 }
 

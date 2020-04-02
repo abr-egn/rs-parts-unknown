@@ -7,7 +7,7 @@ use wasm_bindgen::prelude::*;
 use crate::card::Walk;
 use crate::creature::{self, Creature, Kind};
 use crate::error::{Error, Result};
-use crate::event::{self, Mod, Trigger, Meta, Event, Action, TriggerId};
+use crate::event::{Mod, Trigger, Meta, Event, Action, TriggerId};
 use crate::id_map::{Id, IdMap};
 use crate::map::{Tile, Map, Space};
 
@@ -165,6 +165,7 @@ impl World {
     fn resolve_action(&mut self, action: &Action) -> Result<Event> {
         use Action::*;
         match *action {
+            Nothing => return Ok(Event::Nothing),
             MoveCreature { id, to } => {
                 let &from = self.map.creatures().get(&id).ok_or(Error::NoSuchCreature)?;
                 self.map.move_to(id, to)?;
