@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use hex::Hex;
-use serde::Serialize;
+use wasm_bindgen::prelude::*;
 
 use crate::creature::Creature;
 use crate::id_map::Id;
@@ -21,15 +21,15 @@ impl<T> Meta<T> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Action {
     MoveCreature { id: Id<Creature>, to: Hex },
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub enum Event {
-    CreatureMoved { id: Id<Creature>, path: Vec<Hex>, },
     Failed { action: Action, reason: String },
+    CreatureMoved { id: Id<Creature>, from: Hex, to: Hex, },
 }
 
 pub trait Mod: ModClone + std::fmt::Debug + Send {

@@ -6,7 +6,8 @@ use wasm_bindgen::prelude::*;
 
 use crate::card::Walk;
 use crate::creature::{self, Creature, Kind};
-use crate::event::{Mod, Trigger, Meta, Event, Action, TriggerId};
+use crate::error::{Error, Result};
+use crate::event::{self, Mod, Trigger, Meta, Event, Action, TriggerId};
 use crate::id_map::{Id, IdMap};
 use crate::map::{Tile, Map, Space};
 
@@ -149,20 +150,25 @@ impl World {
             }
         }
         let result = Meta {
-            data: self.resolve_action(&modded.data),
+            data: self.resolve_action(&modded.data).unwrap_or_else(|err|
+                Event::Failed {
+                    action: modded.data.clone(),
+                    reason: format!("{:?}", err),
+                }
+            ),
             tags: modded.tags.clone(),
         };
         clog!(self, "  => {:?}", result);
         result
     }
 
-    fn resolve_action(&mut self, action: &Action) -> Event {
+    fn resolve_action(&mut self, action: &Action) -> Result<Event> {
         use Action::*;
         match *action {
-            // TODO: move move_to logic out of map
-            MoveCreature { id, to } => match self.map.move_to(id, to) {
-                Ok(path) => Event::CreatureMoved { id, path },
-                Err(_) => Event::Failed { action: action.clone(), reason: String::from("??") },
+            MoveCreature { id, to } => {
+                let &from = self.map.creatures().get(&id).ok_or(Error::NoSuchCreature)?;
+                self.map.move_to(id, to)?;
+                return Ok(Event::CreatureMoved { id, from, to });
             }
         }
     }

@@ -44,12 +44,9 @@ export class Render {
 
     async animateEvents(events: Event[]) {
         for (let event of events) {
-            if ("CreatureMoved" in event.data) {
-                const move = event.data.CreatureMoved;
-                // skip the first hex, as it's the current
-                for (let hex of move.path.slice(1)) {
-                    await this._moveCreatureTo(move.id, hexToPixel(hex));
-                }
+            let move;
+            if (move = event.creatureMoved) {
+                await this._moveCreatureTo(move.id, hexToPixel(move.to))
             }
         }
     }
@@ -150,8 +147,9 @@ export class Render {
 
         let moves: Hex[] = [];
         for (let event of this.preview) {
-            if ("CreatureMoved" in event.data) {
-                moves.push(...event.data.CreatureMoved.path);
+            let move;
+            if (move = event.creatureMoved) {
+                moves.push(move.to);
             }
         }
         for (let hex of moves) {

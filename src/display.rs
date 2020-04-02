@@ -1,6 +1,5 @@
 use hex;
 use js_sys::Array;
-use serde_wasm_bindgen::to_value;
 use wasm_bindgen::prelude::*;
 
 use crate::card;
@@ -44,6 +43,7 @@ impl Event {
     }
 }
 
+#[allow(non_snake_case)]
 #[wasm_bindgen]
 impl Event {
     #[wasm_bindgen(getter)]
@@ -54,8 +54,30 @@ impl Event {
     }
 
     #[wasm_bindgen(getter)]
-    pub fn data(&self) -> JsValue {
-        to_value(&self.wrapped.data).unwrap()
+    pub fn creatureMoved(&self) -> Option<CreatureMoved> {
+        CreatureMoved::new(&self.wrapped.data)
+    }
+}
+
+#[wasm_bindgen]
+pub struct CreatureMoved {
+    pub id: u32,
+    pub from: Hex,
+    pub to: Hex,
+}
+
+impl CreatureMoved {
+    fn new(ev: &event::Event) -> Option<Self> {
+        match ev {
+            event::Event::CreatureMoved { id, from, to } => Some(
+                CreatureMoved {
+                    id: id.value(),
+                    from: Hex::new(*from),
+                    to: Hex::new(*to),
+                }
+            ),
+            _ => None,
+        }
     }
 }
 

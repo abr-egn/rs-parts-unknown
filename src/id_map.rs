@@ -4,7 +4,7 @@ use std::fmt;
 use std::hash::{Hash, Hasher};
 use std::marker::PhantomData;
 
-use serde::{Serialize, Serializer};
+//use serde::{Serialize, Serializer};
 
 #[derive(Debug, Clone)]
 pub struct IdMap<T> {
@@ -39,11 +39,13 @@ pub struct Id<T> {
     phantom: PhantomData<*const T>,
 }
 
+/*
 impl<T> Serialize for Id<T> {
     fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
         serializer.serialize_u32(self.value)
     }
 }
+*/
 
 impl<T> Id<T> {
     fn new(value: u32) -> Id<T> { Id { value: value, phantom: PhantomData } }

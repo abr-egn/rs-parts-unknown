@@ -1,6 +1,7 @@
 mod card;
 mod creature;
 mod display;
+mod error;
 mod event;
 mod id_map;
 mod map;

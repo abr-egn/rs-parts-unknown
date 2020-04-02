@@ -5,26 +5,16 @@ use std::collections::{
 
 use fnv::FnvHashSet;
 use hex::Hex;
-use thiserror::Error;
 use wasm_bindgen::prelude::*;
 
 use crate::creature::Creature;
+use crate::error::{Error, Result};
 use crate::id_map::Id;
 
 #[derive(Debug, Clone)]
 pub struct Map {
     tiles: HashMap<Hex, Tile>,
     creatures: HashMap<Id<Creature>, Hex>,
-}
-
-#[derive(Error, Debug)]
-pub enum Error {
-    #[error("obstructed")]
-    Obstructed,
-    #[error("out of bounds")]
-    OutOfBounds,
-    #[error("no such creature")]
-    NoSuchCreature,
 }
 
 impl Map {
@@ -70,7 +60,7 @@ impl Map {
         out
     }
 
-    pub fn path_to(&self, from: Hex, to: Hex) -> Result<Vec<Hex>, Error> {
+    pub fn path_to(&self, from: Hex, to: Hex) -> Result<Vec<Hex>> {
         let to_tile = self.tiles.get(&to).ok_or(Error::OutOfBounds)?;
         if to_tile.space != Space::Empty || to_tile.creature.is_some() {
             return Err(Error::Obstructed);
@@ -102,7 +92,7 @@ impl Map {
 
     // Mutators
 
-    pub fn place_at(&mut self, creature_id: Id<Creature>, at: Hex) -> Result<(), Error> {
+    pub fn place_at(&mut self, creature_id: Id<Creature>, at: Hex) -> Result<()> {
         let tile = self.tiles.get_mut(&at).ok_or(Error::OutOfBounds)?;
         if tile.creature.is_some() { return Err(Error::Obstructed) }
         let c_ent = vacant_or(self.creatures.entry(creature_id), Error::Obstructed)?;
@@ -111,19 +101,12 @@ impl Map {
         Ok(())
     }
 
-    pub fn move_to(&mut self, creature_id: Id<Creature>, to: Hex) -> Result<Vec<Hex>, Error> {
-        // Check
+    pub fn move_to(&mut self, creature_id: Id<Creature>, to: Hex) -> Result<()> {
         let from: &Hex = self.creatures.get(&creature_id).ok_or(Error::NoSuchCreature)?;
-        if self.tiles.get(from).ok_or(Error::OutOfBounds)?.creature != Some(creature_id) {
-            return Err(Error::NoSuchCreature);
-        }
-        let path = self.path_to(*from, to)?;
-
-        // Commit
-        self.tiles.get_mut(&to).unwrap().creature = Some(creature_id);
+        self.tiles.get_mut(&to).ok_or(Error::OutOfBounds)?.creature = Some(creature_id);
         self.tiles.get_mut(from).unwrap().creature = None;
         self.creatures.insert(creature_id, to);
-        Ok(path)
+        Ok(())
     }
 }
 
@@ -193,7 +176,7 @@ fn reconstruct_path(came_from: HashMap<Hex, Hex>, candidate: Hex) -> Vec<Hex> {
     out
 }
 
-fn vacant_or<K, V, E>(e: Entry<K, V>, err: E) -> Result<VacantEntry<K, V>, E> {
+fn vacant_or<K, V, E>(e: Entry<K, V>, err: E) -> std::result::Result<VacantEntry<K, V>, E> {
     match e {
         Entry::Occupied(_) => Err(err),
         Entry::Vacant(v) => Ok(v),
