@@ -1,9 +1,7 @@
 import produce from "immer";
 import * as React from "react";
-import {container} from "tsyringe";
 
 import {Card} from "../wasm";
-import {Game} from "../ts/game";
 import {StateKey, StateUI} from "../ts/stack";
 import * as States from "../ts/states";
 
@@ -33,7 +31,7 @@ export class Index extends React.Component<{}, IndexState> {
   }
 
   cancelPlay() {
-    container.resolve(Game).stack.pop();
+    window.game.stack.pop();
   }
 
   render() {
@@ -64,7 +62,7 @@ class EndTurn extends React.Component<EndTurnProps, {}> {
     this.onClick = this.onClick.bind(this);  // JS `this` is still terrible
   }
   onClick() {
-    container.resolve(Game).stack.push(new States.EndTurn());
+    window.game.stack.push(new States.EndTurn());
   }
   render() {
     return <button onClick={this.onClick} disabled={!this.props.active}>End Turn</button>
@@ -77,7 +75,10 @@ interface CardListProps {
 };
 class CardList extends React.Component<CardListProps, {}> {
   onClick(card: Card) {
-    container.resolve(Game).stack.push(new States.PlayCard(card));
+    window.game.stack.push(new States.PlayCard(card));
+  }
+  canPlay(card: Card) {
+    const world = window.game.world;
   }
   render() {
     const list = this.props.cards.map((card) =>

@@ -1,7 +1,6 @@
 import {enableAllPlugins} from "immer";
 import * as ReactDOM from "react-dom";
 import "reflect-metadata";
-import {container} from "tsyringe";
 
 import {Game} from "./game";
 import {Base} from "./states";
@@ -20,10 +19,9 @@ function main() {
   ReactDOM.render(content, document.getElementById("root"));
 
   const game = new Game(ref);
-  container.register(Game, {useValue: game});
-  game.stack.push(new Base());
-
   window.game = game;
+
+  game.stack.push(new Base());  
 }
 
 main();

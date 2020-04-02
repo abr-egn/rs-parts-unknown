@@ -20,7 +20,6 @@
         "immer": "^6.0.2",
         "react": "^16.13.1",
         "react-dom": "^16.13.1",
-        "reflect-metadata": "^0.1.13",
-        "tsyringe": "^4.1.0"
+        "reflect-metadata": "^0.1.13"
     }
 }

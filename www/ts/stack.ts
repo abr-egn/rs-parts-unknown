@@ -1,5 +1,3 @@
-import {container} from "tsyringe";
-
 import {Game} from "./game";
 import {Hex} from "../wasm";
 
@@ -8,9 +6,7 @@ export interface StateUI {
 }
 
 export class State<T extends StateUI = StateUI> {
-    private _game: Game;
     constructor(init: any = {}) {
-        this._game = container.resolve(Game);
         init.active = false;
         this.updateUI(_ => init);
     }
@@ -23,13 +19,9 @@ export class State<T extends StateUI = StateUI> {
     onTileEntered(hex: Hex) {}
     onTileExited(hex: Hex) {}
 
-    get game(): Game {
-        return this._game;
-    }
-
     updateUI(update: (draft: T) => void) {
         const key = this.constructor as StateKey<T>;
-        this._game.updateUI(key, update);
+        window.game.updateUI(key, update);
     }
 
     _onActivated() {
