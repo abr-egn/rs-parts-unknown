@@ -67,7 +67,7 @@ impl World {
         out
     }
 
-    pub fn end_turn(&mut self) -> Vec<Meta<Event>> {
+    pub fn npc_turn(&mut self) -> Vec<Meta<Event>> {
         let player_hex = self.map.creatures().get(&self.player_id).unwrap();
 
         let mut moves = vec![];
@@ -274,8 +274,8 @@ mod wasm {
     
         // Mutators
     
-        pub fn endTurn(&mut self) -> Array /* Event[] */ {
-            self.end_turn().into_iter()
+        pub fn npcTurn(&mut self) -> Array /* Event[] */ {
+            self.npc_turn().into_iter()
                 .map(display::Event::new)
                 .map(JsValue::from)
                 .collect()

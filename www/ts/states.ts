@@ -71,7 +71,7 @@ class Update extends State {
 export class EndTurn extends State {
     onPushed() {
         const nextWorld = window.game.world.clone();
-        let events = nextWorld.endTurn() as Event[];
+        let events = nextWorld.npcTurn() as Event[];
         window.game.stack.swap(new Update(events, nextWorld));
     }
 }
