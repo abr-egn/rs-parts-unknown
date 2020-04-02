@@ -5,7 +5,7 @@ use wasm_bindgen::prelude::*;
 
 use crate::creature::Creature;
 use crate::error::Error;
-use crate::event::{self, Event, Meta};
+use crate::event::{self, Action, Event, Meta};
 use crate::id_map::Id;
 use crate::world::World;
 
@@ -91,7 +91,9 @@ impl Behavior for Walk {
                 out.push(event::failure(Error::Obstructed));
                 return out;
             }
-            out.append(&mut world.move_player(*to));
+            out.append(&mut world.execute(&Meta::new(
+                Action::MoveCreature { id: self.creature_id, to: *to }
+            )));
         }
         out
     }

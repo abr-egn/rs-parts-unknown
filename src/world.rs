@@ -61,8 +61,10 @@ impl World {
 
     // Mutators
 
-    pub fn move_player(&mut self, to: Hex) -> Vec<Meta<Event>> {
-        self.execute(&Meta::new(Action::MoveCreature { id: self.player_id, to }))
+    pub fn execute(&mut self, action: &Meta<Action>) -> Vec<Meta<Event>> {
+        let mut out = vec![];
+        self.execute_(action, &HashSet::new(), &mut out);
+        out
     }
 
     pub fn end_turn(&mut self) -> Vec<Meta<Event>> {
@@ -99,12 +101,6 @@ impl World {
     }
 
     // Private
-
-    fn execute(&mut self, action: &Meta<Action>) -> Vec<Meta<Event>> {
-        let mut out = vec![];
-        self.execute_(action, &HashSet::new(), &mut out);
-        out
-    }
 
     fn execute_(
         &mut self,
