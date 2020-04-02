@@ -1,6 +1,5 @@
 import {enableAllPlugins} from "immer";
 import * as ReactDOM from "react-dom";
-import "reflect-metadata";
 
 import {Game} from "./game";
 import {Base} from "./states";

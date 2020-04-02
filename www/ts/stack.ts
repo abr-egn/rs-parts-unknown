@@ -1,4 +1,3 @@
-import {Game} from "./game";
 import {Hex} from "../wasm";
 
 export interface StateUI {
