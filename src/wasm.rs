@@ -3,7 +3,6 @@ use std::rc::Rc;
 
 use hex::Hex;
 use js_sys::Array;
-use log::info;
 use serde_wasm_bindgen::{from_value, to_value};
 use wasm_bindgen::prelude::*;
 
@@ -17,12 +16,6 @@ use crate::world;
 #[derive(Debug, Clone)]
 pub struct World {
     wrapped: Rc<RefCell<world::World>>,
-}
-
-impl Drop for World {
-    fn drop(&mut self) {
-        info!("World dropped");
-    }
 }
 
 #[allow(non_snake_case)]
@@ -51,14 +44,16 @@ impl World {
             .map(|(h, t)| {
                 let tuple = Array::new();
                 tuple.push(&to_js_hex(h));
-                tuple.push(&JsValue::from(t.clone()));
+                tuple.push(&to_value(t).unwrap());
                 tuple
             })
             .collect()
     }
 
-    pub fn getTile(&self, hex: JsValue) -> Option<crate::map::Tile> {
-        self.wrapped().map().tiles().get(&from_js_hex(hex)).cloned()
+    pub fn getTile(&self, hex: JsValue) -> JsValue /* Tile | undefined */ {
+        self.wrapped().map().tiles()
+            .get(&from_js_hex(hex))
+            .map_or(JsValue::undefined(), |t| to_value(&t).unwrap())
     }
 
     pub fn getCreatureMap(&self) -> Array /* [Id<Creature>, Hex][] */ {

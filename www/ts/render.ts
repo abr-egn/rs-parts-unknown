@@ -1,4 +1,5 @@
-import {World, Hex, Tile, Space, Event} from "../wasm";
+import {World, Event} from "../wasm";
+import {Hex, Tile} from "./types";
 
 const HEX_SIZE = 30;
 
@@ -108,7 +109,7 @@ export class Render {
         this._ctx.lineWidth = 1.0;
         this._ctx.strokeStyle = "#FFFFFF";
         this._ctx.fillStyle = "#FFFFFF";
-        if (tile.space == Space.Empty) {
+        if (tile.space == "Empty") {
             this._ctx.stroke();
         } else {
             this._ctx.fill();
@@ -258,5 +259,5 @@ function hexRound(hex: FHex): Hex {
         rz = -rx-ry;
     }
 
-    return new Hex(rx, ry);
+    return {x: rx, y: ry};
 }

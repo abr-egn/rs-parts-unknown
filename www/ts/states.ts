@@ -1,5 +1,6 @@
-import {Behavior, Card, Event, Hex, World} from "../wasm";
+import {Behavior, Card, Event, World} from "../wasm";
 import {State, StateUI} from "./stack";
+import {Hex} from "./types";
 
 export interface BaseUI extends StateUI { cards: Card[] }
 export class Base extends State<BaseUI> {

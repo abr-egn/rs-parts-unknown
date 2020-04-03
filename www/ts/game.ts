@@ -1,9 +1,10 @@
 import {RefObject} from "react";
 
-import {World, Hex, Tile} from "../wasm";
+import {World} from "../wasm";
 import {Render} from "./render";
 import {Stack, StateKey, StateUI} from "./stack";
 import {Index} from "../tsx/index";
+import {Hex, Tile} from "./types";
 
 export class Game {
     private _world: World;

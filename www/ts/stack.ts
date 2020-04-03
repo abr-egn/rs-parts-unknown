@@ -1,5 +1,4 @@
-import {Hex} from "../wasm";
-import {Game} from "./game";
+import {Hex} from "./types";
 
 export interface StateUI {
     active: boolean,

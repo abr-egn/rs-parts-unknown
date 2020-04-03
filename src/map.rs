@@ -5,7 +5,7 @@ use std::collections::{
 
 use fnv::FnvHashSet;
 use hex::Hex;
-use wasm_bindgen::prelude::*;
+use serde::Serialize;
 
 use crate::creature::Creature;
 use crate::error::{Error, Result};
@@ -183,28 +183,14 @@ fn vacant_or<K, V, E>(e: Entry<K, V>, err: E) -> std::result::Result<VacantEntry
     }
 }
 
-#[wasm_bindgen]
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Tile {
-    #[wasm_bindgen(readonly)]
     pub space: Space,
-    #[wasm_bindgen(skip)]
     pub creature: Option<Id<Creature>>,
 }
 
-#[wasm_bindgen]
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize)]
 pub enum Space {
     Empty,
     Wall,
-}
-
-mod wasm {
-    use super::*;
-
-    #[wasm_bindgen]
-    impl Tile {
-        #[wasm_bindgen(getter)]
-        pub fn creature(&self) -> Option<u32> { self.creature.map(|id| id.value()) }
-    }
 }
