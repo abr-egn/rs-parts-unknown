@@ -1,5 +1,10 @@
-use hex;
+use std::cell::{Ref, RefCell, RefMut};
+use std::rc::Rc;
+
+use hex::Hex;
 use js_sys::Array;
+use log::info;
+use serde_wasm_bindgen::{from_value, to_value};
 use wasm_bindgen::prelude::*;
 
 use crate::card;
@@ -9,125 +14,127 @@ use crate::id_map::Id;
 use crate::world;
 
 #[wasm_bindgen]
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub struct Hex {
-    #[wasm_bindgen(readonly)]
-    pub x: i32,
-    #[wasm_bindgen(readonly)]
-    pub y: i32,
-}
-
-#[wasm_bindgen]
-impl Hex {
-    #[wasm_bindgen(constructor)]
-    pub fn make(x: i32, y: i32) -> Self {
-        Hex { x, y }
-    }
-}
-
-impl Hex {
-    pub fn new(source: hex::Hex) -> Self {
-        Hex { x: source.x, y: source.y }
-    }
-    pub fn old(&self) -> hex::Hex {
-        hex::Hex { x: self.x, y: self.y }
-    }
-}
-
-#[wasm_bindgen]
 #[derive(Debug, Clone)]
 pub struct World {
-    #[wasm_bindgen(skip)]
-    pub wrapped: world::World,
+    wrapped: Rc<RefCell<world::World>>,
+}
+
+impl Drop for World {
+    fn drop(&mut self) {
+        info!("World dropped");
+    }
 }
 
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 impl World {
     #[wasm_bindgen(constructor)]
-    pub fn new() -> Self { World { wrapped: world::World::new() } }
+    pub fn new() -> Self {
+        World {
+            wrapped: Rc::new(RefCell::new(world::World::new()))
+        }
+    }
     #[wasm_bindgen(js_name = clone)]
-    pub fn js_clone(&self) -> Self { self.clone() }
+    pub fn js_clone(&self) -> Self {
+        World {
+            wrapped: Rc::new(RefCell::new(self.wrapped().clone()))
+        }
+    }
 
     // Accessors
 
     #[wasm_bindgen(getter)]
-    pub fn playerId(&self) -> u32 { self.wrapped.player_id().value() }
+    pub fn playerId(&self) -> u32 { self.wrapped().player_id().value() }
 
     pub fn getTiles(&self) -> Array /* [Hex, Tile][] */ {
-        self.wrapped.map().tiles().iter()
+        self.wrapped().map().tiles().iter()
             .map(|(h, t)| {
                 let tuple = Array::new();
-                tuple.push(&JsValue::from(Hex::new(*h)));
+                tuple.push(&to_js_hex(h));
                 tuple.push(&JsValue::from(t.clone()));
                 tuple
             })
             .collect()
     }
 
-    pub fn getTile(&self, hex: &Hex) -> Option<crate::map::Tile> {
-        self.wrapped.map().tiles().get(&hex.old()).cloned()
+    pub fn getTile(&self, hex: JsValue) -> Option<crate::map::Tile> {
+        self.wrapped().map().tiles().get(&from_js_hex(hex)).cloned()
     }
 
     pub fn getCreatureMap(&self) -> Array /* [Id<Creature>, Hex][] */ {
-        self.wrapped.map().creatures().iter()
+        self.wrapped().map().creatures().iter()
             .map(|(id, hex)| {
                 let tuple = Array::new();
                 tuple.push(&JsValue::from(id.value()));
-                tuple.push(&JsValue::from(Hex::new(*hex)));
+                tuple.push(&to_js_hex(hex));
                 tuple
             })
             .collect()
     }
 
     pub fn getCreature(&self, id: u32) -> Option<crate::creature::Creature> {
-        self.wrapped.creatures().map().get(&Id::synthesize(id)).cloned()
+        self.wrapped().creatures().map().get(&Id::synthesize(id)).cloned()
     }
 
-    pub fn getCreatureHex(&self, id: u32) -> Option<Hex> {
-        self.wrapped.map().creatures().get(&Id::synthesize(id))
+    pub fn getCreatureHex(&self, id: u32) -> JsValue /* Hex | undefined */ {
+        self.wrapped().map().creatures().get(&Id::synthesize(id))
             .cloned()
-            .map(Hex::new)
+            .map_or(JsValue::undefined(), |h| to_js_hex(&h))
     }
 
     pub fn getCreatureRange(&self, id: u32) -> Array /* Hex[] */ {
         let id = Id::synthesize(id);
-        let range = match self.wrapped.creatures().map().get(&id) {
+        let wrapped = self.wrapped();
+        let range = match wrapped.creatures().map().get(&id) {
             Some(c) => match c.kind() {
                 Kind::NPC(npc) => npc.move_range,
                 _ => return Array::new(),
             },
             None => return Array::new(),
         };
-        let start = match self.wrapped.map().creatures().get(&id) {
+        let start = match wrapped.map().creatures().get(&id) {
             Some(h) => h,
             None => return Array::new(),
         };
-        self.wrapped.map().range_from(*start, range).into_iter()
-            .map(Hex::new)
+        wrapped.map().range_from(*start, range).into_iter()
+            .map(|hex| to_js_hex(&hex))
             .map(JsValue::from)
             .collect()
     }
 
     pub fn checkSpendAP(&self, creature_id: u32, ap: i32) -> bool {
         let id: Id<creature::Creature> = Id::synthesize(creature_id);
-        return self.wrapped.check_action(&Action::SpendAP { id, ap });
+        return self.wrapped().check_action(&Action::SpendAP { id, ap });
     }
+
+    #[wasm_bindgen(getter)]
+    pub fn refCount(&self) -> usize { Rc::strong_count(&self.wrapped) }
 
     // Mutators
 
     pub fn npcTurn(&mut self) -> Array /* Event[] */ {
-        self.wrapped.npc_turn().into_iter()
+        self.wrapped_mut().npc_turn().into_iter()
             .map(Event::new)
             .map(JsValue::from)
             .collect()
     }
 
     #[wasm_bindgen(getter)]
-    pub fn logging(&self) -> bool { self.wrapped.logging }
+    pub fn logging(&self) -> bool { self.wrapped().logging }
     #[wasm_bindgen(setter)]
-    pub fn set_logging(&mut self, logging: bool) { self.wrapped.logging = logging }
+    pub fn set_logging(&mut self, logging: bool) {
+        self.wrapped_mut().logging = logging
+    }
 }
+
+impl World {
+    pub fn wrapped(&self) -> Ref<world::World> { self.wrapped.borrow() }
+    pub fn wrapped_mut(&mut self) -> RefMut<world::World> { self.wrapped.borrow_mut() }
+}
+
+fn to_js_hex(hex: &Hex) -> JsValue { to_value(hex).unwrap() }
+
+fn from_js_hex(js: JsValue) -> Hex { from_value(js).unwrap() }
 
 #[wasm_bindgen]
 pub struct Event {
@@ -158,9 +165,18 @@ impl Event {
 
 #[wasm_bindgen]
 pub struct CreatureMoved {
+    #[wasm_bindgen(readonly)]
     pub id: u32,
-    pub from: Hex,
-    pub to: Hex,
+    from: JsValue,
+    to: JsValue,
+}
+
+#[wasm_bindgen]
+impl CreatureMoved {
+    #[wasm_bindgen(getter)]
+    pub fn from(&self) -> JsValue { self.from.clone() }
+    #[wasm_bindgen(getter)]
+    pub fn to(&self) -> JsValue { self.to.clone() }
 }
 
 impl CreatureMoved {
@@ -169,8 +185,8 @@ impl CreatureMoved {
             event::Event::CreatureMoved { id, from, to } => Some(
                 CreatureMoved {
                     id: id.value(),
-                    from: Hex::new(*from),
-                    to: Hex::new(*to),
+                    from: to_js_hex(from),
+                    to: to_js_hex(to),
                 }
             ),
             _ => None,
@@ -193,17 +209,16 @@ impl Behavior {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 impl Behavior {
-    pub fn highlight(&self, world: &World, cursor: &Hex) -> Array /* Hex[] */ {
-        self.wrapped.highlight(&world.wrapped, cursor.old()).into_iter()
-            .map(Hex::new)
-            .map(JsValue::from)
+    pub fn highlight(&self, world: &World, cursor: JsValue) -> Array /* Hex[] */ {
+        self.wrapped.highlight(&world.wrapped.borrow(), from_js_hex(cursor)).into_iter()
+            .map(|h| to_js_hex(&h))
             .collect()
     }
-    pub fn targetValid(&self, world: &World, cursor: &Hex) -> bool {
-        self.wrapped.target_valid(&world.wrapped, cursor.old())
+    pub fn targetValid(&self, world: &World, cursor: JsValue) -> bool {
+        self.wrapped.target_valid(&world.wrapped.borrow(), from_js_hex(cursor))
     }
-    pub fn apply(&self, world: &mut World, target: &Hex) -> Array /* Event[] */ {
-        self.wrapped.apply(&mut world.wrapped, target.old()).into_iter()
+    pub fn apply(&self, world: &mut World, target: JsValue) -> Array /* Event[] */ {
+        self.wrapped.apply(&mut world.wrapped.borrow_mut(), from_js_hex(target)).into_iter()
             .map(Event::new)
             .map(JsValue::from)
             .collect()

@@ -42,6 +42,7 @@ export class PlayCard extends State {
         } else {
             window.game.render.preview = [];
         }
+        check.free()
     }
 
     onTileClicked(hex: Hex) {

@@ -129,7 +129,7 @@ mod wasm {
         #[wasm_bindgen(js_name = startPlay)]
         pub fn js_start_play(&self, world: &wasm::World, source: u32) -> wasm::Behavior {
             let id: Id<Creature> = Id::synthesize(source);
-            wasm::Behavior::new(self.start_play(&world.wrapped, &id))
+            wasm::Behavior::new(self.start_play(&world.wrapped(), &id))
         }
     }
 }
