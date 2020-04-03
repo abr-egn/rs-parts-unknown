@@ -59,6 +59,17 @@ impl World {
     pub fn map(&self) -> &Map { &self.map }
     pub fn player_id(&self) -> Id<Creature> { self.player_id }
 
+    pub fn check_action(&self, action: &Action) -> bool {
+        let mut check = self.clone();
+        check.logging = false;
+        let result = check.execute(&Meta::new(action.clone()));
+        // First event is always the originating action
+        match result[0].data {
+            Event::Failed { .. } => return false,
+            _ => return true,
+        }
+    }
+
     // Mutators
 
     pub fn execute(&mut self, action: &Meta<Action>) -> Vec<Meta<Event>> {
@@ -108,7 +119,7 @@ impl World {
         skip: &HashSet<TriggerId>,
         out: &mut Vec<Meta<Event>>,
     ) {
-        let event = self.resolve_mods(action);
+        let event = self.resolve_with_mods(action);
         out.push(event.clone());
         let mut trigger_ids = self.trigger_order();
         trigger_ids.reverse();
@@ -134,7 +145,7 @@ impl World {
         self.triggers.map().keys().cloned().collect()
     }
 
-    fn resolve_mods(&mut self, action: &Meta<Action>) -> Meta<Event> {
+    fn resolve_with_mods(&mut self, action: &Meta<Action>) -> Meta<Event> {
         clog!(self, "ACTION: {:?}", action);
         let mut modded = action.clone();
         for (id, m) in self.mods.iter_mut() {
@@ -269,15 +280,7 @@ mod wasm {
 
         pub fn checkSpendAP(&self, creature_id: u32, ap: i32) -> bool {
             let id: Id<Creature> = Id::synthesize(creature_id);
-            let mut check = self.clone();
-            check.logging = false;
-            let tag = "checkSpendAP";
-            let result = check.execute(&Meta::tagged(
-                Action::SpendAP { id, ap },
-                &[tag],
-            ));
-
-            unimplemented!()
+            return self.check_action(&Action::SpendAP { id, ap });
         }
     
         // Mutators

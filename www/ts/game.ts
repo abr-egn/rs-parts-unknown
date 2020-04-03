@@ -9,14 +9,13 @@ export class Game {
     private _world: World;
     private _stack: Stack;
     private _render: Render;
-    constructor(
-        private _index: RefObject<Index>,
-    ) {
+    constructor(private _index: RefObject<Index>) {
         this._world = new World();
         this._stack = new Stack();
         this._render = new Render(
             document.getElementById("mainCanvas") as HTMLCanvasElement,
             this._world, this._stack);
+        this._index.current!.setGame(this);
     }
 
     // Accessors
@@ -38,6 +37,10 @@ export class Game {
     }
 
     // Mutators
+
+    set index(value: RefObject<Index>) {
+        this._index = value;
+    }
 
     updateWorld(world: World) {
         this._world = world;

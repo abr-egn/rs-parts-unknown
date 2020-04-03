@@ -1,4 +1,5 @@
 import {Hex} from "../wasm";
+import {Game} from "./game";
 
 export interface StateUI {
     active: boolean,
@@ -40,6 +41,7 @@ export type StateKey<T extends StateUI> = {
 
 export class Stack {
     private _stack: State[] = [];
+
     push(state: State) {
         console.log("PUSH: %s", state.constructor.name);
         this._top()?._onDeactivated();
