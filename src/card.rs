@@ -116,6 +116,8 @@ impl Walk {
 mod wasm {
     use crate::wasm;
 
+    use serde_wasm_bindgen::from_value;
+
     use super::*;
 
     #[wasm_bindgen]
@@ -127,8 +129,8 @@ mod wasm {
         #[wasm_bindgen(getter = apCost)]
         pub fn ap_cost(&self) -> i32 { self.ap_cost }
         #[wasm_bindgen(js_name = startPlay)]
-        pub fn js_start_play(&self, world: &wasm::World, source: u32) -> wasm::Behavior {
-            let id: Id<Creature> = Id::synthesize(source);
+        pub fn js_start_play(&self, world: &wasm::World, source: JsValue) -> wasm::Behavior {
+            let id: Id<Creature> = from_value(source).unwrap();
             wasm::Behavior::new(self.start_play(&world.wrapped(), &id))
         }
     }

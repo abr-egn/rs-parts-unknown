@@ -5,7 +5,7 @@ export interface Hex {
 
 export interface Tile {
     space: Space,
-    creature: number,
+    creature?: number,
 }
 
 export type Space = "Empty" | "Wall";
