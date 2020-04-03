@@ -33,16 +33,14 @@ impl World {
         let mut mods: IdMap<Box<dyn Mod>> = IdMap::new();
         mods.add(Box::new(ModDebugTag));
         let mut creatures = IdMap::new();
-        let player = creature::Player::new(vec![Walk::card()]);
-        let pc_id = creatures.add(Creature::new(Kind::Player(player)));
+        let pc_id = creatures.add(make_player());
         let mut map = Map::new();
         map.place_at(pc_id, hex::ORIGIN).unwrap();
-        let enemy_id = creatures.add(Creature::new(Kind::NPC(
-            creature::NPC {
-                move_range: 3,
-                attack_range: 1,
-            }
-        )));
+        let npc = Kind::NPC(creature::NPC {
+            move_range: 3,
+            attack_range: 1,
+        });
+        let enemy_id = creatures.add(Creature::new(npc, &[]));
         map.place_at(enemy_id, Hex { x: -4, y: 1 }).unwrap();
         World {
             map: map,
@@ -190,6 +188,17 @@ impl World {
     }
 }
 
+fn make_player() -> Creature {
+    let player = creature::Player::new(vec![Walk::card()]);
+    let part = creature::Part {
+        cards: vec![Walk::card()],
+        ap: 3,
+    };
+    let mut pc = Creature::new(Kind::Player(player), &[part]);
+    pc.fill_ap();
+    pc
+}
+
 #[derive(Clone, Debug)]
 struct ModDebugTag;
 
@@ -205,7 +214,7 @@ impl Mod for ModDebugTag {
 mod wasm {
     use js_sys::Array;
 
-    use crate::display;
+    use crate::wasm;
 
     use super::*;
 
@@ -227,14 +236,14 @@ mod wasm {
             self.map.tiles().iter()
                 .map(|(h, t)| {
                     let tuple = Array::new();
-                    tuple.push(&JsValue::from(display::Hex::new(*h)));
+                    tuple.push(&JsValue::from(wasm::Hex::new(*h)));
                     tuple.push(&JsValue::from(t.clone()));
                     tuple
                 })
                 .collect()
         }
     
-        pub fn getTile(&self, hex: &display::Hex) -> Option<Tile> {
+        pub fn getTile(&self, hex: &wasm::Hex) -> Option<Tile> {
             self.map.tiles().get(&Hex { x: hex.x, y: hex.y }).cloned()
         }
     
@@ -243,7 +252,7 @@ mod wasm {
                 .map(|(id, hex)| {
                     let tuple = Array::new();
                     tuple.push(&JsValue::from(id.value()));
-                    tuple.push(&JsValue::from(display::Hex::new(*hex)));
+                    tuple.push(&JsValue::from(wasm::Hex::new(*hex)));
                     tuple
                 })
                 .collect()
@@ -253,10 +262,10 @@ mod wasm {
             self.creatures.map().get(&Id::synthesize(id)).cloned()
         }
 
-        pub fn getCreatureHex(&self, id: u32) -> Option<display::Hex> {
+        pub fn getCreatureHex(&self, id: u32) -> Option<wasm::Hex> {
             self.map.creatures().get(&Id::synthesize(id))
                 .cloned()
-                .map(display::Hex::new)
+                .map(wasm::Hex::new)
         }
     
         pub fn getCreatureRange(&self, id: u32) -> Array /* Hex[] */ {
@@ -273,7 +282,7 @@ mod wasm {
                 None => return Array::new(),
             };
             self.map.range_from(*start, range).into_iter()
-                .map(display::Hex::new)
+                .map(wasm::Hex::new)
                 .map(JsValue::from)
                 .collect()
         }
@@ -287,7 +296,7 @@ mod wasm {
     
         pub fn npcTurn(&mut self) -> Array /* Event[] */ {
             self.npc_turn().into_iter()
-                .map(display::Event::new)
+                .map(wasm::Event::new)
                 .map(JsValue::from)
                 .collect()
         }

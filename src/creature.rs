@@ -6,27 +6,38 @@ use crate::id_map::IdMap;
 #[wasm_bindgen]
 #[derive(Debug, Clone)]
 pub struct Creature {
-    kind: Kind,
-    parts: IdMap<Part>,
-    cur_ap: i32,
+    #[wasm_bindgen(skip)]
+    pub kind: Kind,
+    #[wasm_bindgen(skip)]
+    pub parts: IdMap<Part>,
+    #[wasm_bindgen(skip)]
+    pub cur_ap: i32,
 }
 
 impl Creature {
-    pub fn new(kind: Kind) -> Self {
-        Creature { kind, parts: IdMap::new(), cur_ap: 0 }
+    pub fn new(kind: Kind, parts: &[Part]) -> Self {
+        let mut pids = IdMap::new();
+        for part in parts {
+            pids.add(part.clone());
+        }
+        Creature { kind, parts: pids, cur_ap: 0 }
     }
 
     pub fn kind(&self) -> &Kind { &self.kind }
 
+    pub fn parts(&self) -> &IdMap<Part> { &self.parts }
+
     pub fn cards(&self) -> impl Iterator<Item=&Card> {
         self.parts.map().values()
-            .flat_map(|part| part.cards())
+            .flat_map(|part| part.cards.iter())
     }
 
     pub fn cur_ap(&self) -> i32 { self.cur_ap }
 
     pub fn max_ap(&self) -> i32 {
-        self.parts.map().values().fold(0, |sum, part| sum + part.ap())
+        self.parts.map().values()
+            .map(|part| part.ap)
+            .sum()
     }
 
     pub fn fill_ap(&mut self) {
@@ -72,8 +83,10 @@ pub struct NPC {
 #[wasm_bindgen]
 #[derive(Debug, Clone)]
 pub struct Part {
-    cards: Vec<Card>,
-    ap: i32,
+    #[wasm_bindgen(skip)]
+    pub cards: Vec<Card>,
+    #[wasm_bindgen(readonly)]
+    pub ap: i32,
     /*
     power: i32,
     max_hp: i32,
@@ -82,14 +95,6 @@ pub struct Part {
     tags: HashSet<PartTag>,
     joints: Vec<Joint>,
     */
-}
-
-impl Part {
-    pub fn new(cards: Vec<Card>, ap: i32) -> Self {
-        Part { cards, ap }
-    }
-    pub fn cards(&self) -> &[Card] { &self.cards }
-    pub fn ap(&self) -> i32 { self.ap }
 }
 
 /*
@@ -112,6 +117,7 @@ mod wasm {
 
     use super::*;
 
+    #[allow(non_snake_case)]
     #[wasm_bindgen]
     impl Creature {
         #[wasm_bindgen(getter)]
@@ -128,6 +134,10 @@ mod wasm {
                 _ => None,
             }
         }
+        #[wasm_bindgen(getter)]
+        pub fn curAP(&self) -> i32 { self.cur_ap() }
+        #[wasm_bindgen(getter)]
+        pub fn maxAP(&self) -> i32 { self.max_ap() }
     }
 
     #[allow(non_snake_case)]

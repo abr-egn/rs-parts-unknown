@@ -1,10 +1,10 @@
 mod card;
 mod creature;
-mod display;
 mod error;
 mod event;
 mod id_map;
 mod map;
+mod wasm;
 mod world;
 
 use log::{Level, info};
