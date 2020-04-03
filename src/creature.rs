@@ -1,9 +1,6 @@
-use wasm_bindgen::prelude::*;
-
 use crate::card::Card;
 use crate::id_map::IdMap;
 
-#[wasm_bindgen]
 #[derive(Debug, Clone)]
 pub struct Creature {
     #[wasm_bindgen(skip)]
