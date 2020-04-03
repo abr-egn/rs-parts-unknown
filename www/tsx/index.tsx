@@ -12,7 +12,6 @@ export function index(): [JSX.Element, React.RefObject<Index>] {
 }
 
 interface IndexState {
-  game?: Game,
   stack: Map<StateKey<any>, any>,
 }
 
@@ -32,35 +31,21 @@ export class Index extends React.Component<{}, IndexState> {
         draft.stack.set(key, produce(draft.stack.get(key), update));
       });
     })
-    /*
-    this.setState(produce((draft: IndexState) => {
-      draft.stack.set(key, produce(draft.stack.get(key), update));
-    }));
-    */
-  }
-
-  setGame(game: Game) {
-    this.setState((prev: IndexState) => {
-      return produce(prev, (draft: IndexState) => {
-        draft.game = game;
-      });
-    });
   }
 
   cancelPlay() {
-    this.state.game!.stack.pop();
+    window.game!.stack.pop();
   }
 
   render() {
     const base = this.state.stack.get(States.Base);
     const play = this.state.stack.get(States.PlayCard);
-    const left = (this.state.game &&
+    const left = (window.game &&
       <div id="leftSide" className="side">
         <CardList
           active={base?.active}
           cards={base?.cards || []}
-          creatureId={this.state.game.world.playerId}
-          game={this.state.game}
+          creatureId={window.game.world.playerId}
         />
         {play?.active && <div>
           <div>Playing: {play.card.name}</div>
@@ -68,9 +53,9 @@ export class Index extends React.Component<{}, IndexState> {
         </div>}
       </div>
     );
-    const right = (this.state.game &&
+    const right = (window.game &&
       <div className="side">
-        <EndTurn active={base?.active} game={this.state.game}/>
+        <EndTurn active={base?.active}/>
       </div>
     );
     return (
@@ -85,7 +70,6 @@ export class Index extends React.Component<{}, IndexState> {
 
 interface EndTurnProps {
   active: boolean,
-  game: Game,
 };
 class EndTurn extends React.Component<EndTurnProps, {}> {
   constructor(props: EndTurnProps) {
@@ -93,7 +77,7 @@ class EndTurn extends React.Component<EndTurnProps, {}> {
     this.onClick = this.onClick.bind(this);  // JS `this` is still terrible
   }
   onClick() {
-    this.props.game.stack.push(new States.EndTurn());
+    window.game.stack.push(new States.EndTurn());
   }
   render() {
     return <button onClick={this.onClick} disabled={!this.props.active}>End Turn</button>
@@ -104,14 +88,13 @@ interface CardListProps {
   active: boolean,
   cards: Card[],
   creatureId: number,
-  game: Game,
 };
 class CardList extends React.Component<CardListProps, {}> {
   onClick(card: Card) {
-    this.props.game.stack.push(new States.PlayCard(card));
+    window.game.stack.push(new States.PlayCard(card));
   }
   canPlay(card: Card): boolean {
-    const world = this.props.game.world;
+    const world = window.game.world;
     return world.checkSpendAP(this.props.creatureId, card.apCost);
   }
   render() {

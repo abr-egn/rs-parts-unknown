@@ -19,6 +19,8 @@ function main() {
 
   const game = new Game(ref);
   window.game = game;
+  ref.current!.forceUpdate();
+
   game.stack.push(new Base());
 }
 

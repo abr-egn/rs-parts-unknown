@@ -15,7 +15,6 @@ export class Game {
         this._render = new Render(
             document.getElementById("mainCanvas") as HTMLCanvasElement,
             this._world, this._stack);
-        this._index.current!.setGame(this);
     }
 
     // Accessors
