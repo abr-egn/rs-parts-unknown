@@ -150,6 +150,12 @@ pub struct XCreature {
     wrapped: Ref<world::World, Creature>,
 }
 
+impl Drop for XCreature {
+    fn drop(&mut self) {
+        info!("XCreature dropped");
+    }
+}
+
 #[wasm_bindgen]
 pub struct Event {
     wrapped: event::Meta<event::Event>,
