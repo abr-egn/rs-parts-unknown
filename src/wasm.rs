@@ -48,7 +48,7 @@ impl World {
         to_value(&self.wrapped().player_id()).unwrap()
     }
 
-    pub fn getTiles(&self) -> Array /* [Hex, Tile][] */ {
+    pub fn _getTiles(&self) -> Array /* [Hex, Tile][] */ {
         self.wrapped().map().tiles().iter()
             .map(|(h, t)| {
                 let tuple = Array::new();

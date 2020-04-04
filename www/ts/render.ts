@@ -1,5 +1,6 @@
 import {World, Event} from "../wasm";
 import {Hex, Tile} from "./types";
+import "./types";
 
 const HEX_SIZE = 30;
 
