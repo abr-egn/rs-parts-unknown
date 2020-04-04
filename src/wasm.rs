@@ -1,5 +1,6 @@
 use hex::Hex;
 use js_sys::Array;
+use log::info;
 use serde::{Serialize, de::DeserializeOwned};
 use serde_wasm_bindgen::{from_value, to_value};
 use wasm_bindgen::prelude::*;

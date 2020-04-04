@@ -1,4 +1,4 @@
-import {World} from "../wasm";
+import {World, Creature, XCreature} from "../wasm";
 
 declare module "../wasm" {
     interface World {
@@ -7,6 +7,7 @@ declare module "../wasm" {
         getTile(hex: Hex): Tile | undefined;
         getCreatureMap(): [Id<Creature>, Hex][];
         getCreature(id: Id<Creature>): Creature | undefined;
+        getXCreature(id: Id<Creature>): XCreature | undefined;
         getCreatureHex(id: Id<Creature>): Hex | undefined;
         getCreatureRange(id: Id<Creature>): Hex[];
         checkSpendAP(id: Id<Creature>, ap: number): boolean;
@@ -20,10 +21,17 @@ World.prototype.getTiles = World.prototype._getTiles;
 World.prototype.getTile = World.prototype._getTile;
 World.prototype.getCreatureMap = World.prototype._getCreatureMap;
 World.prototype.getCreature = World.prototype._getCreature;
+World.prototype.getXCreature = World.prototype._getXCreature;
 World.prototype.getCreatureHex = World.prototype._getCreatureHex;
 World.prototype.getCreatureRange = World.prototype._getCreatureRange;
 World.prototype.checkSpendAP = World.prototype._checkSpendAP;
 World.prototype.npcTurn = World.prototype._npcTurn;
+
+const _oldWorldFree = World.prototype.free;
+World.prototype.free = function() {
+    // TODO
+    _oldWorldFree.bind(this)();
+}
 
 export interface Hex {
     x: number,
