@@ -1,4 +1,5 @@
 mod card;
+mod cell;
 mod creature;
 mod error;
 mod event;

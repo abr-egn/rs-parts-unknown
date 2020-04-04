@@ -20,7 +20,7 @@ fn from_js_value<T: DeserializeOwned>(js: JsValue) -> T {
 }
 
 #[wasm_bindgen]
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct World {
     wrapped: Rc<RefCell<world::World>>,
 }
@@ -34,8 +34,7 @@ impl World {
             wrapped: Rc::new(RefCell::new(world::World::new()))
         }
     }
-    #[wasm_bindgen(js_name = clone)]
-    pub fn js_clone(&self) -> Self {
+    pub fn clone(&self) -> Self {
         World {
             wrapped: Rc::new(RefCell::new(self.wrapped().clone()))
         }
@@ -133,6 +132,14 @@ impl World {
     pub fn wrapped(&self) -> Ref<world::World> { self.wrapped.borrow() }
     pub fn wrapped_mut(&mut self) -> RefMut<world::World> { self.wrapped.borrow_mut() }
 }
+
+/*
+#[wasm_bindgen]
+pub struct XCreature {
+    world: Rc<RefCell<world::World>>,
+    wrapped: Ref<Creature>,
+}
+*/
 
 #[wasm_bindgen]
 pub struct Event {
