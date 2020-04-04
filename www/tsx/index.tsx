@@ -1,10 +1,10 @@
 import produce from "immer";
 import * as React from "react";
 
-import {Card} from "../wasm";
-import {Game} from "../ts/game";
+import {Card, Creature} from "../wasm";
 import {StateKey, StateUI} from "../ts/stack";
 import * as States from "../ts/states";
+import {Id} from "../ts/types";
 
 export function index(): [JSX.Element, React.RefObject<Index>] {
     let ref = React.createRef<Index>();
@@ -87,7 +87,7 @@ class EndTurn extends React.Component<EndTurnProps, {}> {
 interface CardListProps {
   active: boolean,
   cards: Card[],
-  creatureId: number,
+  creatureId: Id<Creature>,
 };
 class CardList extends React.Component<CardListProps, {}> {
   onClick(card: Card) {

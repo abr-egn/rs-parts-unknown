@@ -1,6 +1,7 @@
 import {enableAllPlugins} from "immer";
 import * as ReactDOM from "react-dom";
 
+import "./types";
 import {Game} from "./game";
 import {Base} from "./states";
 import {index} from "../tsx/index";

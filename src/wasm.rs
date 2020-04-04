@@ -44,8 +44,8 @@ impl World {
     // Accessors
 
     #[wasm_bindgen(getter)]
-    pub fn playerId(&self) -> JsValue {
-        to_value(&self.wrapped().player_id()).unwrap()
+    pub fn _playerId(&self) -> JsValue {
+        to_js_value(&self.wrapped().player_id())
     }
 
     pub fn _getTiles(&self) -> Array /* [Hex, Tile][] */ {
@@ -59,13 +59,13 @@ impl World {
             .collect()
     }
 
-    pub fn getTile(&self, hex: JsValue) -> JsValue /* Tile | undefined */ {
+    pub fn _getTile(&self, hex: JsValue) -> JsValue /* Tile | undefined */ {
         self.wrapped().map().tiles()
             .get(&from_js_value::<Hex>(hex))
-            .map_or(JsValue::undefined(), |t| to_value(&t).unwrap())
+            .map_or(JsValue::undefined(), |t| to_js_value(&t))
     }
 
-    pub fn getCreatureMap(&self) -> Array /* [Id<Creature>, Hex][] */ {
+    pub fn _getCreatureMap(&self) -> Array /* [Id<Creature>, Hex][] */ {
         self.wrapped().map().creatures().iter()
             .map(|(id, hex)| {
                 let tuple = Array::new();
@@ -76,18 +76,18 @@ impl World {
             .collect()
     }
 
-    pub fn getCreature(&self, id: JsValue) -> Option<crate::creature::Creature> {
+    pub fn _getCreature(&self, id: JsValue) -> Option<crate::creature::Creature> {
         let id: Id<Creature> = from_js_value(id);
         self.wrapped().creatures().map().get(&id).cloned()
     }
 
-    pub fn getCreatureHex(&self, id: JsValue) -> JsValue /* Hex | undefined */ {
+    pub fn _getCreatureHex(&self, id: JsValue) -> JsValue /* Hex | undefined */ {
         let id: Id<Creature> = from_js_value(id);
         self.wrapped().map().creatures().get(&id)
             .map_or(JsValue::undefined(), to_js_value::<Hex>)
     }
 
-    pub fn getCreatureRange(&self, id: JsValue) -> Array /* Hex[] */ {
+    pub fn _getCreatureRange(&self, id: JsValue) -> Array /* Hex[] */ {
         let id: Id<Creature> = from_js_value(id);
         let wrapped = self.wrapped();
         let range = match wrapped.creatures().map().get(&id) {
@@ -107,14 +107,14 @@ impl World {
             .collect()
     }
 
-    pub fn checkSpendAP(&self, creature_id: JsValue, ap: i32) -> bool {
+    pub fn _checkSpendAP(&self, creature_id: JsValue, ap: i32) -> bool {
         let id: Id<Creature> = from_js_value(creature_id);
         return self.wrapped().check_action(&Action::SpendAP { id, ap });
     }
 
     // Mutators
 
-    pub fn npcTurn(&mut self) -> Array /* Event[] */ {
+    pub fn _npcTurn(&mut self) -> Array /* Event[] */ {
         self.wrapped_mut().npc_turn().into_iter()
             .map(Event::new)
             .map(JsValue::from)

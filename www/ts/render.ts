@@ -1,6 +1,5 @@
 import {World, Event} from "../wasm";
 import {Hex, Tile} from "./types";
-import "./types";
 
 const HEX_SIZE = 30;
 
@@ -36,13 +35,11 @@ export class Render {
         this._creaturePos.clear();
         let range: Hex[] = [];
         for (let [id, hex] of this._world.getCreatureMap()) {
-            this._creaturePos.set(id, hexToPixel(hex));
+            this._creaturePos.set(id.value, hexToPixel(hex));
             range = range.concat(this._world.getCreatureRange(id));
         }
         this._creatureRange = range;
     }
-
-    get world(): World { return this._world; }
 
     async animateEvents(events: Event[]) {
         for (let event of events) {
@@ -125,7 +122,7 @@ export class Render {
         this._ctx.translate(pos.x, pos.y);
         this._ctx.font = "30px sans-serif";
         this._ctx.fillStyle = "#FFFFFF";
-        const creature = this._world.getCreature(id);
+        const creature = this._world.getCreature({value: id});
         if (!creature) { throw "invalid id"; }
         var text = "X";
         if (creature.player) {
