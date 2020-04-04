@@ -28,15 +28,19 @@ World.prototype.getCreatureRange = World.prototype._getCreatureRange;
 World.prototype.checkSpendAP = World.prototype._checkSpendAP;
 World.prototype.npcTurn = World.prototype._npcTurn;
 
-World.prototype.getXCreature = function(id: Id<Creature>) {
-    const val = this._getXCreature(id);
-    if (val != undefined) {
-        if (this._toFree == undefined) {
-            this._toFree = [];
+World.prototype.getXCreature = wrapGet(World.prototype._getXCreature);
+
+function wrapGet<T extends (this: World, ...args: any[]) => any>(inner: T): (this: World, ...args: Parameters<T>) => ReturnType<T> {
+    return function(this: World, ...args: Parameters<T>): ReturnType<T> {
+        const val = inner.bind(this)(...args);
+        if (val != undefined) {
+            if (this._toFree == undefined) {
+                this._toFree = [];
+            }
+            this._toFree.push(val);
         }
-        this._toFree.push(val);
+        return val;
     }
-    return val;
 }
 
 const _oldWorldFree = World.prototype.free;
