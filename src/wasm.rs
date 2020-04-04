@@ -150,10 +150,23 @@ pub struct XCreature {
     wrapped: Ref<world::World, Creature>,
 }
 
-impl Drop for XCreature {
-    fn drop(&mut self) {
-        info!("XCreature dropped");
+#[wasm_bindgen]
+impl XCreature {
+    pub fn _player(&self) -> Option<XPlayer> {
+        use crate::creature::Kind;
+        let tmp = Ref::clone(&self.wrapped);
+        Ref::map_opt(tmp, |creature| {
+            match creature.kind {
+                Kind::Player(ref p) => Some(p),
+                _ => None,
+            }
+        }).map(|xp| XPlayer { wrapped: xp })
     }
+}
+
+#[wasm_bindgen]
+pub struct XPlayer {
+    wrapped: Ref<world::World, crate::creature::Player>,
 }
 
 #[wasm_bindgen]

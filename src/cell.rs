@@ -36,7 +36,7 @@ impl<T> RcCell<T> {
     }
     pub fn borrow(&self) -> Ref<T> {
         Ref {
-            track: RefTrack::new(&self).unwrap(),
+            track: RefTrack::new(&self.rc).unwrap(),
             ptr: self.rc.value.get(),
         }
     }
@@ -61,6 +61,12 @@ pub struct Ref<T, U=T> {
 }
 
 impl<T, U> Ref<T, U> {
+    pub fn clone(this: &Ref<T, U>) -> Ref<T, U> {
+        Ref {
+            track: RefTrack::new(&this.track.rc).unwrap(),
+            ptr: this.ptr,
+        }
+    }
     pub fn map<V, F>(this: Ref<T, U>, f: F) -> Ref<T, V>
         where F: FnOnce(&U) -> &V,
     {
@@ -84,12 +90,12 @@ struct RefTrack<T> {
 }
 
 impl<T> RefTrack<T> {
-    fn new(cell: &RcCell<T>) -> Option<RefTrack<T>> {
-        let b = cell.rc.borrow.get();
+    fn new(rc: &Rc<Inner<T>>) -> Option<RefTrack<T>> {
+        let b = rc.borrow.get();
         match b {
             Borrow::Ref { count } => {
-                cell.rc.borrow.set(Borrow::Ref { count: count+1 });
-                Some(RefTrack { rc: Rc::clone(&cell.rc) })
+                rc.borrow.set(Borrow::Ref { count: count+1 });
+                Some(RefTrack { rc: Rc::clone(rc) })
             }
             _ => None,
         }
