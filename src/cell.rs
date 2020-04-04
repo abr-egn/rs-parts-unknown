@@ -4,10 +4,12 @@ use std::{
     ops::{Deref, DerefMut},
 };
 
+#[derive(Debug)]
 pub struct RcCell<T> {
     rc: Rc<Inner<T>>,
 }
 
+#[derive(Debug)]
 struct Inner<T> {
     value: UnsafeCell<T>,
     borrow: Cell<Borrow>,
@@ -32,17 +34,17 @@ impl<T> RcCell<T> {
             borrow: Cell::new(Borrow::Ref { count: 0 }),
         })}
     }
-    pub fn borrow(&self) -> Ref<T, T> { self.borrow_as(|t| t) }
+    pub fn borrow(&self) -> Ref<T> { self.borrow_as(|t| t) }
     pub fn borrow_as<U, F: FnOnce(&T) -> &U>(&self, f: F) -> Ref<T, U> {
         Ref::new(&self, f).unwrap()
     }
-    pub fn borrow_mut(&self) -> RefMut<T, T> { self.borrow_mut_as(|t| t) }
+    pub fn borrow_mut(&self) -> RefMut<T> { self.borrow_mut_as(|t| t) }
     pub fn borrow_mut_as<U, F: FnOnce(&mut T) -> &mut U>(&self, f: F) -> RefMut<T, U> {
         RefMut::new(&self, f).unwrap()
     }
 }
 
-pub struct Ref<T, U> {
+pub struct Ref<T, U=T> {
     rc: Rc<Inner<T>>,
     ptr: *const U,
 }
@@ -80,7 +82,7 @@ impl<T, U> Deref for Ref<T, U> {
     fn deref(&self) -> &U { unsafe { &*self.ptr } }
 }
 
-pub struct RefMut<T, U> {
+pub struct RefMut<T, U=T> {
     rc: Rc<Inner<T>>,
     ptr: *mut U,
 }

@@ -1,18 +1,18 @@
-use std::cell::{Ref, RefCell, RefMut};
-use std::rc::Rc;
-
 use hex::Hex;
 use js_sys::Array;
 use serde::{Serialize, de::DeserializeOwned};
 use serde_wasm_bindgen::{from_value, to_value};
 use wasm_bindgen::prelude::*;
 
-use crate::card;
-use crate::creature::{Creature, Kind};
-use crate::event::{self, Action};
-use crate::id_map::Id;
-use crate::map::Tile;
-use crate::world;
+use crate::{
+    card,
+    cell::{RcCell, Ref, RefMut},
+    creature::{Creature, Kind},
+    event::{self, Action},
+    id_map::Id,
+    map::Tile,
+    world,
+};
 
 fn to_js_value<T: Serialize>(t: &T) -> JsValue { to_value(t).unwrap() }
 fn from_js_value<T: DeserializeOwned>(js: JsValue) -> T { 
@@ -22,7 +22,7 @@ fn from_js_value<T: DeserializeOwned>(js: JsValue) -> T {
 #[wasm_bindgen]
 #[derive(Debug)]
 pub struct World {
-    wrapped: Rc<RefCell<world::World>>,
+    wrapped: RcCell<world::World>,
 }
 
 #[allow(non_snake_case)]
@@ -31,12 +31,12 @@ impl World {
     #[wasm_bindgen(constructor)]
     pub fn new() -> Self {
         World {
-            wrapped: Rc::new(RefCell::new(world::World::new()))
+            wrapped: RcCell::new(world::World::new())
         }
     }
     pub fn clone(&self) -> Self {
         World {
-            wrapped: Rc::new(RefCell::new(self.wrapped().clone()))
+            wrapped: RcCell::new(self.wrapped().clone())
         }
     }
 
