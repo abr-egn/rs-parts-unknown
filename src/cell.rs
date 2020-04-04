@@ -72,7 +72,7 @@ impl<T, U> Drop for Ref<T, U> {
             Borrow::Ref { count } if count > 0 => {
                 self.rc.borrow.set(Borrow::Ref { count: count-1 });
             }
-            _ => panic!("Invalid borrow on ref drop: {:?}", b),
+            _ => panic!("Invalid borrow on Ref drop: {:?}", b),
         }
     }
 }
@@ -110,7 +110,7 @@ impl<T, U> Drop for RefMut<T, U> {
             Borrow::RefMut => {
                 self.rc.borrow.set(Borrow::Ref { count: 0 });
             }
-            _ => panic!("Invalid borrow on ref drop: {:?}", b),
+            _ => panic!("Invalid borrow on RefMut drop: {:?}", b),
         }
     }
 }
