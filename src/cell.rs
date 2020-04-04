@@ -17,7 +17,7 @@ struct Inner<T> {
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 enum Borrow {
-    Ref { count: isize },
+    Ref { count: usize },
     RefMut,
 }
 
@@ -41,6 +41,13 @@ impl<T> RcCell<T> {
     pub fn borrow_mut(&self) -> RefMut<T> { self.borrow_mut_as(|t| t) }
     pub fn borrow_mut_as<U, F: FnOnce(&mut T) -> &mut U>(&self, f: F) -> RefMut<T, U> {
         RefMut::new(&self, f).unwrap()
+    }
+    pub fn rc_count(&self) -> usize { Rc::strong_count(&self.rc) }
+    pub fn borrow_count(&self) -> Option<usize> {
+        match self.rc.borrow.get() {
+            Borrow::Ref { count } => Some(count),
+            Borrow::RefMut => None,
+        }
     }
 }
 

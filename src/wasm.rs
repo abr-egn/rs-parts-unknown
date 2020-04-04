@@ -39,6 +39,10 @@ impl World {
             wrapped: RcCell::new(self.wrapped().clone())
         }
     }
+    #[wasm_bindgen(getter)]
+    pub fn rcCount(&self) -> usize { self.wrapped.rc_count() }
+    #[wasm_bindgen(getter)]
+    pub fn borrowCount(&self) -> Option<usize> { self.wrapped.borrow_count() }
 
     // Accessors
 
