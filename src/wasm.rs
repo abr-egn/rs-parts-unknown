@@ -84,6 +84,13 @@ impl World {
         self.wrapped().creatures().map().get(&id).cloned()
     }
 
+    pub fn _getXCreature(&self, id: JsValue) -> Option<XCreature> {
+        let id: Id<Creature> = from_js_value(id);
+        Ref::map_opt(self.wrapped(),
+            |world| world.creatures().map().get(&id))
+            .map(|cref| XCreature { wrapped: cref })
+    }
+
     pub fn _getCreatureHex(&self, id: JsValue) -> JsValue /* Hex | undefined */ {
         let id: Id<Creature> = from_js_value(id);
         self.wrapped().map().creatures().get(&id)
@@ -137,13 +144,10 @@ impl World {
     pub fn wrapped_mut(&mut self) -> RefMut<world::World> { self.wrapped.borrow_mut() }
 }
 
-/*
 #[wasm_bindgen]
 pub struct XCreature {
-    world: Rc<RefCell<world::World>>,
-    wrapped: Ref<Creature>,
+    wrapped: Ref<world::World, Creature>,
 }
-*/
 
 #[wasm_bindgen]
 pub struct Event {

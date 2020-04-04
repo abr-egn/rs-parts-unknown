@@ -34,9 +34,11 @@ impl<T> RcCell<T> {
             borrow: Cell::new(Borrow::Ref { count: 0 }),
         })}
     }
-    pub fn borrow(&self) -> Ref<T> { self.borrow_as(|t| t) }
-    pub fn borrow_as<U, F: FnOnce(&T) -> &U>(&self, f: F) -> Ref<T, U> {
-        Ref::new(&self, f).unwrap()
+    pub fn borrow(&self) -> Ref<T> {
+        Ref {
+            track: RefTrack::new(&self).unwrap(),
+            ptr: self.rc.value.get(),
+        }
     }
     pub fn borrow_mut(&self) -> RefMut<T> { self.borrow_mut_as(|t| t) }
     pub fn borrow_mut_as<U, F: FnOnce(&mut T) -> &mut U>(&self, f: F) -> RefMut<T, U> {
@@ -51,28 +53,24 @@ impl<T> RcCell<T> {
     }
 }
 
-pub struct Ref<T, U=T> {
-    rc: Rc<Inner<T>>,
-    ptr: *const U,
+struct RefTrack<T> {
+    rc: Rc<Inner<T>>
 }
 
-impl<T, U> Ref<T, U> {
-    fn new<F: FnOnce(&T) -> &U>(cell: &RcCell<T>, f: F) -> Option<Ref<T, U>> {
+impl<T> RefTrack<T> {
+    fn new(cell: &RcCell<T>) -> Option<RefTrack<T>> {
         let b = cell.rc.borrow.get();
         match b {
             Borrow::Ref { count } => {
                 cell.rc.borrow.set(Borrow::Ref { count: count+1 });
-                Some(Ref {
-                    rc: Rc::clone(&cell.rc),
-                    ptr: f(unsafe { &*cell.rc.value.get() }),
-                })
+                Some(RefTrack { rc: Rc::clone(&cell.rc) })
             }
             _ => None,
         }
     }
 }
 
-impl<T, U> Drop for Ref<T, U> {
+impl<T> Drop for RefTrack<T> {
     fn drop(&mut self) {
         let b = self.rc.borrow.get();
         match b {
@@ -83,6 +81,31 @@ impl<T, U> Drop for Ref<T, U> {
         }
     }
 }
+
+pub struct Ref<T, U=T> {
+    track: RefTrack<T>,
+    ptr: *const U,
+}
+
+impl<T, U> Ref<T, U> {
+    pub fn map<V, F>(this: Ref<T, U>, f: F) -> Ref<T, V>
+        where F: FnOnce(&U) -> &V,
+    {
+        Ref {
+            track: this.track,
+            ptr: f(unsafe { &*this.ptr }),
+        }
+    }
+    pub fn map_opt<V, F>(this: Ref<T, U>, f: F) -> Option<Ref<T, V>>
+        where F: FnOnce(&U) -> Option<&V>,
+    {
+        f(unsafe { &*this.ptr }).map(|u| Ref {
+            track: this.track,
+            ptr: u,
+        })
+    }
+}
+
 
 impl<T, U> Deref for Ref<T, U> {
     type Target = U;
