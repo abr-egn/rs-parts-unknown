@@ -1,20 +1,26 @@
 use std::convert::TryInto;
-
 use hex::Hex;
-use wasm_bindgen::prelude::*;
+use crate::{
+    creature::Creature,
+    error::Error,
+    event::{self, Action, Event, Meta},
+    id_map::Id,
+    world::World,
+};
 
-use crate::creature::Creature;
-use crate::error::Error;
-use crate::event::{self, Action, Event, Meta};
-use crate::id_map::Id;
-use crate::world::World;
-
-#[wasm_bindgen]
 #[derive(Clone)]
 pub struct Card {
     name: String,
     ap_cost: i32,
     start_play: fn(&World, &Id<Creature>) -> Box<dyn Behavior>,
+}
+
+impl Card {
+    pub fn name(&self) -> &str { &self.name }
+    pub fn ap_cost(&self) -> i32 { self.ap_cost }
+    pub fn start_play(&self, world: &World, source: &Id<Creature>) -> Box<dyn Behavior> {
+        (self.start_play)(world, source)
+    }
 }
 
 impl std::fmt::Debug for Card {
@@ -23,13 +29,6 @@ impl std::fmt::Debug for Card {
             .field("name", &self.name)
             .field("ap_cost", &self.ap_cost)
             .finish()
-    }
-}
-
-impl Card {
-    pub fn name(&self) -> &str { &self.name }
-    pub fn start_play(&self, world: &World, source: &Id<Creature>) -> Box<dyn Behavior> {
-        (self.start_play)(world, source)
     }
 }
 
@@ -109,29 +108,6 @@ impl Walk {
             name: "Walk".into(),
             ap_cost: 1,
             start_play: |world, source| Walk::behavior(world, source, 2),
-        }
-    }
-}
-
-mod wasm {
-    use crate::wasm;
-
-    use serde_wasm_bindgen::from_value;
-
-    use super::*;
-
-    #[wasm_bindgen]
-    impl Card {
-        #[wasm_bindgen(js_name = clone)]
-        pub fn js_clone(&self) -> Card { self.clone() }
-        #[wasm_bindgen(getter = name)]
-        pub fn js_name(&self) -> String { self.name.clone() }
-        #[wasm_bindgen(getter = apCost)]
-        pub fn ap_cost(&self) -> i32 { self.ap_cost }
-        #[wasm_bindgen(js_name = startPlay)]
-        pub fn js_start_play(&self, world: &wasm::World, source: JsValue) -> wasm::Behavior {
-            let id: Id<Creature> = from_value(source).unwrap();
-            wasm::Behavior::new(self.start_play(&world.wrapped(), &id))
         }
     }
 }

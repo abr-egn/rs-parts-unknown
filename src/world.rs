@@ -188,11 +188,10 @@ impl World {
 }
 
 fn make_player() -> Creature {
-    let player = creature::Player::new(vec![Walk::card()]);
-    let part = creature::Part {
-        cards: vec![Walk::card()],
-        ap: 3,
-    };
+    let player = creature::Player {};
+    let mut cards = IdMap::new();
+    cards.add(Walk::card());
+    let part = creature::Part { cards, ap: 3 };
     let mut pc = Creature::new(Kind::Player(player), &[part]);
     pc.fill_ap();
     pc

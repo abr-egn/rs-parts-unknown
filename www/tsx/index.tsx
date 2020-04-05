@@ -1,7 +1,7 @@
 import produce from "immer";
 import * as React from "react";
 
-import {Card, Creature} from "../wasm";
+import {Card, Creature, World} from "../wasm";
 import {StateKey, StateUI} from "../ts/stack";
 import * as States from "../ts/states";
 import {Id} from "../ts/types";
@@ -13,6 +13,7 @@ export function index(): [JSX.Element, React.RefObject<Index>] {
 
 interface IndexState {
   stack: Map<StateKey<any>, any>,
+  world?: World,
 }
 
 // <params, state>
@@ -33,18 +34,31 @@ export class Index extends React.Component<{}, IndexState> {
     })
   }
 
+  setWorld(world: World) {
+    this.setState(produce((draft: IndexState) => {
+      draft.world = world;
+    }));
+  }
+
+  getStack<T extends StateUI>(key: StateKey<T>): T {
+    return this.state.stack.get(key);
+  }
+
   cancelPlay() {
     window.game!.stack.pop();
   }
 
   render() {
-    const base = this.state.stack.get(States.Base);
-    const play = this.state.stack.get(States.PlayCard);
+    const base = this.getStack(States.Base);
+    const play = this.getStack(States.PlayCard);
+    const world = this.state.world;
+    const cards = world &&
+      world.getCreature(world.playerId)?.getCards();
     const left = (window.game &&
       <div id="leftSide" className="side">
         <CardList
           active={base?.active}
-          cards={base?.cards || []}
+          cards={cards || []}
           creatureId={window.game.world.playerId}
         />
         {play?.active && <div>

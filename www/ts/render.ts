@@ -125,7 +125,7 @@ export class Render {
         const creature = this._world.getCreature({value: id});
         if (!creature) { throw "invalid id"; }
         var text = "X";
-        if (creature.player) {
+        if (creature.getPlayer()) {
             text = "P";
         }
         const measure = this._ctx.measureText(text);

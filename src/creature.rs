@@ -1,16 +1,13 @@
-use wasm_bindgen::prelude::*;
+use serde::Serialize;
+use crate::{
+    card::Card,
+    id_map::{Id, IdMap},
+};
 
-use crate::card::Card;
-use crate::id_map::IdMap;
-
-#[wasm_bindgen]
 #[derive(Debug, Clone)]
 pub struct Creature {
-    #[wasm_bindgen(skip)]
     pub kind: Kind,
-    #[wasm_bindgen(skip)]
     pub parts: IdMap<Part>,
-    #[wasm_bindgen(skip)]
     pub cur_ap: i32,
 }
 
@@ -27,9 +24,12 @@ impl Creature {
 
     pub fn parts(&self) -> &IdMap<Part> { &self.parts }
 
-    pub fn cards(&self) -> impl Iterator<Item=&Card> {
-        self.parts.map().values()
-            .flat_map(|part| part.cards.iter())
+    pub fn cards(&self) -> impl Iterator<Item=(Id<Part>, Id<Card>, &Card)> {
+        self.parts.map().iter()
+            .flat_map(|(&id, part)|
+                part.cards.map().iter()
+                    .map(move |(&cid, card)| (id, cid, card))
+            )
     }
 
     pub fn cur_ap(&self) -> i32 { self.cur_ap }
@@ -57,35 +57,18 @@ pub enum Kind {
     NPC(NPC),
 }
 
-#[wasm_bindgen]
 #[derive(Debug, Clone)]
-pub struct Player {
-    cards: Vec<Card>,
-}
+pub struct Player { }
 
-impl Player {
-    pub fn new(cards: Vec<Card>) -> Self {
-        Player { cards }
-    }
-
-    pub fn cards(&self) -> &[Card] { &self.cards }
-}
-
-#[wasm_bindgen]
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct NPC {
-    #[wasm_bindgen(skip)]
     pub move_range: i32,
-    #[wasm_bindgen(skip)]
     pub attack_range: i32,
 }
 
-#[wasm_bindgen]
 #[derive(Debug, Clone)]
 pub struct Part {
-    #[wasm_bindgen(skip)]
-    pub cards: Vec<Card>,
-    #[wasm_bindgen(readonly)]
+    pub cards: IdMap<Card>,
     pub ap: i32,
     /*
     power: i32,
@@ -110,52 +93,3 @@ pub struct Joint {
     attached: Option<Id<Part>>,
 }
 */
-
-mod wasm {
-    use js_sys::Array;
-    use wasm_bindgen::prelude::*;
-
-    use super::*;
-
-    #[allow(non_snake_case)]
-    #[wasm_bindgen]
-    impl Creature {
-        #[wasm_bindgen(getter)]
-        pub fn player(&self) -> Option<Player> {
-            match &self.kind {
-                Kind::Player(p) => Some(p.clone()),
-                _ => None,
-            }
-        }
-        #[wasm_bindgen(getter)]
-        pub fn npc(&self) -> Option<NPC> {
-            match &self.kind {
-                Kind::NPC(c) => Some(c.clone()),
-                _ => None,
-            }
-        }
-        #[wasm_bindgen(getter)]
-        pub fn curAP(&self) -> i32 { self.cur_ap() }
-        #[wasm_bindgen(getter)]
-        pub fn maxAP(&self) -> i32 { self.max_ap() }
-    }
-
-    #[allow(non_snake_case)]
-    #[wasm_bindgen]
-    impl NPC {
-        #[wasm_bindgen(getter = moveRange)]
-        pub fn move_range(&self) -> i32 { self.move_range }
-        #[wasm_bindgen(getter = attackRange)]
-        pub fn attack_range(&self) -> i32 { self.attack_range }
-    }
-
-    #[wasm_bindgen]
-    impl Player {
-        #[wasm_bindgen(getter = cards)]
-        pub fn js_cards(&self) -> Array /* Card[] */ {
-            self.cards().iter().cloned()
-                .map(JsValue::from)
-                .collect()
-        }
-    }
-}

@@ -1,23 +1,12 @@
-import {Behavior, Card, Event, World} from "../wasm";
+import {Behavior, Event, World, Card} from "../wasm";
 import {State, StateUI} from "./stack";
 import {Hex} from "./types";
 
-export interface BaseUI extends StateUI { cards: Card[] }
-export class Base extends State<BaseUI> {
-    constructor() {
-        super({
-            cards: []
-        })
-        const world = window.game.world;
-        const cards = world.getCreature(world.playerId)!.player!.cards;
-        this.updateUI((draft) => {
-            draft.cards = cards;
-        });
-    }
+export class Base extends State {
 }
 
 export interface PlayCardUI extends StateUI { card: Card }
-export class PlayCard extends State {
+export class PlayCard extends State<PlayCardUI> {
     private _behavior: Behavior;
     constructor(private _card: Card) {
         super({card: _card});

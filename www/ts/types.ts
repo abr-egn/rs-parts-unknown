@@ -1,4 +1,6 @@
-import {World, Creature, XPlayer, XCreature} from "../wasm";
+import {World, Creature, Card} from "../wasm";
+
+/* World */
 
 declare module "../wasm" {
     interface World {
@@ -7,19 +9,11 @@ declare module "../wasm" {
         getTile(hex: Hex): Tile | undefined;
         getCreatureMap(): [Id<Creature>, Hex][];
         getCreature(id: Id<Creature>): Creature | undefined;
-        getXCreature(id: Id<Creature>): XCreature | undefined;
         getCreatureHex(id: Id<Creature>): Hex | undefined;
         getCreatureRange(id: Id<Creature>): Hex[];
         checkSpendAP(id: Id<Creature>, ap: number): boolean;
+
         npcTurn(): Event[];
-
-        _toFree: any[] | undefined;
-    }
-
-    interface XCreature {
-        readonly player: XPlayer | undefined;
-
-        _toFree: any[] | undefined;
     }
 }
 
@@ -30,19 +24,11 @@ Object.defineProperty(World.prototype, "playerId", {
 World.prototype.getTiles = World.prototype._getTiles;
 World.prototype.getTile = World.prototype._getTile;
 World.prototype.getCreatureMap = World.prototype._getCreatureMap;
-World.prototype.getCreature = World.prototype._getCreature;
 World.prototype.getCreatureHex = World.prototype._getCreatureHex;
 World.prototype.getCreatureRange = World.prototype._getCreatureRange;
 World.prototype.checkSpendAP = World.prototype._checkSpendAP;
 World.prototype.npcTurn = World.prototype._npcTurn;
-World.prototype.getXCreature = wrapGet(World.prototype._getXCreature);
-
-XCreature.prototype.free = wrapFree(XCreature.prototype.free);
-Object.defineProperty(XCreature.prototype, "player", {
-    get: function() {
-        return wrapGet(XCreature.prototype._player).bind(this)();
-    }
-});
+World.prototype.getCreature = wrapGet(World.prototype._getCreature);
 
 export interface Hex {
     x: number,
@@ -59,6 +45,47 @@ export type Space = "Empty" | "Wall";
 export interface Id<_> {
     value: number,
 }
+
+/* Creature */
+
+declare module "../wasm" {
+    interface Creature {
+        getPlayer(): Player | undefined;
+        getNPC(): NPC | undefined;
+        getCards(): Card[];
+
+        _toFree: any[] | undefined;
+    }
+}
+
+Creature.prototype.free = wrapFree(Creature.prototype.free);
+Creature.prototype.getPlayer = wrapGet(Creature.prototype._player);
+Creature.prototype.getNPC = Creature.prototype._npc;
+Creature.prototype.getCards = function() {
+    const values = this._cards();
+    if (this._toFree == undefined) {
+        this._toFree = [];
+    }
+    this._toFree.push(...values);
+    return values;
+}
+
+export interface NPC {
+    move_range: number,
+    attack_range: number,
+}
+
+/* Card */
+
+declare module "../wasm" {
+    interface Card {
+        startPlay(world: World, source: Id<Creature>): Behavior;
+    }
+}
+
+Card.prototype.startPlay = wrapGet(Card.prototype._startPlay);
+
+/* Child object tracking machinery */
 
 interface FreeTracker {
     _toFree: any[] | undefined;

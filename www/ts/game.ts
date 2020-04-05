@@ -16,6 +16,7 @@ export class Game {
         this._render = new Render(
             document.getElementById("mainCanvas") as HTMLCanvasElement,
             this._world, this._stack);
+        this._index.current!.setWorld(this._world);
     }
 
     // Accessors
@@ -46,6 +47,7 @@ export class Game {
         this._world.free();
         this._world = world;
         this._render.world = this._world;
+        this._index.current!.setWorld(this._world);
     }
 
     updateUI<T extends StateUI>(key: StateKey<T>, update: (draft: T) => void) {
