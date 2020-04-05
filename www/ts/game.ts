@@ -1,22 +1,36 @@
 import {RefObject} from "react";
+import * as ReactDOM from "react-dom";
 
 import {World} from "../wasm";
 import {Render} from "./render";
 import {Stack, StateKey, StateUI} from "./stack";
-import {Index} from "../tsx/index";
+import {Index, index} from "../tsx/index";
 import {Hex, Tile} from "./types";
+
+declare global {
+    interface Window {
+        game: Game;
+    }
+}
 
 export class Game {
     private _world: World;
     private _stack: Stack;
+    private _index: RefObject<Index>;
     private _render: Render;
-    constructor(private _index: RefObject<Index>) {
+    constructor() {
         this._world = new World();
         this._stack = new Stack();
+
+        window.game = this;
+
+        let [content, ref] = index();
+        ReactDOM.render(content, document.getElementById("root"));
+        this._index = ref;
+
         this._render = new Render(
             document.getElementById("mainCanvas") as HTMLCanvasElement,
             this._world, this._stack);
-        this._index.current!.setWorld(this._world);
     }
 
     // Accessors

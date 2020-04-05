@@ -5,6 +5,7 @@ import {Card, Creature, World} from "../wasm";
 import {StateKey, StateUI} from "../ts/stack";
 import * as States from "../ts/states";
 import {Id} from "../ts/types";
+import {Game} from "../ts/game";
 
 export function index(): [JSX.Element, React.RefObject<Index>] {
     let ref = React.createRef<Index>();
@@ -13,7 +14,7 @@ export function index(): [JSX.Element, React.RefObject<Index>] {
 
 interface IndexState {
   stack: Map<StateKey<any>, any>,
-  world?: World,
+  world: World,
 }
 
 // <params, state>
@@ -22,6 +23,7 @@ export class Index extends React.Component<{}, IndexState> {
     super(props);
     this.state = {
       stack: new Map(),
+      world: window.game.world,
     };
     this.cancelPlay = this.cancelPlay.bind(this);
   }
@@ -45,38 +47,31 @@ export class Index extends React.Component<{}, IndexState> {
   }
 
   cancelPlay() {
-    window.game!.stack.pop();
+    window.game.stack.pop();
   }
 
   render() {
     const base = this.getStack(States.Base);
     const play = this.getStack(States.PlayCard);
     const world = this.state.world;
-    const cards = world &&
-      world.getCreature(world.playerId)?.getCards();
-    const left = (window.game &&
-      <div id="leftSide" className="side">
-        <CardList
-          active={base?.active}
-          cards={cards || []}
-          creatureId={window.game.world.playerId}
-        />
-        {play?.active && <div>
-          <div>Playing: {play.card.name}</div>
-          <div><button onClick={this.cancelPlay}>Cancel</button></div>
-        </div>}
-      </div>
-    );
-    const right = (window.game &&
-      <div className="side">
-        <EndTurn active={base?.active}/>
-      </div>
-    );
+    const cards = world.getCreature(world.playerId)?.getCards();
     return (
       <div className="center">
-        {left}
+        <div id="leftSide" className="side">
+          <CardList
+            active={base?.active}
+            cards={cards || []}
+            creatureId={window.game.world.playerId}
+          />
+          {play?.active && <div>
+            <div>Playing: {play.card.name}</div>
+            <div><button onClick={this.cancelPlay}>Cancel</button></div>
+          </div>}
+        </div>
         <canvas id="mainCanvas" width="800" height="800"></canvas>
-        {right}
+        <div className="side">
+          <EndTurn active={base?.active}/>
+        </div>
       </div>
     );
   }
