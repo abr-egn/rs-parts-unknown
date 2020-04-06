@@ -1,11 +1,10 @@
 import produce from "immer";
 import * as React from "react";
 
-import {Card, Creature, World} from "../wasm";
+import {World} from "../wasm";
 import {StateKey, StateUI} from "../ts/stack";
 import * as States from "../ts/states";
-import {Id} from "../ts/types";
-import {Game} from "../ts/game";
+import {Id, Card, Creature} from "../ts/types";
 
 export function index(): [JSX.Element, React.RefObject<Index>] {
     let ref = React.createRef<Index>();
@@ -54,13 +53,19 @@ export class Index extends React.Component<{}, IndexState> {
     const base = this.getStack(States.Base);
     const play = this.getStack(States.PlayCard);
     const world = this.state.world;
+    let cards: Card[] = [];
+    const player = world.getCreature(world.playerId);
+    if (player) {
+      for (let part of player.parts.values()) {
+        cards.push(...part.cards.values());
+      }
+    }
     return (
       <div className="center">
         <div id="leftSide" className="side">
           <CardList
             active={base?.active}
-            world={world}
-            creatureId={window.game.world.playerId}
+            cards={cards}
           />
           {play?.active && <div>
             <div>Playing: {play.card.name}</div>
@@ -94,8 +99,7 @@ class EndTurn extends React.Component<EndTurnProps, {}> {
 
 interface CardListProps {
   active: boolean,
-  world: World,
-  creatureId: Id<Creature>,
+  cards: Card[],
 };
 class CardList extends React.Component<CardListProps, {}> {
   onClick(card: Card) {
@@ -103,11 +107,9 @@ class CardList extends React.Component<CardListProps, {}> {
   }
   canPlay(card: Card): boolean {
     const world = window.game.world;
-    return world.checkSpendAP(this.props.creatureId, card.apCost);
+    return world.checkSpendAP(card.creatureId, card.apCost);
   }
   render() {
-    /*
-    const cards = world.getCreature(world.playerId)?.getCards();
     const list = this.props.cards.map((card) =>
       <li key={card.name}>
         <button
@@ -119,7 +121,5 @@ class CardList extends React.Component<CardListProps, {}> {
       </li>
     );
     return <ul>{list}</ul>;
-    */
-   return null;
   }
 }

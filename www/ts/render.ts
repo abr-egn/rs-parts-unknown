@@ -1,5 +1,5 @@
-import {World, Creature} from "../wasm";
-import {Hex, Tile, Event, Id} from "./types";
+import {World} from "../wasm";
+import {Hex, Tile, Event, Id, Creature} from "./types";
 
 const HEX_SIZE = 30;
 
@@ -124,15 +124,15 @@ export class Render {
         this._ctx.translate(pos.x, pos.y);
         this._ctx.font = "30px sans-serif";
         this._ctx.fillStyle = "#FFFFFF";
-        const text = this._world.withCreature(id, (creature) => {
-            if (!creature) {
-                return "???";
-            } else if (creature?.getPlayer()) {
-                return "P";
+        let text = "???";
+        let creature;
+        if (creature = this._world.getCreature(id)) {
+            if (creature.kind.Player) {
+                text = "P";
             } else {
-                return "X";
+                text = "X";
             }
-        });
+        }
         const measure = this._ctx.measureText(text);
         const height = measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent;
         this._ctx.fillText(text, -measure.width / 2, height / 2);

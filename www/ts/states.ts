@@ -1,34 +1,44 @@
-import {Behavior, World, Card} from "../wasm";
+import {Behavior, World} from "../wasm";
 import {State, StateUI} from "./stack";
-import {Hex, Event} from "./types";
+import {Hex, Event, Card} from "./types";
 
 export class Base extends State {
 }
 
 export interface PlayCardUI extends StateUI { card: Card }
 export class PlayCard extends State<PlayCardUI> {
-    private _behavior: Behavior;
+    private _behavior?: Behavior;
     constructor(private _card: Card) {
         super({card: _card});
+    }
+
+    onPushed() {
         const world = window.game.world;
-        this._behavior = this._card.startPlay(world, world.playerId);
+        this._behavior = world.startPlay(this._card);
+        if (!this._behavior) {
+            console.log("Card did not start play:");
+            console.log(this._card);
+            window.game.stack.pop();
+        }
         // Base initial highlight on player location
-        window.game.render.highlight = this._behavior.highlight(
+        window.game.render.highlight = this._behavior!.highlight(
             world, world.getCreatureHex(world.playerId)!);
     }
 
     onPopped() {
         window.game.render.highlight = [];
         window.game.render.preview = [];
+        this._behavior?.free();
+        this._behavior = undefined;
     }
 
     onTileEntered(hex: Hex) {
-        let highlight: Hex[] = this._behavior.highlight(window.game.world, hex);
+        let highlight: Hex[] = this._behavior!.highlight(window.game.world, hex);
         window.game.render.highlight = highlight;
         const check = window.game.world.clone();
         check.logging = false;
-        if (this._behavior.targetValid(check, hex)) {
-            window.game.render.preview = this._behavior.apply(check, hex);
+        if (this._behavior!.targetValid(check, hex)) {
+            window.game.render.preview = this._behavior!.apply(check, hex);
         } else {
             window.game.render.preview = [];
         }
@@ -36,11 +46,11 @@ export class PlayCard extends State<PlayCardUI> {
     }
 
     onTileClicked(hex: Hex) {
-        if (!this._behavior.targetValid(window.game.world, hex)) {
+        if (!this._behavior!.targetValid(window.game.world, hex)) {
             return;
         }
         const world = window.game.world.clone();
-        const events = this._behavior.apply(world, hex);
+        const events = this._behavior!.apply(world, hex);
         window.game.stack.swap(new Update(events, world));
     }
 }
