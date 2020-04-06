@@ -1,5 +1,5 @@
-import {World, Event} from "../wasm";
-import {Hex, Tile} from "./types";
+import {World, Creature} from "../wasm";
+import {Hex, Tile, Event, Id} from "./types";
 
 const HEX_SIZE = 30;
 
@@ -16,7 +16,7 @@ export class Render {
     private _mouseHex?: Hex;
     private _tsMillis: DOMHighResTimeStamp;
     private _frameWaits: ((value: number) => void)[] = [];
-    private _creaturePos: Map<number, DOMPointReadOnly> = new Map();
+    private _creaturePos: Map<Id<Creature>, DOMPointReadOnly> = new Map();
     private _creatureRange: Hex[] = [];
     constructor(
             private readonly _canvas: HTMLCanvasElement,
@@ -35,7 +35,7 @@ export class Render {
         this._creaturePos.clear();
         let range: Hex[] = [];
         for (let [id, hex] of this._world.getCreatureMap()) {
-            this._creaturePos.set(id.value, hexToPixel(hex));
+            this._creaturePos.set(id, hexToPixel(hex));
             range = range.concat(this._world.getCreatureRange(id));
         }
         this._creatureRange = range;
@@ -43,10 +43,12 @@ export class Render {
 
     async animateEvents(events: Event[]) {
         for (let event of events) {
+            /* TODO
             let move;
             if (move = event.creatureMoved) {
                 await this._moveCreatureTo(move.id, hexToPixel(move.to))
             }
+            */
         }
     }
 
@@ -122,12 +124,15 @@ export class Render {
         this._ctx.translate(pos.x, pos.y);
         this._ctx.font = "30px sans-serif";
         this._ctx.fillStyle = "#FFFFFF";
-        const creature = this._world.getCreature({value: id});
-        if (!creature) { throw "invalid id"; }
-        var text = "X";
-        if (creature.getPlayer()) {
-            text = "P";
-        }
+        const text = this._world.withCreature(id, (creature) => {
+            if (!creature) {
+                return "???";
+            } else if (creature?.getPlayer()) {
+                return "P";
+            } else {
+                return "X";
+            }
+        });
         const measure = this._ctx.measureText(text);
         const height = measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent;
         this._ctx.fillText(text, -measure.width / 2, height / 2);
@@ -146,10 +151,12 @@ export class Render {
 
         let moves: Hex[] = [];
         for (let event of this.preview) {
+            /* TODO
             let move;
             if (move = event.creatureMoved) {
                 moves.push(move.to);
             }
+            */
         }
         for (let hex of moves) {
             this._ctx.save();

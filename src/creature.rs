@@ -4,7 +4,7 @@ use crate::{
     id_map::{Id, IdMap},
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Creature {
     pub kind: Kind,
     pub parts: IdMap<Part>,
@@ -51,13 +51,13 @@ impl Creature {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub enum Kind {
     Player(Player),
     NPC(NPC),
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Player { }
 
 #[derive(Debug, Clone, Serialize)]
@@ -66,7 +66,7 @@ pub struct NPC {
     pub attack_range: i32,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Part {
     pub cards: IdMap<Card>,
     pub ap: i32,

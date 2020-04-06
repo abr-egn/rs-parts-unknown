@@ -7,8 +7,11 @@ use std::marker::PhantomData;
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone)]
+#[derive(Serialize)]
+#[serde(transparent)]
 pub struct IdMap<T> {
     map: HashMap<Id<T>, T>,
+    #[serde(skip)]
     next_id: Id<T>,
 }
 
@@ -35,6 +38,7 @@ impl<T> IdMap<T> {
 }
 
 #[derive(Serialize, Deserialize)]
+#[serde(transparent)]
 pub struct Id<T> {
     value: u32,
     #[serde(skip)]

@@ -54,13 +54,12 @@ export class Index extends React.Component<{}, IndexState> {
     const base = this.getStack(States.Base);
     const play = this.getStack(States.PlayCard);
     const world = this.state.world;
-    const cards = world.getCreature(world.playerId)?.getCards();
     return (
       <div className="center">
         <div id="leftSide" className="side">
           <CardList
             active={base?.active}
-            cards={cards || []}
+            world={world}
             creatureId={window.game.world.playerId}
           />
           {play?.active && <div>
@@ -95,7 +94,7 @@ class EndTurn extends React.Component<EndTurnProps, {}> {
 
 interface CardListProps {
   active: boolean,
-  cards: Card[],
+  world: World,
   creatureId: Id<Creature>,
 };
 class CardList extends React.Component<CardListProps, {}> {
@@ -107,6 +106,8 @@ class CardList extends React.Component<CardListProps, {}> {
     return world.checkSpendAP(this.props.creatureId, card.apCost);
   }
   render() {
+    /*
+    const cards = world.getCreature(world.playerId)?.getCards();
     const list = this.props.cards.map((card) =>
       <li key={card.name}>
         <button
@@ -118,5 +119,7 @@ class CardList extends React.Component<CardListProps, {}> {
       </li>
     );
     return <ul>{list}</ul>;
+    */
+   return null;
   }
 }

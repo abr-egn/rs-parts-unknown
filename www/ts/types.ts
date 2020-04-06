@@ -8,7 +8,9 @@ declare module "../wasm" {
         getTiles(): Array<[Hex, Tile]>;
         getTile(hex: Hex): Tile | undefined;
         getCreatureMap(): [Id<Creature>, Hex][];
-        getCreature(id: Id<Creature>): Creature | undefined;
+        //getCreature(id: Id<Creature>): Creature | undefined;
+        withCreature<T>(id: Id<Creature>, f: (creature?: Creature) => T): T;
+        getSCreature(id: Id<Creature>): SCreature | undefined;
         getCreatureHex(id: Id<Creature>): Hex | undefined;
         getCreatureRange(id: Id<Creature>): Hex[];
         checkSpendAP(id: Id<Creature>, ap: number): boolean;
@@ -28,7 +30,13 @@ World.prototype.getCreatureHex = World.prototype._getCreatureHex;
 World.prototype.getCreatureRange = World.prototype._getCreatureRange;
 World.prototype.checkSpendAP = World.prototype._checkSpendAP;
 World.prototype.npcTurn = World.prototype._npcTurn;
-World.prototype.getCreature = wrapGet(World.prototype._getCreature);
+World.prototype.withCreature = function<T>(id: Id<Creature>, f: (creature?: Creature) => T): T {
+    let creature = this._getCreature(id);
+    let out = f(creature);
+    creature?.free();
+    return out;
+};
+//World.prototype.getCreature = wrapGet(World.prototype._getCreature);
 
 export interface Hex {
     x: number,
@@ -42,8 +50,39 @@ export interface Tile {
 
 export type Space = "Empty" | "Wall";
 
-export interface Id<_> {
-    value: number,
+export type Id<_> = number;
+
+export interface Event {
+    data: any,
+    tags: string[],
+}
+
+export interface SCreature {
+    id: Id<Creature>,
+    data: {
+        kind: {
+            Player: SPlayer | undefined,
+            NPC: SNPC | undefined,
+        },
+        parts: Map<Id<SPart>, SPart>,
+        cur_ap: number,
+    },
+}
+
+export interface SPlayer {}
+export interface SNPC {
+    move_range: number,
+    attack_range: number,
+}
+
+export interface SPart {
+    cards: Map<any, any>,
+    ap: number,
+}
+
+export interface SCard {
+    name: string,
+    ap_cost: number,
 }
 
 /* Creature */

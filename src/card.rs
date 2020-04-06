@@ -1,5 +1,6 @@
 use std::convert::TryInto;
 use hex::Hex;
+use serde::Serialize;
 use crate::{
     creature::Creature,
     error::Error,
@@ -8,19 +9,12 @@ use crate::{
     world::World,
 };
 
-#[derive(Clone)]
+#[derive(Clone, Serialize)]
 pub struct Card {
-    name: String,
-    ap_cost: i32,
-    start_play: fn(&World, &Id<Creature>) -> Box<dyn Behavior>,
-}
-
-impl Card {
-    pub fn name(&self) -> &str { &self.name }
-    pub fn ap_cost(&self) -> i32 { self.ap_cost }
-    pub fn start_play(&self, world: &World, source: &Id<Creature>) -> Box<dyn Behavior> {
-        (self.start_play)(world, source)
-    }
+    pub name: String,
+    pub ap_cost: i32,
+    #[serde(skip)]
+    pub start_play: fn(&World, &Id<Creature>) -> Box<dyn Behavior>,
 }
 
 impl std::fmt::Debug for Card {

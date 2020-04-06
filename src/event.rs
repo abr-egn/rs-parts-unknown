@@ -1,12 +1,13 @@
 use std::collections::HashSet;
-
 use hex::Hex;
+use serde::Serialize;
+use crate::{
+    creature::Creature,
+    error::Error,
+    id_map::Id,
+};
 
-use crate::creature::Creature;
-use crate::error::Error;
-use crate::id_map::Id;
-
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Meta<T> {
     pub data: T,
     pub tags: HashSet<String>,
@@ -27,14 +28,14 @@ impl<T> Meta<T> {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum Action {
     Nothing,
     MoveCreature { id: Id<Creature>, to: Hex },
     SpendAP { id: Id<Creature>, ap: i32 },
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub enum Event {
     Nothing,
     Failed { action: Action, reason: String },

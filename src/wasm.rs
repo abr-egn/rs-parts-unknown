@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use hex::Hex;
 use js_sys::Array;
 use serde::{Serialize, de::DeserializeOwned};
@@ -7,7 +8,7 @@ use crate::{
     card,
     cell::{RcCell, Ref, RefMut},
     creature,
-    event::{self, Action},
+    event::{Action},
     id_map::Id,
     map::Tile,
     world,
@@ -85,6 +86,12 @@ impl World {
             .map(|cref| Creature { wrapped: cref })
     }
 
+    pub fn _getSCreature(&self, id: JsValue) -> JsValue {
+        let id: Id<creature::Creature> = from_js_value(id);
+        self.wrapped().creatures().map().get(&id)
+            .map_or(JsValue::undefined(), |c| SCreature::new(id, c).js())
+    }
+
     pub fn _getCreatureHex(&self, id: JsValue) -> JsValue /* Hex | undefined */ {
         let id: Id<creature::Creature> = from_js_value(id);
         self.wrapped().map().creatures().get(&id)
@@ -123,7 +130,7 @@ impl World {
         let creature = world.creatures().map().get(&creature_id).unwrap();
         let part = creature.parts().map().get(&part_id).unwrap();
         let card = part.cards.map().get(&card_id).unwrap();
-        Behavior::new(card.start_play(&world, &creature_id))
+        Behavior::new((card.start_play)(&world, &creature_id))
     }
 
     #[wasm_bindgen(getter)]
@@ -132,9 +139,8 @@ impl World {
     // Mutators
 
     pub fn _npcTurn(&mut self) -> Array /* Event[] */ {
-        self.wrapped_mut().npc_turn().into_iter()
-            .map(Event::new)
-            .map(JsValue::from)
+        self.wrapped_mut().npc_turn().iter()
+            .map(to_js_value)
             .collect()
     }
 
@@ -147,6 +153,80 @@ impl World {
 impl World {
     pub fn wrapped(&self) -> Ref<world::World> { self.wrapped.borrow() }
     pub fn wrapped_mut(&mut self) -> RefMut<world::World> { self.wrapped.borrow_mut() }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SCreature {
+    id: Id<creature::Creature>,
+    kind: creature::Kind,
+    parts: HashMap<Id<creature::Part>, SPart>,
+    cur_ap: i32,
+}
+
+impl SCreature {
+    fn new(id: Id<creature::Creature>, source: &creature::Creature) -> SCreature {
+        let parts = source.parts().map().iter()
+            .map(|(part_id, part)| (*part_id, SPart::new(*part_id, id, part)))
+            .collect();
+        SCreature {
+            id,
+            kind: source.kind.clone(),
+            parts,
+            cur_ap: source.cur_ap,
+        }
+    }
+    fn js(&self) -> JsValue { to_js_value(&self) }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SPart {
+    id: Id<creature::Part>,
+    creature_id: Id<creature::Creature>,
+    cards: HashMap<Id<card::Card>, SCard>,
+    ap: i32,
+}
+
+impl SPart {
+    fn new(
+        id: Id<creature::Part>,
+        creature_id: Id<creature::Creature>,
+        source: &creature::Part,
+    ) -> Self {
+        let cards = source.cards.map().iter()
+            .map(|(card_id, card)| (*card_id, SCard::new(*card_id, id, creature_id, card)))
+            .collect();
+        SPart {
+            id, creature_id, cards,
+            ap: source.ap,
+        }
+    }
+}
+
+#[derive(Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SCard {
+    id: Id<card::Card>,
+    part_id: Id<creature::Part>,
+    creature_id: Id<creature::Creature>,
+    name: String,
+    ap_cost: i32,
+}
+
+impl SCard {
+    fn new(
+        id: Id<card::Card>,
+        part_id: Id<creature::Part>,
+        creature_id: Id<creature::Creature>,
+        source: &card::Card,
+    ) -> Self {
+        SCard {
+            id, part_id, creature_id,
+            name: source.name.clone(),
+            ap_cost: source.ap_cost,
+        }
+    }
 }
 
 #[wasm_bindgen]
@@ -203,12 +283,12 @@ pub struct Card {
 #[wasm_bindgen]
 impl Card {
     #[wasm_bindgen(getter)]
-    pub fn name(&self) -> String { String::from(self.wrapped.name()) }
+    pub fn name(&self) -> String { self.wrapped.name.clone() }
     #[wasm_bindgen(getter)]
-    pub fn apCost(&self) -> i32 { self.wrapped.ap_cost() }
+    pub fn apCost(&self) -> i32 { self.wrapped.ap_cost }
     pub fn _startPlay(&self, world: &World, source: JsValue) -> Behavior {
         let source: Id<creature::Creature> = from_js_value(source);
-        Behavior::new(self.wrapped.start_play(&world.wrapped(), &source))
+        Behavior::new((self.wrapped.start_play)(&world.wrapped(), &source))
     }
 }
 
@@ -236,68 +316,10 @@ impl Behavior {
         self.wrapped.target_valid(&world.wrapped.borrow(), from_js_value::<Hex>(cursor))
     }
     pub fn apply(&self, world: &mut World, target: JsValue) -> Array /* Event[] */ {
-        self.wrapped.apply(&mut world.wrapped.borrow_mut(), from_js_value::<Hex>(target)).into_iter()
-            .map(Event::new)
-            .map(JsValue::from)
+        let mut world = world.wrapped.borrow_mut();
+        let target: Hex = from_js_value(target);
+        self.wrapped.apply(&mut world, target).iter()
+            .map(to_js_value)
             .collect()
-    }
-}
-
-#[wasm_bindgen]
-pub struct Event {
-    wrapped: event::Meta<event::Event>,
-}
-
-impl Event {
-    pub fn new(wrapped: event::Meta<event::Event>) -> Self {
-        Event { wrapped }
-    }
-}
-
-#[allow(non_snake_case)]
-#[wasm_bindgen]
-impl Event {
-    #[wasm_bindgen(getter)]
-    pub fn tags(&self) -> Array /* string[] */ {
-        self.wrapped.tags.iter()
-            .map(|s| JsValue::from(s))
-            .collect()
-    }
-
-    #[wasm_bindgen(getter)]
-    pub fn creatureMoved(&self) -> Option<CreatureMoved> {
-        CreatureMoved::new(&self.wrapped.data)
-    }
-}
-
-#[wasm_bindgen]
-pub struct CreatureMoved {
-    id: JsValue,
-    from: JsValue,
-    to: JsValue,
-}
-
-#[wasm_bindgen]
-impl CreatureMoved {
-    #[wasm_bindgen(getter)]
-    pub fn id(&self) -> JsValue { self.id.clone() }
-    #[wasm_bindgen(getter)]
-    pub fn from(&self) -> JsValue { self.from.clone() }
-    #[wasm_bindgen(getter)]
-    pub fn to(&self) -> JsValue { self.to.clone() }
-}
-
-impl CreatureMoved {
-    fn new(ev: &event::Event) -> Option<Self> {
-        match ev {
-            event::Event::CreatureMoved { id, from, to } => Some(
-                CreatureMoved {
-                    id: to_js_value::<Id<creature::Creature>>(id),
-                    from: to_js_value::<Hex>(from),
-                    to: to_js_value::<Hex>(to),
-                }
-            ),
-            _ => None,
-        }
     }
 }
