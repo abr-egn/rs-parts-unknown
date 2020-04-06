@@ -1,4 +1,4 @@
-import {World} from "../wasm";
+import {World, Behavior} from "../wasm";
 
 /* World */
 
@@ -46,7 +46,22 @@ export type Space = "Empty" | "Wall";
 export type Id<_> = number;
 
 export interface Event {
-    data: any,
+    data: {
+        Nothing: {} | undefined,
+        Failed: {
+            action: any,
+            reason: string,
+        } | undefined,
+        CreatureMoved: {
+            id: Id<Creature>,
+            from: Hex,
+            to: Hex,
+        } | undefined,
+        SpentAP: {
+            id: Id<Creature>,
+            ap: number,
+        }
+    },
     tags: string[],
 }
 
@@ -81,4 +96,16 @@ export interface Card {
     apCost: number,
 }
 
-// TODO: Behavior typing
+/* Behavior */
+
+declare module "../wasm" {
+    interface Behavior {
+        highlight(world: World, cursor: Hex): Hex[];
+        targetValid(world: World, cursor: Hex): boolean;
+        apply(world: World, target: Hex): Event[];
+    }
+}
+
+Behavior.prototype.highlight = Behavior.prototype._highlight;
+Behavior.prototype.targetValid = Behavior.prototype._targetValid;
+Behavior.prototype.apply = Behavior.prototype._apply;

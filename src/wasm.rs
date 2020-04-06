@@ -212,7 +212,7 @@ pub struct Behavior {
 }
 
 impl Behavior {
-    pub fn new(wrapped: Box<dyn card::Behavior>) -> Self {
+    fn new(wrapped: Box<dyn card::Behavior>) -> Self {
         Behavior { wrapped }
     }
 }
@@ -220,15 +220,15 @@ impl Behavior {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 impl Behavior {
-    pub fn highlight(&self, world: &World, cursor: JsValue) -> Array /* Hex[] */ {
+    pub fn _highlight(&self, world: &World, cursor: JsValue) -> Array /* Hex[] */ {
         self.wrapped.highlight(&world.wrapped, from_js_value::<Hex>(cursor)).into_iter()
             .map(|h| to_js_value::<Hex>(&h))
             .collect()
     }
-    pub fn targetValid(&self, world: &World, cursor: JsValue) -> bool {
+    pub fn _targetValid(&self, world: &World, cursor: JsValue) -> bool {
         self.wrapped.target_valid(&world.wrapped, from_js_value::<Hex>(cursor))
     }
-    pub fn apply(&self, world: &mut World, target: JsValue) -> Array /* Event[] */ {
+    pub fn _apply(&self, world: &mut World, target: JsValue) -> Array /* Event[] */ {
         let target: Hex = from_js_value(target);
         self.wrapped.apply(&mut world.wrapped, target).iter()
             .map(to_js_value)

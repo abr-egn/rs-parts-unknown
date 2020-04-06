@@ -43,12 +43,10 @@ export class Render {
 
     async animateEvents(events: Event[]) {
         for (let event of events) {
-            /* TODO
             let move;
-            if (move = event.creatureMoved) {
+            if (move = event.data.CreatureMoved) {
                 await this._moveCreatureTo(move.id, hexToPixel(move.to))
             }
-            */
         }
     }
 
@@ -151,12 +149,10 @@ export class Render {
 
         let moves: Hex[] = [];
         for (let event of this.preview) {
-            /* TODO
             let move;
-            if (move = event.creatureMoved) {
+            if (move = event.data.CreatureMoved) {
                 moves.push(move.to);
             }
-            */
         }
         for (let hex of moves) {
             this._ctx.save();
