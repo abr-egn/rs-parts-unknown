@@ -60,6 +60,12 @@ impl World {
             .map_or(JsValue::undefined(), |t| to_js_value(&t))
     }
 
+    pub fn _getCreature(&self, id: JsValue) -> JsValue {
+        let id: Id<creature::Creature> = from_js_value(id);
+        self.wrapped.creatures().map().get(&id)
+            .map_or(JsValue::undefined(), |c| Creature::new(id, c).js())
+    }
+
     pub fn _getCreatureMap(&self) -> Array /* [Id<Creature>, Hex][] */ {
         self.wrapped.map().creatures().iter()
             .map(|(id, hex)| {
@@ -69,12 +75,6 @@ impl World {
                 tuple
             })
             .collect()
-    }
-
-    pub fn _getCreature(&self, id: JsValue) -> JsValue {
-        let id: Id<creature::Creature> = from_js_value(id);
-        self.wrapped.creatures().map().get(&id)
-            .map_or(JsValue::undefined(), |c| Creature::new(id, c).js())
     }
 
     pub fn _getCreatureHex(&self, id: JsValue) -> JsValue /* Hex | undefined */ {

@@ -52,6 +52,10 @@ export class Index extends React.Component<{}, IndexState> {
   render() {
     const world = this.state.world;
     const base = this.getStack(States.Base);
+    let selected;
+    if (base?.selected != undefined) {
+      selected = world.getCreature(base.selected);
+    }
     return (
       <div className="center">
         <div id="leftSide" className="side">
@@ -63,6 +67,7 @@ export class Index extends React.Component<{}, IndexState> {
         </div>
         <canvas id="mainCanvas" width="800" height="800"></canvas>
         <div className="side">
+          {selected && <Creature creature={selected}/>}
         </div>
       </div>
     );

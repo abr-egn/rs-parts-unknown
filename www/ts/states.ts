@@ -1,10 +1,24 @@
 import {Behavior, World} from "../wasm";
 import {State, StateUI} from "./stack";
-import {Hex, Event, Card, isFailure} from "./types";
+import {
+    Card, Creature, Event, Hex, Id,
+    isFailure,
+} from "./types";
 
-export class Base extends State {
+export interface BaseUI extends StateUI { selected?: Id<Creature> }
+export class Base extends State<BaseUI> {
     onTileClicked(hex: Hex) {
-        console.log("Tile:", hex);
+        let tile = window.game.world.getTile(hex);
+        console.log("Tile:", tile);
+        if (!tile) { return; }
+        if (!tile.creature || tile.creature == window.game.world.playerId) {
+            this.updateUI((draft) => { draft.selected = undefined; });
+        } else {
+            this.updateUI((draft) => { draft.selected = tile!.creature; });
+        }
+    }
+    onDeactivated() {
+        this.updateUI((draft) => draft.selected = undefined);
     }
 }
 
