@@ -9,7 +9,7 @@ export interface BaseUI extends StateUI { selected?: Id<Creature> }
 export class Base extends State<BaseUI> {
     onTileClicked(hex: Hex) {
         let tile = window.game.world.getTile(hex);
-        console.log("Tile:", tile);
+        console.log("Tile:", hex, tile);
         if (!tile) { return; }
         if (!tile.creature || tile.creature == window.game.world.playerId) {
             window.game.render.selected = undefined;

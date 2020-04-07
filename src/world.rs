@@ -36,6 +36,8 @@ impl World {
         map.place_at(pc_id, hex::ORIGIN).unwrap();
         let enemy_id = creatures.add(make_npc());
         map.place_at(enemy_id, Hex { x: -4, y: 1 }).unwrap();
+        let enemy2_id = creatures.add(make_npc());
+        map.place_at(enemy2_id, Hex { x: 4, y: -1 }).unwrap();
         World {
             map: map,
             player_id: pc_id,
