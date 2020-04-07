@@ -52,12 +52,15 @@ export class PlayCard extends State<PlayCardUI> {
         if (!this._behavior!.targetValid(window.game.world, hex)) {
             return;
         }
-        const world = window.game.world.clone();
-        const events = world.spendAP(this._card.creatureId, this._card.apCost);
-        if (!isFailure(events)) {
-            events.push(...this._behavior!.apply(world, hex));
+        const apWorld = window.game.world.clone();
+        const apEvents = apWorld.spendAP(this._card.creatureId, this._card.apCost);
+        let after = undefined;
+        if (!isFailure(apEvents)) {
+            const cardWorld = apWorld.clone();
+            const cardEvents = this._behavior!.apply(cardWorld, hex);
+            after = new Update(cardEvents, cardWorld);
         }
-        window.game.stack.swap(new Update(events, world));
+        window.game.stack.swap(new Update(apEvents, apWorld, after));
     }
 }
 
@@ -65,12 +68,17 @@ class Update extends State {
     constructor(
         private _events: Event[],
         private _nextWorld: World,
+        private _after?: State,
     ) { super(); }
 
     onPushed() {
         window.game.render.animateEvents(this._events).then(() => {
             window.game.updateWorld(this._nextWorld);
-            window.game.stack.pop();
+            if (this._after) {
+                window.game.stack.swap(this._after);
+            } else {
+                window.game.stack.pop();
+            }
         });
     }
 }

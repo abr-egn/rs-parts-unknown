@@ -108,6 +108,7 @@ function Player(props: {
       <div>Playing: {props.play.card.name}</div>
       <div><button onClick={cancelPlay}>Cancel</button></div>
     </div>}
+    <EndTurn active={props.canPlay}/>
   </div>);
 }
 
@@ -133,5 +134,8 @@ function CardList(props: {
       [{card.apCost}] {card.name}
     </li>
   );
-  return <ul>{list}</ul>;
+  return (<div>
+    Cards:
+    <ul>{list}</ul>
+  </div>);
 }
