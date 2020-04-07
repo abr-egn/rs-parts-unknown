@@ -41,7 +41,7 @@ export class Index extends React.Component<{}, IndexState> {
     }));
   }
 
-  private getStack<T extends StateUI>(key: StateKey<T>): T | undefined {
+  getStack<T extends StateUI>(key: StateKey<T>): T | undefined {
     return this.state.stack.get(key);
   }
 
@@ -52,9 +52,14 @@ export class Index extends React.Component<{}, IndexState> {
   render() {
     const world = this.state.world;
     const base = this.getStack(States.Base);
-    let selected;
-    if (base?.selected != undefined) {
-      selected = world.getCreature(base.selected);
+    let creatures = [];
+    if (base?.selected) {
+      for (let id of base.selected) {
+        const creature = world.getCreature(id);
+        if (creature) {
+          creatures.push(<Creature key={id} creature={creature}/>);
+        }
+      }
     }
     return (
       <div className="center">
@@ -65,9 +70,9 @@ export class Index extends React.Component<{}, IndexState> {
             play={this.getStack(States.PlayCard)}
           />
         </div>
-        <canvas id="mainCanvas" width="800" height="800"></canvas>
+        <canvas id="mainCanvas" width="800" height="800" tabIndex={1}></canvas>
         <div className="side">
-          {selected && <Creature creature={selected}/>}
+          {creatures}
         </div>
       </div>
     );

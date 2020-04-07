@@ -21,6 +21,7 @@ export class Game {
     private _stack: Stack;
     private _index: RefObject<Index>;
     private _render: Render;
+    public keys: Map<string, boolean> = new Map();
     constructor() {
         this._world = new World();
         this._stack = new Stack();
@@ -31,9 +32,17 @@ export class Game {
         ReactDOM.render(content, document.getElementById("root"));
         this._index = ref;
 
-        this._render = new Render(
-            document.getElementById("mainCanvas") as HTMLCanvasElement,
-            this._world, this._stack);
+        const canvas = document.getElementById("mainCanvas") as HTMLCanvasElement;
+        this._render = new Render(canvas, this._world, this._stack);
+
+        canvas.focus();
+        canvas.addEventListener('keydown', (e) => {
+            e.shiftKey
+            this.keys.set(e.code, true);
+        });
+        canvas.addEventListener('keyup', (e) => {
+            this.keys.set(e.code, false);
+        });
     }
 
     // Accessors
@@ -50,15 +59,11 @@ export class Game {
         return this._stack;
     }
 
-    tileAt(hex: Hex): Tile | undefined {
-        return this._world.getTile(hex);
+    getUI<T extends StateUI>(key: StateKey<T>): T | undefined {
+        return this._index.current?.getStack(key);
     }
 
     // Mutators
-
-    set index(value: RefObject<Index>) {
-        this._index = value;
-    }
 
     updateWorld(world: World) {
         this._world.free();

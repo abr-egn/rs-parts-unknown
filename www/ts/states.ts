@@ -5,23 +5,32 @@ import {
     isFailure,
 } from "./types";
 
-export interface BaseUI extends StateUI { selected?: Id<Creature> }
+export interface BaseUI extends StateUI {
+    selected: Set<Id<Creature>>,
+}
 export class Base extends State<BaseUI> {
+    constructor() {
+        super({selected: new Set()})
+    }
     onTileClicked(hex: Hex) {
         let tile = window.game.world.getTile(hex);
         console.log("Tile:", hex, tile);
         if (!tile) { return; }
         if (!tile.creature || tile.creature == window.game.world.playerId) {
-            window.game.render.selected = undefined;
-            this.updateUI((draft) => { draft.selected = undefined; });
+            this.updateUI((draft) => { draft.selected.clear(); });
         } else {
-            window.game.render.selected = tile.creature;
-            this.updateUI((draft) => { draft.selected = tile!.creature; });
+            const keys = window.game.keys;
+            const shift = keys.get("ShiftLeft") || keys.get("ShiftRight");
+            this.updateUI((draft) => {
+                if (!shift) {
+                    draft.selected.clear();
+                }
+                draft.selected.add(tile!.creature!);
+            });
         }
     }
     onDeactivated() {
-        window.game.render.selected = undefined;
-        this.updateUI((draft) => draft.selected = undefined);
+        this.updateUI((draft) => draft.selected.clear());
     }
 }
 

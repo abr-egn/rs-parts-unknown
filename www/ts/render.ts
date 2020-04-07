@@ -3,6 +3,7 @@ import {
     Boundary, Creature, Event, Hex, Id, Tile,
     find_boundary
 } from "./types";
+import * as States from "./states";
 
 const HEX_SIZE = 30;
 
@@ -15,7 +16,6 @@ export interface Listener {
 export class Render {
     public preview: Event[] = [];
     public highlight: Hex[] = [];
-    public selected?: Id<Creature>;
     private readonly _ctx: CanvasRenderingContext2D;
     private _mouseHex?: Hex;
     private _tsMillis: DOMHighResTimeStamp;
@@ -86,11 +86,14 @@ export class Render {
         for (let hex of this.highlight) {
             this._drawHighlight(hex);
         }
-        if (this.selected) {
-            this._drawRange(this.selected);
-            const hex = this._world.getCreatureHex(this.selected);
-            if (hex) {
-                this._drawHighlight(hex);
+        const selected = window.game.getUI(States.Base)?.selected;
+        if (selected) {
+            for (let id of selected) {
+                this._drawRange(id);
+                const hex = this._world.getCreatureHex(id);
+                if (hex) {
+                    this._drawHighlight(hex);
+                }
             }
         }
         for (let [id, pos] of this._creaturePos) {
