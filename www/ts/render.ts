@@ -14,8 +14,6 @@ export interface Listener {
 }
 
 export class Render {
-    public preview: Event[] = [];
-    public highlight: Hex[] = [];
     private readonly _ctx: CanvasRenderingContext2D;
     private _mouseHex?: Hex;
     private _tsMillis: DOMHighResTimeStamp;
@@ -83,17 +81,16 @@ export class Render {
             this._drawTile(hex, tile);
         }
         this._drawPreview(tsMillis);
-        for (let hex of this.highlight) {
+        const highlight = window.game.getUI(States.PlayCard)?.highlight || [];
+        for (let hex of highlight) {
             this._drawHighlight(hex);
         }
-        const selected = window.game.getUI(States.Base)?.selected;
-        if (selected) {
-            for (let id of selected) {
-                this._drawRange(id);
-                const hex = this._world.getCreatureHex(id);
-                if (hex) {
-                    this._drawHighlight(hex);
-                }
+        const selected = window.game.getUI(States.Base)?.selected || [];
+        for (let id of selected) {
+            this._drawRange(id);
+            const hex = this._world.getCreatureHex(id);
+            if (hex) {
+                this._drawHighlight(hex);
             }
         }
         for (let [id, pos] of this._creaturePos) {
@@ -150,7 +147,8 @@ export class Render {
         const size = HEX_SIZE * scale;
 
         let moves: Hex[] = [];
-        for (let event of this.preview) {
+        const preview = window.game.getUI(States.PlayCard)?.preview || [];
+        for (let event of preview) {
             let move;
             if (move = event.data.CreatureMoved) {
                 moves.push(move.to);

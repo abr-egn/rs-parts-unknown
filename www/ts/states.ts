@@ -34,11 +34,19 @@ export class Base extends State<BaseUI> {
     }
 }
 
-export interface PlayCardUI extends StateUI { card: Card }
+export interface PlayCardUI extends StateUI {
+    card: Card,
+    highlight: Hex[],
+    preview: Event[],
+}
 export class PlayCard extends State<PlayCardUI> {
     private _behavior?: Behavior;
     constructor(private _card: Card) {
-        super({card: _card});
+        super({
+            card: _card,
+            highlight: [],
+            preview: [],
+        });
     }
 
     onPushed() {
@@ -50,27 +58,32 @@ export class PlayCard extends State<PlayCardUI> {
             window.game.stack.pop();
         }
         // Base initial highlight on player location
-        window.game.render.highlight = this._behavior!.highlight(
+        const highlight = this._behavior!.highlight(
             world, world.getCreatureHex(world.playerId)!);
+        this.updateUI((draft) => { draft.highlight = highlight; });
     }
 
     onPopped() {
-        window.game.render.highlight = [];
-        window.game.render.preview = [];
+        this.updateUI((draft) => {
+            draft.highlight = [];
+            draft.preview = [];
+        });
         this._behavior?.free();
         this._behavior = undefined;
     }
 
     onTileEntered(hex: Hex) {
         let highlight: Hex[] = this._behavior!.highlight(window.game.world, hex);
-        window.game.render.highlight = highlight;
         const check = window.game.world.clone();
         check.logging = false;
+        let preview: Event[] = [];
         if (this._behavior!.targetValid(check, hex)) {
-            window.game.render.preview = this._behavior!.apply(check, hex);
-        } else {
-            window.game.render.preview = [];
+            preview = this._behavior!.apply(check, hex);
         }
+        this.updateUI((draft) => {
+            draft.highlight = highlight;
+            draft.preview = preview;
+        })
         check.free()
     }
 
