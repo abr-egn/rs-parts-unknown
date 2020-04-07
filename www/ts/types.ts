@@ -121,7 +121,9 @@ Behavior.prototype.apply = Behavior.prototype._apply;
 
 export interface Boundary {
     hex: Hex,
-    sides: any[],
+    sides: Direction[],
 }
+
+export type Direction = "XY" | "XZ" | "YZ" | "YX" | "ZX" | "ZY";
 
 export const find_boundary: (shape: Hex[]) => Boundary[] = _find_boundary;
