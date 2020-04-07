@@ -15,6 +15,7 @@ export interface Listener {
 export class Render {
     public preview: Event[] = [];
     public highlight: Hex[] = [];
+    public selected?: Hex;
     private readonly _ctx: CanvasRenderingContext2D;
     private _mouseHex?: Hex;
     private _tsMillis: DOMHighResTimeStamp;
@@ -88,6 +89,9 @@ export class Render {
         this._drawPreview(tsMillis);
         for (let hex of this.highlight) {
             this._drawHighlight(hex);
+        }
+        if (this.selected) {
+            this._drawHighlight(this.selected);
         }
         for (let [id, pos] of this._creaturePos) {
             this._drawCreature(id, pos);

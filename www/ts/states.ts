@@ -12,12 +12,15 @@ export class Base extends State<BaseUI> {
         console.log("Tile:", tile);
         if (!tile) { return; }
         if (!tile.creature || tile.creature == window.game.world.playerId) {
+            window.game.render.selected = undefined;
             this.updateUI((draft) => { draft.selected = undefined; });
         } else {
+            window.game.render.selected = hex;
             this.updateUI((draft) => { draft.selected = tile!.creature; });
         }
     }
     onDeactivated() {
+        window.game.render.selected = undefined;
         this.updateUI((draft) => draft.selected = undefined);
     }
 }
