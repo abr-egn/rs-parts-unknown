@@ -1,5 +1,8 @@
 import {World} from "../wasm";
-import {Hex, Tile, Event, Id, Creature} from "./types";
+import {
+    Boundary, Creature, Event, Hex, Id, Tile,
+    find_boundary
+} from "./types";
 
 const HEX_SIZE = 30;
 
@@ -17,7 +20,6 @@ export class Render {
     private _tsMillis: DOMHighResTimeStamp;
     private _frameWaits: ((value: number) => void)[] = [];
     private _creaturePos: Map<Id<Creature>, DOMPointReadOnly> = new Map();
-    private _creatureRange: Hex[] = [];
     constructor(
             private readonly _canvas: HTMLCanvasElement,
             private _world: World,
@@ -33,14 +35,9 @@ export class Render {
     set world(d: World) {
         this._world = d;
         this._creaturePos.clear();
-        let range: Hex[] = [];
         for (let [id, hex] of this._world.getCreatureMap()) {
             this._creaturePos.set(id, hexToPixel(hex));
-            if (id != this._world.playerId) {
-                range = range.concat(this._world.getCreatureRange(id));
-            }
         }
-        this._creatureRange = range;
     }
 
     async animateEvents(events: Event[]) {
@@ -84,8 +81,9 @@ export class Render {
         for (let [hex, tile] of this._world.getTiles()) {
             this._drawTile(hex, tile);
         }
-        for (let hex of this._creatureRange) {
-            this._drawRange(hex);
+        for (let id of this._creaturePos.keys()) {
+            if (id == this._world.playerId) { continue; }
+            this._drawRange(id);
         }
         this._drawPreview(tsMillis);
         for (let hex of this.highlight) {
@@ -107,7 +105,7 @@ export class Render {
 
         this._pathHex(hex, HEX_SIZE);
         this._ctx.lineWidth = 1.0;
-        this._ctx.strokeStyle = "#FFFFFF";
+        this._ctx.strokeStyle = "#404040";
         this._ctx.fillStyle = "#FFFFFF";
         if (tile.space == "Empty") {
             this._ctx.stroke();
@@ -172,10 +170,41 @@ export class Render {
         this._ctx.restore();
     }
 
-    private _drawRange(hex: Hex) {
+    private _drawRange(id: Id<Creature>) {
+        const shape = this._world.getCreatureRange(id);
+        const bounds = find_boundary(shape);
+        for (let bound of bounds) {
+            this._drawBoundary(bound);
+        }
+    }
+
+    private _drawBoundary(bound: Boundary) {
         this._ctx.save();
 
-        this._pathHex(hex, HEX_SIZE);
+        let point = hexToPixel(bound.hex);
+        this._ctx.translate(point.x, point.y);
+        const DELTA = Math.PI/3.0;
+        this._ctx.beginPath();
+        for (let side of bound.sides) {
+            let i;
+            switch (side) {
+                case "XZ": i = 0; break;
+                case "YZ": i = 1; break;
+                case "YX": i = 2; break;
+                case "ZX": i = 3; break;
+                case "ZY": i = 4; break;
+                case "XY": i = 5; break;
+                default: continue;
+            }
+            let x = Math.cos(i*DELTA)*HEX_SIZE;
+            let y = Math.sin(i*DELTA)*HEX_SIZE;
+            this._ctx.moveTo(x, y);
+            i = i+1;
+            x = Math.cos(i*DELTA)*HEX_SIZE;
+            y = Math.sin(i*DELTA)*HEX_SIZE;
+            this._ctx.lineTo(x, y);
+        }
+
         this._ctx.lineWidth = 2.0;
         this._ctx.strokeStyle = "#808000";
         this._ctx.stroke();

@@ -191,6 +191,7 @@ fn make_player() -> Creature {
     let part = creature::Part { cards, ap: 3 };
     let mut pc = Creature::new(&[part]);
     pc.cur_ap = pc.max_ap();
+    pc.cur_mp = 1;
     pc
 }
 

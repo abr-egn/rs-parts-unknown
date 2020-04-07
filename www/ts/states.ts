@@ -3,6 +3,9 @@ import {State, StateUI} from "./stack";
 import {Hex, Event, Card, isFailure} from "./types";
 
 export class Base extends State {
+    onTileClicked(hex: Hex) {
+        console.log("Tile:", hex);
+    }
 }
 
 export interface PlayCardUI extends StateUI { card: Card }
