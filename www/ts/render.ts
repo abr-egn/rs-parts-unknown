@@ -81,7 +81,7 @@ export class Render {
             this._drawTile(hex, tile);
         }
         this._drawPreview(tsMillis);
-        const highlight = window.game.getUI(States.PlayCard)?.highlight || [];
+        const highlight = window.game.getUI(States.Base)?.highlight || [];
         for (let hex of highlight) {
             this._drawHighlight(hex);
         }
@@ -147,7 +147,7 @@ export class Render {
         const size = HEX_SIZE * scale;
 
         let moves: Hex[] = [];
-        const preview = window.game.getUI(States.PlayCard)?.preview || [];
+        const preview = window.game.getUI(States.Base)?.preview || [];
         for (let event of preview) {
             let move;
             if (move = event.data.CreatureMoved) {

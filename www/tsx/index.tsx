@@ -96,7 +96,7 @@ function EndTurn(props: {active: boolean}): JSX.Element {
 function Player(props: {
   player: Creature,
   canPlay: boolean,
-  play?: States.PlayCardUI,
+  play?: States.PlayCard.UI,
 }): JSX.Element {
   const cards: Card[] = [];
   if (props.player) {

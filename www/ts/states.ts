@@ -5,12 +5,22 @@ import {
     isFailure,
 } from "./types";
 
-interface BaseUI {
-    selected: Set<Id<Creature>>,
+export namespace Base {
+    export interface Data {
+        selected: Set<Id<Creature>>,
+        // Shared values for other states
+        highlight: Hex[],
+        preview: Event[],
+    }
+    export type UI = Data & StateUI;
 }
-export class Base extends State<BaseUI> {
+export class Base extends State<Base.Data> {
     constructor() {
-        super({selected: new Set()})
+        super({
+            selected: new Set(),
+            highlight: [],
+            preview: [],
+        })
     }
     onTileClicked(hex: Hex) {
         let tile = window.game.world.getTile(hex);
@@ -34,25 +44,16 @@ export class Base extends State<BaseUI> {
     }
 }
 
-interface HighlightUI {
-    
+export namespace PlayCard {
+    export interface Data {
+        card: Card,
+    }
+    export type UI = Data & StateUI;
 }
-export class Highlight extends State<HighlightUI> { }
-
-interface PlayCardData {
-    card: Card,
-    highlight: Hex[],
-    preview: Event[],
-}
-export type PlayCardUI = PlayCardData & StateUI;
-export class PlayCard extends State<PlayCardData> {
+export class PlayCard extends State<PlayCard.Data> {
     private _behavior?: Behavior;
     constructor(private _card: Card) {
-        super({
-            card: _card,
-            highlight: [],
-            preview: [],
-        });
+        super({ card: _card });
     }
 
     onPushed() {
@@ -66,11 +67,11 @@ export class PlayCard extends State<PlayCardData> {
         // Base initial highlight on player location
         const highlight = this._behavior!.highlight(
             world, world.getCreatureHex(world.playerId)!);
-        this.updateUI((draft) => { draft.highlight = highlight; });
+        window.game.updateUI(Base, (draft) => { draft.highlight = highlight; });
     }
 
     onPopped() {
-        this.updateUI((draft) => {
+        window.game.updateUI(Base, (draft) => {
             draft.highlight = [];
             draft.preview = [];
         });
@@ -86,7 +87,7 @@ export class PlayCard extends State<PlayCardData> {
         if (this._behavior!.targetValid(check, hex)) {
             preview = this._behavior!.apply(check, hex);
         }
-        this.updateUI((draft) => {
+        window.game.updateUI(Base, (draft) => {
             draft.highlight = highlight;
             draft.preview = preview;
         })

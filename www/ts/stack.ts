@@ -23,8 +23,12 @@ export class State<T = {}> {
     }
 
     _onActivated() {
-        this.updateUI(_ => this._init);
-        this.updateUI(ui => { ui.active = true; });
+        this.updateUI(ui => {
+            if (!ui) {
+                return Object.assign({active: true}, this._init);
+            }
+            ui.active = true;
+        });
         this.onActivated();
     }
 
