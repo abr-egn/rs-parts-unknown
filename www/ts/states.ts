@@ -15,7 +15,7 @@ export class Base extends State<BaseUI> {
             window.game.render.selected = undefined;
             this.updateUI((draft) => { draft.selected = undefined; });
         } else {
-            window.game.render.selected = hex;
+            window.game.render.selected = tile.creature;
             this.updateUI((draft) => { draft.selected = tile!.creature; });
         }
     }

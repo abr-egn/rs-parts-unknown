@@ -15,7 +15,7 @@ export interface Listener {
 export class Render {
     public preview: Event[] = [];
     public highlight: Hex[] = [];
-    public selected?: Hex;
+    public selected?: Id<Creature>;
     private readonly _ctx: CanvasRenderingContext2D;
     private _mouseHex?: Hex;
     private _tsMillis: DOMHighResTimeStamp;
@@ -82,16 +82,16 @@ export class Render {
         for (let [hex, tile] of this._world.getTiles()) {
             this._drawTile(hex, tile);
         }
-        for (let id of this._creaturePos.keys()) {
-            if (id == this._world.playerId) { continue; }
-            this._drawRange(id);
-        }
         this._drawPreview(tsMillis);
         for (let hex of this.highlight) {
             this._drawHighlight(hex);
         }
         if (this.selected) {
-            this._drawHighlight(this.selected);
+            this._drawRange(this.selected);
+            const hex = this._world.getCreatureHex(this.selected);
+            if (hex) {
+                this._drawHighlight(hex);
+            }
         }
         for (let [id, pos] of this._creaturePos) {
             this._drawCreature(id, pos);
