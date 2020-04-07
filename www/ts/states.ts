@@ -1,6 +1,6 @@
 import {Behavior, World} from "../wasm";
 import {State, StateUI} from "./stack";
-import {Hex, Event, Card} from "./types";
+import {Hex, Event, Card, isFailure} from "./types";
 
 export class Base extends State {
 }
@@ -50,7 +50,10 @@ export class PlayCard extends State<PlayCardUI> {
             return;
         }
         const world = window.game.world.clone();
-        const events = this._behavior!.apply(world, hex);
+        const events = world.spendAP(this._card.creatureId, this._card.apCost);
+        if (!isFailure(events)) {
+            events.push(...this._behavior!.apply(world, hex));
+        }
         window.game.stack.swap(new Update(events, world));
     }
 }

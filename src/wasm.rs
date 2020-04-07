@@ -7,7 +7,7 @@ use wasm_bindgen::prelude::*;
 use crate::{
     card,
     creature,
-    event::{Action},
+    event::{self, Action},
     id_map::Id,
     map::Tile,
     world,
@@ -121,6 +121,14 @@ impl World {
 
     pub fn _npcTurn(&mut self) -> Array /* Event[] */ {
         self.wrapped.npc_turn().iter()
+            .map(to_js_value)
+            .collect()
+    }
+
+    pub fn _spendAP(&mut self, creature_id: JsValue, ap: i32) -> Array /* Event[] */ {
+        let id: Id<creature::Creature> = from_js_value(creature_id);
+        self.wrapped.execute(&event::Meta::new(Action::SpendAP { id, ap }))
+            .iter()
             .map(to_js_value)
             .collect()
     }

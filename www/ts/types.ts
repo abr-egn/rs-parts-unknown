@@ -15,6 +15,7 @@ declare module "../wasm" {
 
         startPlay(card: Card): Behavior | undefined;
         npcTurn(): Event[];
+        spendAP(id: Id<Creature>, ap: number): Event[];
     }
 }
 
@@ -24,12 +25,14 @@ Object.defineProperty(World.prototype, "playerId", {
 World.prototype.getTiles = World.prototype._getTiles;
 World.prototype.getTile = World.prototype._getTile;
 World.prototype.getCreatureMap = World.prototype._getCreatureMap;
+World.prototype.getCreature = World.prototype._getCreature;
 World.prototype.getCreatureHex = World.prototype._getCreatureHex;
 World.prototype.getCreatureRange = World.prototype._getCreatureRange;
 World.prototype.checkSpendAP = World.prototype._checkSpendAP;
-World.prototype.npcTurn = World.prototype._npcTurn;
-World.prototype.getCreature = World.prototype._getCreature;
+
 World.prototype.startPlay = World.prototype._startPlay;
+World.prototype.npcTurn = World.prototype._npcTurn;
+World.prototype.spendAP = World.prototype._spendAP;
 
 export interface Hex {
     x: number,
@@ -63,6 +66,13 @@ export interface Event {
         }
     },
     tags: string[],
+}
+
+export function isFailure(events: Event[]): boolean {
+    if (events.length < 1) {
+        return false;
+    }
+    return events[0].data.Failed != undefined;
 }
 
 export interface Creature {
