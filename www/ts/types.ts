@@ -12,6 +12,7 @@ declare module "../wasm" {
         getCreatureHex(id: Id<Creature>): Hex | undefined;
         getCreatureRange(id: Id<Creature>): Hex[];
         checkSpendAP(id: Id<Creature>, ap: number): boolean;
+        pathTo(to: Hex): Hex[] | undefined;
 
         startPlay(card: Card): Behavior | undefined;
         npcTurn(): Event[];
@@ -29,6 +30,7 @@ World.prototype.getCreature = World.prototype._getCreature;
 World.prototype.getCreatureHex = World.prototype._getCreatureHex;
 World.prototype.getCreatureRange = World.prototype._getCreatureRange;
 World.prototype.checkSpendAP = World.prototype._checkSpendAP;
+World.prototype.pathTo = World.prototype._pathTo;
 
 World.prototype.startPlay = World.prototype._startPlay;
 World.prototype.npcTurn = World.prototype._npcTurn;

@@ -111,6 +111,18 @@ impl World {
         Some(Behavior::new((real_card.start_play)(&self.wrapped, &card.creature_id)))
     }
 
+    pub fn _pathTo(&self, to: JsValue) -> JsValue /* Hex[] | undefined */ {
+        let to: Hex = from_js_value(to);
+        let from = match self.wrapped.map().creatures().get(&self.wrapped.player_id()) {
+            Some(hex) => hex,
+            _ => return JsValue::undefined(),
+        };
+        self.wrapped.map().path_to(*from, to).map_or(JsValue::undefined(), |v| {
+            let arr: Array = v.iter().map(to_js_value).collect();
+            JsValue::from(arr)
+        })
+    }
+
     #[wasm_bindgen(getter)]
     pub fn logging(&self) -> bool { self.wrapped.logging }
 
