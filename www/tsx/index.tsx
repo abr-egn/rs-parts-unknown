@@ -56,18 +56,26 @@ export class Index extends React.Component<{}, IndexState> {
       <div className="center">
         <div id="leftSide" className="side">
           <Player
-            player={world.getCreature(world.playerId)}
-            base={this.getStack(States.Base)}
+            player={world.getCreature(world.playerId)!}
+            canPlay={base?.active || false}
             play={this.getStack(States.PlayCard)}
           />
         </div>
         <canvas id="mainCanvas" width="800" height="800"></canvas>
         <div className="side">
-          <EndTurn active={base?.active || false}/>
         </div>
       </div>
     );
   }
+}
+
+function Creature(props: {
+  creature: Creature,
+}): JSX.Element {
+  return (<div>
+    <div>AP: {props.creature.curAp}</div>
+    <div>MP: {props.creature.curMp}</div>
+  </div>);
 }
 
 function EndTurn(props: {active: boolean}): JSX.Element {
@@ -76,8 +84,8 @@ function EndTurn(props: {active: boolean}): JSX.Element {
 }
 
 function Player(props: {
-  player?: Creature,
-  base?: StateUI,
+  player: Creature,
+  canPlay: boolean,
   play?: States.PlayCardUI,
 }): JSX.Element {
   const cards: Card[] = [];
@@ -91,8 +99,9 @@ function Player(props: {
 
   return (<div>
     Player:
+    <Creature creature={props.player}/>
     <CardList
-      active={props.base?.active || false}
+      active={props.canPlay}
       cards={cards}
     />
     {props.play?.active && <div>
