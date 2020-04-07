@@ -36,7 +36,9 @@ export class Render {
         let range: Hex[] = [];
         for (let [id, hex] of this._world.getCreatureMap()) {
             this._creaturePos.set(id, hexToPixel(hex));
-            range = range.concat(this._world.getCreatureRange(id));
+            if (id != this._world.playerId) {
+                range = range.concat(this._world.getCreatureRange(id));
+            }
         }
         this._creatureRange = range;
     }
