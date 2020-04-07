@@ -5,13 +5,16 @@ import {World} from "../wasm";
 import {Render} from "./render";
 import {Stack, StateKey, StateUI} from "./stack";
 import {Index, index} from "../tsx/index";
-import {Hex, Tile} from "./types";
+import {Hex, Tile, find_boundary} from "./types";
 
 declare global {
     interface Window {
         game: Game;
+        find_boundary: any;
     }
 }
+
+Window.prototype.find_boundary = find_boundary;
 
 export class Game {
     private _world: World;

@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use hex::Hex;
 use js_sys::Array;
 use serde::{Serialize, Deserialize, de::DeserializeOwned};
@@ -239,4 +239,34 @@ impl Behavior {
             .map(to_js_value)
             .collect()
     }
+}
+
+#[derive(Debug, Clone, Serialize)]
+pub struct Boundary {
+    pub hex: Hex,
+    pub sides: Vec<hex::Direction>,
+}
+
+#[allow(unused)]
+fn find_boundary(shape: &[Hex]) -> Vec<Boundary> {
+    let shape: HashSet<Hex> = shape.into_iter().cloned().collect();
+    let mut out = vec![];
+    for &hex in &shape {
+        let mut bound = Boundary { hex, sides: vec![] };
+        for dir in hex::Direction::all() {
+            if !shape.contains(&(hex + dir.delta())) {
+                bound.sides.push(*dir);
+            }
+        }
+        if !bound.sides.is_empty() {
+            out.push(bound);
+        }
+    }
+    out
+}
+
+#[wasm_bindgen]
+pub fn _find_boundary(shape: &Array /* Hex[] */) -> Array /* Boundary[] */ {
+    let shape: Vec<Hex> = shape.iter().map(from_js_value).collect();
+    find_boundary(&shape).iter().map(to_js_value).collect()
 }

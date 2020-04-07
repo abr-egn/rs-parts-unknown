@@ -1,4 +1,4 @@
-import {World, Behavior} from "../wasm";
+import {World, Behavior, _find_boundary} from "../wasm";
 
 /* World */
 
@@ -116,3 +116,12 @@ declare module "../wasm" {
 Behavior.prototype.highlight = Behavior.prototype._highlight;
 Behavior.prototype.targetValid = Behavior.prototype._targetValid;
 Behavior.prototype.apply = Behavior.prototype._apply;
+
+/* Boundary */
+
+export interface Boundary {
+    hex: Hex,
+    sides: any[],
+}
+
+export const find_boundary: (shape: Hex[]) => Boundary[] = _find_boundary;
