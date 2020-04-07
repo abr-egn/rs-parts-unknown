@@ -4,7 +4,7 @@ use hex::{self, Hex};
 use log::info;
 
 use crate::card::Walk;
-use crate::creature::{self, Creature, Kind};
+use crate::creature::{self, Creature};
 use crate::error::{Error, Result};
 use crate::event::{Mod, Trigger, Meta, Event, Action, TriggerId};
 use crate::id_map::{Id, IdMap};
@@ -34,11 +34,9 @@ impl World {
         let pc_id = creatures.add(make_player());
         let mut map = Map::new();
         map.place_at(pc_id, hex::ORIGIN).unwrap();
-        let npc = Kind::NPC(creature::NPC {
-            move_range: 3,
-            attack_range: 1,
-        });
-        let enemy_id = creatures.add(Creature::new(npc, &[]));
+        let mut npc = Creature::new(&[]);
+        npc.cur_mp = 3;
+        let enemy_id = creatures.add(npc);
         map.place_at(enemy_id, Hex { x: -4, y: 1 }).unwrap();
         World {
             map: map,
@@ -188,12 +186,11 @@ impl World {
 }
 
 fn make_player() -> Creature {
-    let player = creature::Player {};
     let mut cards = IdMap::new();
     cards.add(Walk::card());
     let part = creature::Part { cards, ap: 3 };
-    let mut pc = Creature::new(Kind::Player(player), &[part]);
-    pc.fill_ap();
+    let mut pc = Creature::new(&[part]);
+    pc.cur_ap = pc.max_ap();
     pc
 }
 

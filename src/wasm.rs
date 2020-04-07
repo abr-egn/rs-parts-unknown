@@ -86,10 +86,7 @@ impl World {
     pub fn _getCreatureRange(&self, id: JsValue) -> Array /* Hex[] */ {
         let id: Id<creature::Creature> = from_js_value(id);
         let range = match self.wrapped.creatures().map().get(&id) {
-            Some(c) => match c.kind() {
-                creature::Kind::NPC(npc) => npc.move_range,
-                _ => return Array::new(),
-            },
+            Some(c) => c.cur_mp,
             None => return Array::new(),
         };
         let start = match self.wrapped.map().creatures().get(&id) {
@@ -109,7 +106,7 @@ impl World {
     pub fn _startPlay(&self, card: JsValue) -> Option<Behavior> {
         let card: Card = from_js_value(card);
         let creature = self.wrapped.creatures().map().get(&card.creature_id)?;
-        let part = creature.parts().map().get(&card.part_id)?;
+        let part = creature.parts.map().get(&card.part_id)?;
         let real_card = part.cards.map().get(&card.id)?;
         Some(Behavior::new((real_card.start_play)(&self.wrapped, &card.creature_id)))
     }
@@ -143,21 +140,21 @@ impl World {
 #[serde(rename_all = "camelCase")]
 pub struct Creature {
     id: Id<creature::Creature>,
-    kind: creature::Kind,
     parts: HashMap<Id<creature::Part>, Part>,
     cur_ap: i32,
+    cur_mp: i32,
 }
 
 impl Creature {
     fn new(id: Id<creature::Creature>, source: &creature::Creature) -> Creature {
-        let parts = source.parts().map().iter()
+        let parts = source.parts.map().iter()
             .map(|(part_id, part)| (*part_id, Part::new(*part_id, id, part)))
             .collect();
         Creature {
             id,
-            kind: source.kind.clone(),
             parts,
             cur_ap: source.cur_ap,
+            cur_mp: source.cur_mp,
         }
     }
     fn js(&self) -> JsValue { to_js_value(&self) }

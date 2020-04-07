@@ -77,12 +77,9 @@ export function isFailure(events: Event[]): boolean {
 
 export interface Creature {
     id: Id<Creature>,
-    kind: {
-        Player: Player | undefined,
-        NPC: NPC | undefined,
-    },
     parts: Map<Id<Part>, Part>,
     curAp: number,
+    curMp: number,
 }
 
 export interface Player {}

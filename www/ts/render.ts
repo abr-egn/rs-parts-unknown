@@ -122,14 +122,9 @@ export class Render {
         this._ctx.translate(pos.x, pos.y);
         this._ctx.font = "30px sans-serif";
         this._ctx.fillStyle = "#FFFFFF";
-        let text = "???";
-        let creature;
-        if (creature = this._world.getCreature(id)) {
-            if (creature.kind.Player) {
-                text = "P";
-            } else {
-                text = "X";
-            }
+        let text = "X";
+        if (id == this._world.playerId) {
+            text = "P";
         }
         const measure = this._ctx.measureText(text);
         const height = measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent;
