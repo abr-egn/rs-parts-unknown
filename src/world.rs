@@ -34,9 +34,7 @@ impl World {
         let pc_id = creatures.add(make_player());
         let mut map = Map::new();
         map.place_at(pc_id, hex::ORIGIN).unwrap();
-        let mut npc = Creature::new(&[]);
-        npc.cur_mp = 3;
-        let enemy_id = creatures.add(npc);
+        let enemy_id = creatures.add(make_npc());
         map.place_at(enemy_id, Hex { x: -4, y: 1 }).unwrap();
         World {
             map: map,
@@ -193,6 +191,12 @@ fn make_player() -> Creature {
     pc.cur_ap = pc.max_ap();
     pc.cur_mp = 1;
     pc
+}
+
+fn make_npc() -> Creature {
+    let mut npc = Creature::new(&[]);
+    npc.cur_mp = 3;
+    npc
 }
 
 #[derive(Clone, Debug)]

@@ -41,85 +41,88 @@ export class Index extends React.Component<{}, IndexState> {
     }));
   }
 
-  getStack<T extends StateUI>(key: StateKey<T>): T {
+  private getStack<T extends StateUI>(key: StateKey<T>): T | undefined {
     return this.state.stack.get(key);
   }
 
-  cancelPlay() {
+  private cancelPlay() {
     window.game.stack.pop();
   }
 
   render() {
-    const base = this.getStack(States.Base);
-    const play = this.getStack(States.PlayCard);
     const world = this.state.world;
-    let cards: Card[] = [];
-    const player = world.getCreature(world.playerId);
-    if (player) {
-      for (let part of player.parts.values()) {
-        cards.push(...part.cards.values());
-      }
-    }
+    const base = this.getStack(States.Base);
     return (
       <div className="center">
         <div id="leftSide" className="side">
-          <CardList
-            active={base?.active}
-            cards={cards}
+          <Player
+            player={world.getCreature(world.playerId)}
+            base={this.getStack(States.Base)}
+            play={this.getStack(States.PlayCard)}
           />
-          {play?.active && <div>
-            <div>Playing: {play.card.name}</div>
-            <div><button onClick={this.cancelPlay}>Cancel</button></div>
-          </div>}
         </div>
         <canvas id="mainCanvas" width="800" height="800"></canvas>
         <div className="side">
-          <EndTurn active={base?.active}/>
+          <EndTurn active={base?.active || false}/>
         </div>
       </div>
     );
   }
 }
 
-interface EndTurnProps {
-  active: boolean,
-};
-class EndTurn extends React.Component<EndTurnProps, {}> {
-  constructor(props: EndTurnProps) {
-    super(props);
-    this.onClick = this.onClick.bind(this);  // JS `this` is still terrible
-  }
-  onClick() {
-    window.game.stack.push(new States.EndTurn());
-  }
-  render() {
-    return <button onClick={this.onClick} disabled={!this.props.active}>End Turn</button>
-  }
+function EndTurn(props: {active: boolean}): JSX.Element {
+  const onClick = () => window.game.stack.push(new States.EndTurn());
+  return <button onClick={onClick} disabled={!props.active}>End Turn</button>;
 }
 
-interface CardListProps {
+function Player(props: {
+  player?: Creature,
+  base?: StateUI,
+  play?: States.PlayCardUI,
+}): JSX.Element {
+  const cards: Card[] = [];
+  if (props.player) {
+    for (let part of props.player.parts.values()) {
+      cards.push(...part.cards.values());
+    }
+  }
+
+  const cancelPlay = () => window.game.stack.pop();
+
+  return (<div>
+    Player:
+    <CardList
+      active={props.base?.active || false}
+      cards={cards}
+    />
+    {props.play?.active && <div>
+      <div>Playing: {props.play.card.name}</div>
+      <div><button onClick={cancelPlay}>Cancel</button></div>
+    </div>}
+  </div>);
+}
+
+function CardList(props: {
   active: boolean,
   cards: Card[],
-};
-class CardList extends React.Component<CardListProps, {}> {
-  onClick(card: Card) {
+}): JSX.Element {
+  function startPlay(card: Card) {
     window.game.stack.push(new States.PlayCard(card));
   }
-  canPlay(card: Card): boolean {
+  function canPlay(card: Card): boolean {
     const world = window.game.world;
     return world.checkSpendAP(card.creatureId, card.apCost);
   }
-  render() {
-    const list = this.props.cards.map((card) =>
-      <li key={card.name}>
-        <button
-          onClick={this.onClick.bind(this, card)}
-          disabled={!this.props.active || !this.canPlay(card)}>
-          Play
-        </button>
-        [{card.apCost}] {card.name}
-      </li>
-    );
-    return <ul>{list}</ul>;
-  }
+
+  const list = props.cards.map((card) =>
+    <li key={card.name}>
+      <button
+        onClick={() => startPlay(card)}
+        disabled={!props.active || !canPlay(card)}>
+        Play
+      </button>
+      [{card.apCost}] {card.name}
+    </li>
+  );
+  return <ul>{list}</ul>;
 }
