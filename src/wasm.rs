@@ -112,13 +112,6 @@ impl World {
         Some(Behavior::new((real_card.start_play)(&self.wrapped, &card.creature_id)))
     }
 
-    pub fn _pathTo(&self, to: JsValue) -> JsValue /* Hex[] | undefined */ {
-        self.path(to).map_or(JsValue::undefined(), |v| {
-            let arr: Array = v.iter().map(to_js_value).collect();
-            JsValue::from(arr)
-        })
-    }
-
     #[wasm_bindgen(getter)]
     pub fn logging(&self) -> bool { self.wrapped.logging }
 
@@ -138,10 +131,10 @@ impl World {
             .collect()
     }
 
-    pub fn _movePlayer(&mut self, to: JsValue) -> JsValue /* Event[] */ {
-        // TODO: call movePlayer
-        
-        unimplemented!()
+    pub fn _movePlayer(&mut self, to: JsValue) -> Array /* Event[] */ {
+        self.movePlayer(to).iter()
+            .map(to_js_value)
+            .collect()
     }
 
     #[wasm_bindgen(setter)]
@@ -177,7 +170,15 @@ impl World {
                 out.push(event::failure(Error::Obstructed));
                 return out;
             }
-            // TODO: spend MP, check for failure
+            let mut mp_evs = self.wrapped.execute(&event::Meta::new(
+                Action::SpendMP { id: player_id, mp: 1 }
+            ));
+            let failed = match mp_evs.get(0) {
+                Some(event::Meta { data: event::Event::Failed { .. }, .. }) => true,
+                _ => false,
+            };
+            out.append(&mut mp_evs);
+            if failed { return out; }
             out.append(&mut self.wrapped.execute(&event::Meta::new(
                 Action::MoveCreature { id: player_id, to: *to }
             )));

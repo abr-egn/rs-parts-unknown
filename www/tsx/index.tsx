@@ -27,7 +27,7 @@ export class Index extends React.Component<{}, IndexState> {
     this.cancelPlay = this.cancelPlay.bind(this);
   }
 
-  updateStack<T extends StateUI>(key: StateKey<T>, update: (draft: T) => void) {
+  updateStack<T>(key: StateKey<T>, update: (draft: T & StateUI) => void) {
     this.setState((prev: IndexState) => {
       return produce(prev, (draft: IndexState) => {
         draft.stack.set(key, produce(draft.stack.get(key), update));
@@ -41,7 +41,7 @@ export class Index extends React.Component<{}, IndexState> {
     }));
   }
 
-  getStack<T extends StateUI>(key: StateKey<T>): T | undefined {
+  getStack<T>(key: StateKey<T>): (T & StateUI) | undefined {
     return this.state.stack.get(key);
   }
 

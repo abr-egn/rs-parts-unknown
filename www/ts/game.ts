@@ -59,7 +59,7 @@ export class Game {
         return this._stack;
     }
 
-    getUI<T extends StateUI>(key: StateKey<T>): T | undefined {
+    getUI<T>(key: StateKey<T>): (T & StateUI) | undefined {
         return this._index.current?.getStack(key);
     }
 
@@ -72,7 +72,7 @@ export class Game {
         this._index.current!.setWorld(this._world);
     }
 
-    updateUI<T extends StateUI>(key: StateKey<T>, update: (draft: T) => void) {
+    updateUI<T>(key: StateKey<T>, update: (draft: T & StateUI) => void) {
         this._index.current!.updateStack(key, update);
     }
 }

@@ -17,6 +17,7 @@ declare module "../wasm" {
         startPlay(card: Card): Behavior | undefined;
         npcTurn(): Event[];
         spendAP(id: Id<Creature>, ap: number): Event[];
+        movePlayer(to: Hex): Event[];
     }
 }
 
@@ -30,11 +31,11 @@ World.prototype.getCreature = World.prototype._getCreature;
 World.prototype.getCreatureHex = World.prototype._getCreatureHex;
 World.prototype.getCreatureRange = World.prototype._getCreatureRange;
 World.prototype.checkSpendAP = World.prototype._checkSpendAP;
-World.prototype.pathTo = World.prototype._pathTo;
 
 World.prototype.startPlay = World.prototype._startPlay;
 World.prototype.npcTurn = World.prototype._npcTurn;
 World.prototype.spendAP = World.prototype._spendAP;
+World.prototype.movePlayer = World.prototype._movePlayer;
 
 export interface Hex {
     x: number,

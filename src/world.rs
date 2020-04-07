@@ -178,7 +178,15 @@ impl World {
                 if creature.spend_ap(ap) {
                     return Ok(Event::SpentAP { id, ap })
                 } else {
-                    return Err(Error::NotEnoughAP)
+                    return Err(Error::NotEnough)
+                }
+            }
+            SpendMP { id, mp } => {
+                let creature = self.creatures.get_mut(&id).ok_or(Error::NoSuchCreature)?;
+                if creature.spend_ap(mp) {
+                    return Ok(Event::SpentMP { id, mp })
+                } else {
+                    return Err(Error::NotEnough)
                 }
             }
         }

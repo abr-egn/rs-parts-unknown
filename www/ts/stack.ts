@@ -4,11 +4,10 @@ export interface StateUI {
     active: boolean,
 }
 
-export class State<T extends StateUI = StateUI> {
-    constructor(init: any = {}) {
-        init.active = false;
-        this.updateUI(_ => init);
-    }
+//export type 
+
+export class State<T = {}> {
+    constructor(private _init: T) {}
 
     onPushed() {}
     onPopped() {}
@@ -18,12 +17,13 @@ export class State<T extends StateUI = StateUI> {
     onTileEntered(hex: Hex) {}
     onTileExited(hex: Hex) {}
 
-    updateUI(update: (draft: T) => void) {
+    updateUI(update: (draft: T & StateUI) => void) {
         const key = this.constructor as StateKey<T>;
         window.game.updateUI(key, update);
     }
 
     _onActivated() {
+        this.updateUI(_ => this._init);
         this.updateUI(ui => { ui.active = true; });
         this.onActivated();
     }
@@ -34,7 +34,7 @@ export class State<T extends StateUI = StateUI> {
     }
 }
 
-export type StateKey<T extends StateUI> = {
+export type StateKey<T> = {
     new (...args: any[]): State<T>;
 }
 

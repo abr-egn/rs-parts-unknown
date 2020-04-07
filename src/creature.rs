@@ -39,6 +39,12 @@ impl Creature {
         self.cur_ap -= ap;
         true
     }
+
+    pub fn spend_mp(&mut self, mp: i32) -> bool {
+        if mp > self.cur_mp { return false; }
+        self.cur_mp -= mp;
+        true
+    }
 }
 
 #[derive(Debug, Clone, Serialize)]

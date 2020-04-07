@@ -5,7 +5,7 @@ import {
     isFailure,
 } from "./types";
 
-export interface BaseUI extends StateUI {
+interface BaseUI {
     selected: Set<Id<Creature>>,
 }
 export class Base extends State<BaseUI> {
@@ -34,12 +34,18 @@ export class Base extends State<BaseUI> {
     }
 }
 
-export interface PlayCardUI extends StateUI {
+interface HighlightUI {
+    
+}
+export class Highlight extends State<HighlightUI> { }
+
+interface PlayCardData {
     card: Card,
     highlight: Hex[],
     preview: Event[],
 }
-export class PlayCard extends State<PlayCardUI> {
+export type PlayCardUI = PlayCardData & StateUI;
+export class PlayCard extends State<PlayCardData> {
     private _behavior?: Behavior;
     constructor(private _card: Card) {
         super({
@@ -108,7 +114,7 @@ class Update extends State {
         private _events: Event[],
         private _nextWorld: World,
         private _after?: State,
-    ) { super(); }
+    ) { super({}); }
 
     onPushed() {
         window.game.render.animateEvents(this._events).then(() => {
@@ -123,6 +129,7 @@ class Update extends State {
 }
 
 export class EndTurn extends State {
+    constructor() { super({}); }
     onPushed() {
         const nextWorld = window.game.world.clone();
         let events = nextWorld.npcTurn() as Event[];
