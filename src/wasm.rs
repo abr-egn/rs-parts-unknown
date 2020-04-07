@@ -7,6 +7,7 @@ use wasm_bindgen::prelude::*;
 use crate::{
     card,
     creature,
+    error::{Error, Result},
     event::{self, Action},
     id_map::Id,
     map::Tile,
@@ -112,12 +113,7 @@ impl World {
     }
 
     pub fn _pathTo(&self, to: JsValue) -> JsValue /* Hex[] | undefined */ {
-        let to: Hex = from_js_value(to);
-        let from = match self.wrapped.map().creatures().get(&self.wrapped.player_id()) {
-            Some(hex) => hex,
-            _ => return JsValue::undefined(),
-        };
-        self.wrapped.map().path_to(*from, to).map_or(JsValue::undefined(), |v| {
+        self.path(to).map_or(JsValue::undefined(), |v| {
             let arr: Array = v.iter().map(to_js_value).collect();
             JsValue::from(arr)
         })
@@ -142,9 +138,51 @@ impl World {
             .collect()
     }
 
+    pub fn _movePlayer(&mut self, to: JsValue) -> JsValue /* Event[] */ {
+        // TODO: call movePlayer
+        
+        unimplemented!()
+    }
+
     #[wasm_bindgen(setter)]
     pub fn set_logging(&mut self, logging: bool) {
         self.wrapped.logging = logging
+    }
+}
+
+impl World {
+    fn path(&self, to: JsValue) -> Result<Vec<Hex>> {
+        let to: Hex = from_js_value(to);
+        let from = self.wrapped.map().creatures().get(&self.wrapped.player_id())
+            .ok_or(Error::NoSuchCreature)?;
+        self.wrapped.map().path_to(*from, to)
+    }
+
+    fn movePlayer(&mut self, to: JsValue) -> Vec<event::Meta<event::Event>> {
+        let path = match self.path(to) {
+            Ok(p) => p,
+            Err(e) => return vec![event::failure(e)],
+        };
+        let mut out = vec![];
+        let player_id = self.wrapped.player_id();
+        for (from, to) in path.iter().zip(path.iter().skip(1)) {
+            let actual = match self.wrapped.map().creatures().get(&player_id) {
+                Some(h) => h,
+                None => {
+                    out.push(event::failure(Error::NoSuchCreature));
+                    return out;
+                }
+            };
+            if actual != from && actual.distance_to(*to) > 1 {
+                out.push(event::failure(Error::Obstructed));
+                return out;
+            }
+            // TODO: spend MP, check for failure
+            out.append(&mut self.wrapped.execute(&event::Meta::new(
+                Action::MoveCreature { id: player_id, to: *to }
+            )));
+        }
+        out
     }
 }
 
