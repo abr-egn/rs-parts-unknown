@@ -137,3 +137,16 @@ export class EndTurn extends State {
         window.game.stack.swap(new Update(events, nextWorld));
     }
 }
+
+export class MovePlayer extends State {
+    constructor() { super({}) }
+
+    onPushed() {
+        const range = window.game.world.getCreatureRange(window.game.world.playerId);
+        window.game.updateUI(Base, (draft) => { draft.highlight = range; });
+    }
+    onPopped() {
+        // TODO: use immer patches to automatically unwind changes
+        window.game.updateUI(Base, (draft) => { draft.highlight = []; });
+    }
+}

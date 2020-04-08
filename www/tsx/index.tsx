@@ -2,7 +2,7 @@ import produce from "immer";
 import * as React from "react";
 
 import {World} from "../wasm";
-import {StateKey, StateUI} from "../ts/stack";
+import {StateKey, StateUI, State} from "../ts/stack";
 import * as States from "../ts/states";
 import {Id, Card, Creature} from "../ts/types";
 
@@ -68,6 +68,7 @@ export class Index extends React.Component<{}, IndexState> {
             player={world.getCreature(world.playerId)!}
             canPlay={base?.active || false}
             play={this.getStack(States.PlayCard)}
+            move={this.getStack(States.MovePlayer)}
           />
         </div>
         <canvas id="mainCanvas" width="800" height="800" tabIndex={1}></canvas>
@@ -97,6 +98,7 @@ function Player(props: {
   player: Creature,
   canPlay: boolean,
   play?: States.PlayCard.UI,
+  move?: StateUI,
 }): JSX.Element {
   const cards: Card[] = [];
   if (props.player) {
@@ -106,6 +108,7 @@ function Player(props: {
   }
 
   const cancelPlay = () => window.game.stack.pop();
+  const movePlayer = () => window.game.stack.push(new States.MovePlayer());
 
   return (<div>
     Player:
@@ -114,11 +117,11 @@ function Player(props: {
       active={props.canPlay}
       cards={cards}
     />
-    {props.play?.active && <div>
-      <div>Playing: {props.play.card.name}</div>
-      <div><button onClick={cancelPlay}>Cancel</button></div>
-    </div>}
+    {props.play?.active && <div>Playing: {props.play.card.name}</div>}
     <EndTurn active={props.canPlay}/>
+    {props.canPlay && <button onClick={movePlayer}>Move</button>}
+    {(props.play?.active || props.move?.active) && 
+    <div><button onClick={cancelPlay}>Cancel</button></div>}
   </div>);
 }
 
