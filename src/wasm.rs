@@ -120,10 +120,10 @@ impl World {
     #[wasm_bindgen(skip_typescript)]
     pub fn startPlay(&self, card: JsValue) -> Option<Behavior> {
         let card: Card = from_js_value(card);
-        let creature = self.wrapped.creatures().map().get(&card.creature_id)?;
-        let part = creature.parts.map().get(&card.part_id)?;
+        let creature = self.wrapped.creatures().map().get(&card.creatureId)?;
+        let part = creature.parts.map().get(&card.partId)?;
         let real_card = part.cards.map().get(&card.id)?;
-        Some(Behavior::new((real_card.start_play)(&self.wrapped, &card.creature_id)))
+        Some(Behavior::new((real_card.start_play)(&self.wrapped, &card.creatureId)))
     }
 
     #[wasm_bindgen(skip_typescript)]
@@ -202,12 +202,12 @@ impl World {
 }
 
 #[derive(Serialize, TsData)]
-#[serde(rename_all = "camelCase")]
+#[allow(non_snake_case)]
 pub struct Creature {
     id: Id<creature::Creature>,
     parts: HashMap<Id<creature::Part>, Part>,
-    cur_ap: i32,
-    cur_mp: i32,
+    curAp: i32,
+    curMp: i32,
 }
 
 impl Creature {
@@ -218,59 +218,61 @@ impl Creature {
         Creature {
             id,
             parts,
-            cur_ap: source.cur_ap,
-            cur_mp: source.cur_mp,
+            curAp: source.cur_ap,
+            curMp: source.cur_mp,
         }
     }
     fn js(&self) -> JsValue { to_js_value(&self) }
 }
 
-#[derive(Serialize)]
-#[serde(rename_all = "camelCase")]
+#[derive(Serialize, TsData)]
+#[allow(non_snake_case)]
 pub struct Part {
     id: Id<creature::Part>,
-    creature_id: Id<creature::Creature>,
+    creatureId: Id<creature::Creature>,
     cards: HashMap<Id<card::Card>, Card>,
     ap: i32,
 }
 
+#[allow(non_snake_case)]
 impl Part {
     fn new(
         id: Id<creature::Part>,
-        creature_id: Id<creature::Creature>,
+        creatureId: Id<creature::Creature>,
         source: &creature::Part,
     ) -> Self {
         let cards = source.cards.map().iter()
-            .map(|(card_id, card)| (*card_id, Card::new(*card_id, id, creature_id, card)))
+            .map(|(card_id, card)| (*card_id, Card::new(*card_id, id, creatureId, card)))
             .collect();
         Part {
-            id, creature_id, cards,
+            id, creatureId, cards,
             ap: source.ap,
         }
     }
 }
 
 #[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[allow(non_snake_case)]
 pub struct Card {
     id: Id<card::Card>,
-    part_id: Id<creature::Part>,
-    creature_id: Id<creature::Creature>,
+    partId: Id<creature::Part>,
+    creatureId: Id<creature::Creature>,
     name: String,
-    ap_cost: i32,
+    apCost: i32,
 }
 
+#[allow(non_snake_case)]
 impl Card {
     fn new(
         id: Id<card::Card>,
-        part_id: Id<creature::Part>,
-        creature_id: Id<creature::Creature>,
+        partId: Id<creature::Part>,
+        creatureId: Id<creature::Creature>,
         source: &card::Card,
     ) -> Self {
         Card {
-            id, part_id, creature_id,
+            id, partId, creatureId,
             name: source.name.clone(),
-            ap_cost: source.ap_cost,
+            apCost: source.ap_cost,
         }
     }
 }
@@ -419,20 +421,6 @@ export interface Event {
         id: Id<Creature>,
         mp: number,
     } | undefined,
-}
-
-export interface Creature {
-    id: Id<Creature>,
-    parts: Map<Id<Part>, Part>,
-    curAp: number,
-    curMp: number,
-}
-
-export interface Part {
-    id: Id<Part>,
-    creatureId: Id<Creature>,
-    cards: Map<Id<Card>, Card>,
-    ap: number,
 }
 
 export interface Card {

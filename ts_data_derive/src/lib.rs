@@ -69,7 +69,7 @@ fn build_struct(buffer: &mut String, name: &syn::Ident, data: &syn::DataStruct) 
     append!(buffer, "}}");
 }
 
-fn extract_generic<'a>(name: &str, ty: &'a syn::Type) -> Option<&'a syn::punctuated::Punctuated<syn::GenericArgument, syn::token::Comma>> {
+fn extract_option(ty: &syn::Type) -> Option<&syn::Type> {
     let path = match ty {
         syn::Type::Path(p) => &p.path,
         _ => return None,
@@ -78,17 +78,13 @@ fn extract_generic<'a>(name: &str, ty: &'a syn::Type) -> Option<&'a syn::punctua
         return None;
     }
     let segment = &path.segments[0];
-    if segment.ident.to_string() != name {
+    if segment.ident.to_string() != "Option" {
         return None;
     }
-    match &segment.arguments {
-        syn::PathArguments::AngleBracketed(ab) => return Some(&ab.args),
+    let args = match &segment.arguments {
+        syn::PathArguments::AngleBracketed(ab) => &ab.args,
         _ => return None,
-    }
-}
-
-fn extract_option(ty: &syn::Type) -> Option<&syn::Type> {
-    let args = extract_generic("Option", ty)?;
+    };
     if args.len() != 1 {
         return None;
     }
@@ -106,12 +102,14 @@ impl VisitMut for TypeMapper {
         let name = path_name(path);
         match &name as &str {
             // Pass through
+            "Card" => (),
             "Creature" => (),
             "Id" => (),
             "Option" => (),
             "Part" => (),
             "Space" => (),
             // De-path
+            "card::Card" => replace_all(path, "Card"),
             "creature::Creature" => replace_all(path, "Creature"),
             "creature::Part" => replace_all(path, "Part"),
             // Native types
