@@ -24,6 +24,17 @@ export class Game {
     public keys: Map<string, boolean> = new Map();
     constructor() {
         this._world = new World();
+        this._world.setTracer({
+            startAction: (action) => {
+                console.log("ACTION:", action);
+            },
+            modAction: (name, prev, new_) => {
+                console.log(" [%s]", name, prev, "->", new_);
+            },
+            resolveAction: (action, event) => {
+                console.log("==>", event);
+            },
+        });
         this._stack = new Stack();
 
         window.game = this;

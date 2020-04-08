@@ -47,7 +47,8 @@ impl World {
 
     pub fn check_action(&self, action: &Action) -> bool {
         let mut check = self.clone();
-        Event::is_failure(&check.execute(action))
+        check.tracer = None;
+        !Event::is_failure(&check.execute(action))
     }
 
     // Mutators
