@@ -148,6 +148,7 @@ impl World {
             .collect()
     }
 
+    #[wasm_bindgen(skip_typescript)]
     pub fn setTracer(&mut self, tracer: JsValue) {
         if tracer.is_undefined() {
             self.wrapped.tracer = None;
@@ -288,15 +289,18 @@ impl Behavior {
 #[allow(non_snake_case)]
 #[wasm_bindgen]
 impl Behavior {
-    pub fn _highlight(&self, world: &World, cursor: JsValue) -> Array /* Hex[] */ {
+    #[wasm_bindgen(skip_typescript)]
+    pub fn highlight(&self, world: &World, cursor: JsValue) -> Array /* Hex[] */ {
         self.wrapped.highlight(&world.wrapped, from_js_value::<Hex>(cursor)).into_iter()
             .map(|h| to_js_value::<Hex>(&h))
             .collect()
     }
-    pub fn _targetValid(&self, world: &World, cursor: JsValue) -> bool {
+    #[wasm_bindgen(skip_typescript)]
+    pub fn targetValid(&self, world: &World, cursor: JsValue) -> bool {
         self.wrapped.target_valid(&world.wrapped, from_js_value::<Hex>(cursor))
     }
-    pub fn _apply(&self, world: &mut World, target: JsValue) -> Array /* Event[] */ {
+    #[wasm_bindgen(skip_typescript)]
+    pub fn apply(&self, world: &mut World, target: JsValue) -> Array /* Event[] */ {
         let target: Hex = from_js_value(target);
         self.wrapped.apply(&mut world.wrapped, target).iter()
             .map(to_js_value)
@@ -310,7 +314,6 @@ pub struct Boundary {
     pub sides: Vec<hex::Direction>,
 }
 
-#[allow(unused)]
 fn find_boundary(shape: &[Hex]) -> Vec<Boundary> {
     let shape: HashSet<Hex> = shape.into_iter().cloned().collect();
     let mut out = vec![];
@@ -328,8 +331,9 @@ fn find_boundary(shape: &[Hex]) -> Vec<Boundary> {
     out
 }
 
-#[wasm_bindgen]
-pub fn _find_boundary(shape: &Array /* Hex[] */) -> Array /* Boundary[] */ {
+#[allow(unused)]
+#[wasm_bindgen(skip_typescript, js_name="findBoundary")]
+pub fn js_find_boundary(shape: &Array /* Hex[] */) -> Array /* Boundary[] */ {
     let shape: Vec<Hex> = shape.iter().map(from_js_value).collect();
     find_boundary(&shape).iter().map(to_js_value).collect()
 }
@@ -385,6 +389,7 @@ interface World {
     npcTurn(): Event[];
     spendAP(id: Id<Creature>, ap: number): Event[];
     movePlayer(to: Hex): Event[];
+    setTracer(tracer: Tracer | undefined): void;
 }
 
 export interface Hex {
@@ -449,4 +454,25 @@ export interface Card {
     name: string,
     apCost: number,
 }
+
+export interface Tracer {
+    startAction: (action: any) => void,
+    modAction: (name: string, prev: any, new_: any) => void,
+    resolveAction: (action: any, event: Event) => void,
+}
+
+interface Behavior {
+    highlight(world: World, cursor: Hex): Hex[];
+    targetValid(world: World, cursor: Hex): boolean;
+    apply(world: World, target: Hex): Event[];
+}
+
+export interface Boundary {
+    hex: Hex,
+    sides: Direction[],
+}
+
+export type Direction = "XY" | "XZ" | "YZ" | "YX" | "ZX" | "ZY";
+
+export function findBoundary(shape: Hex[]): Boundary[];
 "#;

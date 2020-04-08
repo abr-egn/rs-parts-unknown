@@ -1,20 +1,22 @@
 import {RefObject} from "react";
 import * as ReactDOM from "react-dom";
 
-import {Event, World} from "../wasm";
+import {
+    Event, Tracer, World,
+    findBoundary,
+} from "../wasm";
 import {Render} from "./render";
 import {Stack, StateKey, StateUI} from "./stack";
 import {Index, index} from "../tsx/index";
-import {Tracer, find_boundary} from "./types";
 
 declare global {
     interface Window {
         game: Game;
-        find_boundary: any;
+        findBoundary: any;
     }
 }
 
-Window.prototype.find_boundary = find_boundary;
+Window.prototype.findBoundary = findBoundary;
 
 export class Game {
     private _world: World;

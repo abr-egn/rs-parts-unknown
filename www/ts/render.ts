@@ -1,8 +1,7 @@
-import {Creature, Event, Hex, Id, Tile, World} from "../wasm";
 import {
-    Boundary, 
-    find_boundary
-} from "./types";
+    Boundary, Creature, Event, Hex, Id, Tile, World,
+    findBoundary,
+} from "../wasm";
 import * as States from "./states";
 
 const HEX_SIZE = 30;
@@ -176,7 +175,7 @@ export class Render {
 
     private _drawRange(id: Id<Creature>) {
         const shape = this._world.getCreatureRange(id);
-        const bounds = find_boundary(shape);
+        const bounds = findBoundary(shape);
         for (let bound of bounds) {
             this._drawBoundary(bound);
         }

@@ -1,6 +1,5 @@
 import {Behavior, Card, Creature, Event, Hex, Id, World} from "../wasm";
 import {State, StateUI} from "./stack";
-import {isFailure} from "./types";
 import {BufferTracer, ConsoleTracer} from "./game";
 
 export namespace Base {
@@ -179,4 +178,11 @@ export class MovePlayer extends State {
         next.setTracer(new ConsoleTracer());
         window.game.stack.swap(new Update(events, next));
     }
+}
+
+function isFailure(events: Event[]): boolean {
+    if (events.length < 1) {
+        return false;
+    }
+    return events[0].Failed != undefined;
 }

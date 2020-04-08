@@ -1,6 +1,5 @@
 import {enableAllPlugins} from "immer";
 
-import "./types";
 import {Game} from "./game";
 import {Base} from "./states";
 
