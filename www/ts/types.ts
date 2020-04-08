@@ -18,6 +18,7 @@ declare module "../wasm" {
         npcTurn(): Event[];
         spendAP(id: Id<Creature>, ap: number): Event[];
         movePlayer(to: Hex): Event[];
+        setTracer(t: Tracer | undefined): void;
     }
 }
 
@@ -36,6 +37,13 @@ World.prototype.startPlay = World.prototype._startPlay;
 World.prototype.npcTurn = World.prototype._npcTurn;
 World.prototype.spendAP = World.prototype._spendAP;
 World.prototype.movePlayer = World.prototype._movePlayer;
+World.prototype.setTracer = function(t: Tracer | undefined) {
+    if (t == undefined) {
+        this._clearTracer();
+        return;
+    }
+    this._setTracer(t);
+}
 
 export interface Hex {
     x: number,
@@ -52,30 +60,31 @@ export type Space = "Empty" | "Wall";
 export type Id<_> = number;
 
 export interface Event {
-    data: {
-        Nothing: {} | undefined,
-        Failed: {
-            action: any,
-            reason: string,
-        } | undefined,
-        CreatureMoved: {
-            id: Id<Creature>,
-            from: Hex,
-            to: Hex,
-        } | undefined,
-        SpentAP: {
-            id: Id<Creature>,
-            ap: number,
-        }
-    },
-    tags: string[],
+    Nothing: {} | undefined,
+    Failed: {
+        action: any,
+        reason: string,
+    } | undefined,
+    CreatureMoved: {
+        id: Id<Creature>,
+        from: Hex,
+        to: Hex,
+    } | undefined,
+    SpentAP: {
+        id: Id<Creature>,
+        ap: number,
+    } | undefined,
+    SpentMP: {
+        id: Id<Creature>,
+        mp: number,
+    } | undefined,
 }
 
 export function isFailure(events: Event[]): boolean {
     if (events.length < 1) {
         return false;
     }
-    return events[0].data.Failed != undefined;
+    return events[0].Failed != undefined;
 }
 
 export interface Creature {
@@ -130,3 +139,11 @@ export interface Boundary {
 export type Direction = "XY" | "XZ" | "YZ" | "YX" | "ZX" | "ZY";
 
 export const find_boundary: (shape: Hex[]) => Boundary[] = _find_boundary;
+
+/* Tracer */
+
+export interface Tracer {
+    startAction: (action: any) => void,
+    modAction: (name: string, prev: any, new_: any) => void,
+    resolveAction: (action: any, event: Event) => void,
+}

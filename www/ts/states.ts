@@ -82,7 +82,7 @@ export class PlayCard extends State<PlayCard.Data> {
     onTileEntered(hex: Hex) {
         let highlight: Hex[] = this._behavior!.highlight(window.game.world, hex);
         const check = window.game.world.clone();
-        check.logging = false;
+        check.setTracer(undefined);
         let preview: Event[] = [];
         if (this._behavior!.targetValid(check, hex)) {
             preview = this._behavior!.apply(check, hex);
@@ -154,20 +154,21 @@ export class MovePlayer extends State {
     }
     onTileEntered(hex: Hex) {
         const check = window.game.world.clone();
-        check.logging = false;
+        check.setTracer(undefined);
         let preview = check.movePlayer(hex);
         window.game.updateUI(Base, (draft) => { draft.preview = preview; });
         check.free();
     }
     onTileClicked(hex: Hex) {
         const next = window.game.world.clone();
-        next.logging = false;
+        // TODO: buffer trace
+        next.setTracer(undefined);
         let events = next.movePlayer(hex);
         let hasHex: boolean = false;
         for (let event of events) {
-            let move;
-            if (move = event.data.CreatureMoved) {
-                if (move.to.x == hex.x && move.to.y == hex.y) {
+            if (event.CreatureMoved) {
+                const to = event.CreatureMoved.to;
+                if (to.x == hex.x && to.y == hex.y) {
                     hasHex = true;
                 }
             }

@@ -1,12 +1,11 @@
 use std::collections::HashSet;
 
 use hex::{self, Hex};
-use log::info;
 
 use crate::card::Walk;
 use crate::creature::{self, Creature};
 use crate::error::{Error, Result};
-use crate::event::{Mod, Trigger, Meta, Event, Action, TriggerId};
+use crate::event::{Mod, Trigger, Event, Action, TriggerId};
 use crate::id_map::{Id, IdMap};
 use crate::map::{Tile, Map, Space};
 
@@ -17,19 +16,11 @@ pub struct World {
     creatures: IdMap<Creature>,
     mods: IdMap<Box<dyn Mod>>,
     triggers: IdMap<Box<dyn Trigger>>,
-    pub logging: bool,
-}
-
-macro_rules! clog {
-    ($self:ident, $($args:tt)*) => {
-        if $self.logging { info!($($args)*) }
-    };
+    pub tracer: Option<Box<dyn Tracer>>,
 }
 
 impl World {
     pub fn new() -> Self {
-        let mut mods: IdMap<Box<dyn Mod>> = IdMap::new();
-        mods.add(Box::new(ModDebugTag));
         let mut creatures = IdMap::new();
         let pc_id = creatures.add(make_player());
         let mut map = Map::new();
@@ -42,9 +33,9 @@ impl World {
             map: map,
             player_id: pc_id,
             creatures: creatures,
-            mods: mods,
+            mods: IdMap::new(),
             triggers: IdMap::new(),
-            logging: true,
+            tracer: None,
         }
     }
 
@@ -56,24 +47,18 @@ impl World {
 
     pub fn check_action(&self, action: &Action) -> bool {
         let mut check = self.clone();
-        check.logging = false;
-        let result = check.execute(&Meta::new(action.clone()));
-        // First event is always the originating action
-        match result[0].data {
-            Event::Failed { .. } => return false,
-            _ => return true,
-        }
+        Event::is_failure(&check.execute(action))
     }
 
     // Mutators
 
-    pub fn execute(&mut self, action: &Meta<Action>) -> Vec<Meta<Event>> {
+    pub fn execute(&mut self, action: &Action) -> Vec<Event> {
         let mut out = vec![];
         self.execute_(action, &HashSet::new(), &mut out);
         out
     }
 
-    pub fn npc_turn(&mut self) -> Vec<Meta<Event>> {
+    pub fn npc_turn(&mut self) -> Vec<Event> {
         let player_hex = self.map.creatures().get(&self.player_id).unwrap();
 
         let mut moves = vec![];
@@ -99,9 +84,7 @@ impl World {
 
         let mut events = vec![];
         for (id, to) in moves {
-            events.extend(self.execute(&Meta::new(
-                Action::MoveCreature { id, to }
-            )));
+            events.extend(self.execute(&Action::MoveCreature { id, to }));
         }
         events
     }
@@ -110,9 +93,9 @@ impl World {
 
     fn execute_(
         &mut self,
-        action: &Meta<Action>,
+        action: &Action,
         skip: &HashSet<TriggerId>,
-        out: &mut Vec<Meta<Event>>,
+        out: &mut Vec<Event>,
     ) {
         let event = self.resolve_with_mods(action);
         out.push(event.clone());
@@ -140,27 +123,24 @@ impl World {
         self.triggers.map().keys().cloned().collect()
     }
 
-    fn resolve_with_mods(&mut self, action: &Meta<Action>) -> Meta<Event> {
-        clog!(self, "ACTION: {:?}", action);
+    fn resolve_with_mods(&mut self, action: &Action) -> Event {
+        self.tracer.as_ref().map(|t| t.start_action(action));
         let mut modded = action.clone();
-        for (id, m) in self.mods.iter_mut() {
+        for (_, m) in self.mods.iter_mut() {
             let mut new = modded.clone();
             m.apply(&mut new);
             if new != modded {
-                clog!(self, "  [{:} ({:?})] --> {:?}", m.name(), id, new);
+                self.tracer.as_ref().map(|t| t.mod_action(&m.name(), &modded, &new));
                 modded = new;
             }
         }
-        let result = Meta {
-            data: self.resolve_action(&modded.data).unwrap_or_else(|err|
-                Event::Failed {
-                    action: modded.data.clone(),
-                    reason: format!("{:?}", err),
-                }
-            ),
-            tags: modded.tags.clone(),
-        };
-        clog!(self, "  => {:?}", result);
+        let result = self.resolve_action(&modded).unwrap_or_else(|err|
+            Event::Failed {
+                action: modded.clone(),
+                reason: format!("{:?}", err),
+            }
+        );
+        self.tracer.as_ref().map(|t| t.resolve_action(&modded, &result));
         result
     }
 
@@ -193,6 +173,24 @@ impl World {
     }
 }
 
+pub trait Tracer: std::fmt::Debug + TracerClone {
+    fn start_action(&self, action: &Action);
+    fn mod_action(&self, mod_name: &str, prev: &Action, new: &Action);
+    fn resolve_action(&self, action: &Action, event: &Event);
+}
+
+pub trait TracerClone {
+    fn clone_box(&self) -> Box<dyn Tracer>;
+}
+
+impl<T: Tracer + Clone + 'static> TracerClone for T {
+    fn clone_box(&self) -> Box<dyn Tracer> { Box::new(self.clone()) }
+}
+
+impl Clone for Box<dyn Tracer> {
+    fn clone(&self) -> Self { self.clone_box() }
+}
+
 fn make_player() -> Creature {
     let mut cards = IdMap::new();
     cards.add(Walk::card());
@@ -207,16 +205,4 @@ fn make_npc() -> Creature {
     let mut npc = Creature::new(&[]);
     npc.cur_mp = 3;
     npc
-}
-
-#[derive(Clone, Debug)]
-struct ModDebugTag;
-
-impl Mod for ModDebugTag {
-    fn name(&self) -> &'static str {
-        "debug tag"
-    }
-    fn apply(&mut self, action: &mut Meta<Action>) {
-        action.tags.insert("debug".into());
-    }
 }

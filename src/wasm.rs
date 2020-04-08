@@ -3,12 +3,15 @@ use hex::Hex;
 use js_sys::Array;
 use serde::{Serialize, Deserialize, de::DeserializeOwned};
 use serde_wasm_bindgen::{from_value, to_value};
-use wasm_bindgen::prelude::*;
+use wasm_bindgen::{
+    prelude::*,
+    JsCast,
+};
 use crate::{
     card,
     creature,
     error::{Error, Result},
-    event::{self, Action},
+    event::{Action, Event},
     id_map::Id,
     map::Tile,
     world,
@@ -112,9 +115,6 @@ impl World {
         Some(Behavior::new((real_card.start_play)(&self.wrapped, &card.creature_id)))
     }
 
-    #[wasm_bindgen(getter)]
-    pub fn logging(&self) -> bool { self.wrapped.logging }
-
     // Mutators
 
     pub fn _npcTurn(&mut self) -> Array /* Event[] */ {
@@ -125,7 +125,7 @@ impl World {
 
     pub fn _spendAP(&mut self, creature_id: JsValue, ap: i32) -> Array /* Event[] */ {
         let id: Id<creature::Creature> = from_js_value(creature_id);
-        self.wrapped.execute(&event::Meta::new(Action::SpendAP { id, ap }))
+        self.wrapped.execute(&Action::SpendAP { id, ap })
             .iter()
             .map(to_js_value)
             .collect()
@@ -137,9 +137,12 @@ impl World {
             .collect()
     }
 
-    #[wasm_bindgen(setter)]
-    pub fn set_logging(&mut self, logging: bool) {
-        self.wrapped.logging = logging
+    pub fn _setTracer(&mut self, tracer: &Tracer) {
+        self.wrapped.tracer = Some(Box::new(WrapTracer::new(tracer)));
+    }
+
+    pub fn _clearTracer(&mut self) {
+        self.wrapped.tracer = None;
     }
 }
 
@@ -151,10 +154,10 @@ impl World {
         self.wrapped.map().path_to(*from, to)
     }
 
-    fn move_player(&mut self, to: JsValue) -> Vec<event::Meta<event::Event>> {
+    fn move_player(&mut self, to: JsValue) -> Vec<Event> {
         let path = match self.path(to) {
             Ok(p) => p,
-            Err(e) => return vec![event::failure(e)],
+            Err(e) => return vec![Event::failed(e)],
         };
         let mut out = vec![];
         let player_id = self.wrapped.player_id();
@@ -162,26 +165,23 @@ impl World {
             let actual = match self.wrapped.map().creatures().get(&player_id) {
                 Some(h) => h,
                 None => {
-                    out.push(event::failure(Error::NoSuchCreature));
+                    out.push(Event::failed(Error::NoSuchCreature));
                     return out;
                 }
             };
             if actual != from && actual.distance_to(*to) > 1 {
-                out.push(event::failure(Error::Obstructed));
+                out.push(Event::failed(Error::Obstructed));
                 return out;
             }
-            let mut mp_evs = self.wrapped.execute(&event::Meta::new(
-                Action::SpendMP { id: player_id, mp: 1 }
-            ));
-            let failed = match mp_evs.get(0) {
-                Some(event::Meta { data: event::Event::Failed { .. }, .. }) => true,
-                _ => false,
-            };
+            let mut mp_evs = self.wrapped.execute(
+                &Action::SpendMP { id: player_id, mp: 1 }
+            );
+            let failed = Event::is_failure(&mp_evs);
             out.append(&mut mp_evs);
             if failed { return out; }
-            out.append(&mut self.wrapped.execute(&event::Meta::new(
-                Action::MoveCreature { id: player_id, to: *to }
-            )));
+            out.append(&mut self.wrapped.execute(
+                &Action::MoveCreature { id: player_id, to: *to }
+            ));
         }
         out
     }
@@ -320,4 +320,42 @@ fn find_boundary(shape: &[Hex]) -> Vec<Boundary> {
 pub fn _find_boundary(shape: &Array /* Hex[] */) -> Array /* Boundary[] */ {
     let shape: Vec<Hex> = shape.iter().map(from_js_value).collect();
     find_boundary(&shape).iter().map(to_js_value).collect()
+}
+
+#[wasm_bindgen]
+extern "C" {
+    pub type Tracer;
+
+    #[wasm_bindgen(structural, method)]
+    pub fn startAction(this: &Tracer, action: &JsValue);
+    #[wasm_bindgen(structural, method)]
+    pub fn modAction(this: &Tracer, modName: &str, prev: &JsValue, new: &JsValue);
+    #[wasm_bindgen(structural, method)]
+    pub fn resolveAction(this: &Tracer, action: &JsValue, event: &JsValue);
+}
+
+#[derive(Debug, Clone)]
+struct WrapTracer {
+    wrapped: JsValue,
+}
+
+impl WrapTracer {
+    fn new(t: &Tracer) -> Self {
+        WrapTracer { wrapped: JsValue::from(t) }
+    }
+    fn wrapped(&self) -> &Tracer {
+        self.wrapped.unchecked_ref()
+    }
+}
+
+impl world::Tracer for WrapTracer {
+    fn start_action(&self, action: &Action) {
+       self.wrapped().startAction(&to_js_value(action));
+    }
+    fn mod_action(&self, mod_name: &str, prev: &Action, new: &Action) {
+        self.wrapped().modAction(mod_name, &to_js_value(prev), &to_js_value(new));
+    }
+    fn resolve_action(&self, action: &Action, event: &Event) {
+        self.wrapped().resolveAction(&to_js_value(action), &to_js_value(event));
+    }
 }

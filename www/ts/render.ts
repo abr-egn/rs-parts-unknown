@@ -42,7 +42,7 @@ export class Render {
     async animateEvents(events: Event[]) {
         for (let event of events) {
             let move;
-            if (move = event.data.CreatureMoved) {
+            if (move = event.CreatureMoved) {
                 await this._moveCreatureTo(move.id, hexToPixel(move.to))
             }
         }
@@ -149,9 +149,8 @@ export class Render {
         let moves: Hex[] = [];
         const preview = window.game.getUI(States.Base)?.preview || [];
         for (let event of preview) {
-            let move;
-            if (move = event.data.CreatureMoved) {
-                moves.push(move.to);
+            if (event.CreatureMoved) {
+                moves.push(event.CreatureMoved.to);
             }
         }
         for (let hex of moves) {

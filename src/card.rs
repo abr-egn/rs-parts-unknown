@@ -4,7 +4,7 @@ use serde::Serialize;
 use crate::{
     creature::Creature,
     error::Error,
-    event::{self, Action, Event, Meta},
+    event::{Action, Event},
     id_map::Id,
     world::World,
 };
@@ -31,7 +31,7 @@ pub trait Behavior: BehaviorClone {
     fn highlight(&self, world: &World, cursor: Hex) -> Vec<Hex>;
     // TODO: allow for multiple targets
     fn target_valid(&self, world: &World, cursor: Hex) -> bool;
-    fn apply(&self, world: &mut World, target: Hex) -> Vec<Meta<Event>>;
+    fn apply(&self, world: &mut World, target: Hex) -> Vec<Event>;
 }
 
 pub trait BehaviorClone {
@@ -66,27 +66,27 @@ impl Behavior for Walk {
             _ => false,
         }
     }
-    fn apply(&self, world: &mut World, target: Hex) -> Vec<Meta<Event>> {
+    fn apply(&self, world: &mut World, target: Hex) -> Vec<Event> {
         let path = match world.map().path_to(self.start, target) {
             Ok(p) => p,
-            Err(e) => return vec![event::failure(e)],
+            Err(e) => return vec![Event::failed(e)],
         };
         let mut out = vec![];
         for (from, to) in path.iter().zip(path.iter().skip(1)) {
             let actual = match world.map().creatures().get(&self.creature_id) {
                 Some(h) => h,
                 None => {
-                    out.push(event::failure(Error::NoSuchCreature));
+                    out.push(Event::failed(Error::NoSuchCreature));
                     return out;
                 }
             };
             if actual != from && actual.distance_to(*to) > 1 {
-                out.push(event::failure(Error::Obstructed));
+                out.push(Event::failed(Error::Obstructed));
                 return out;
             }
-            out.append(&mut world.execute(&Meta::new(
-                Action::MoveCreature { id: self.creature_id, to: *to }
-            )));
+            out.append(&mut world.execute(
+                &Action::MoveCreature { id: self.creature_id, to: *to }
+            ));
         }
         out
     }

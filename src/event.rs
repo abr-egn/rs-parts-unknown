@@ -1,4 +1,3 @@
-use std::collections::HashSet;
 use hex::Hex;
 use serde::Serialize;
 use crate::{
@@ -6,27 +5,6 @@ use crate::{
     error::Error,
     id_map::Id,
 };
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-pub struct Meta<T> {
-    pub data: T,
-    pub tags: HashSet<String>,
-}
-
-impl<T> Meta<T> {
-    pub fn new(data: T) -> Self {
-        Meta {
-            data,
-            tags: HashSet::new(),
-        }
-    }
-    pub fn tagged(data: T, tags: &[&str]) -> Self {
-        Meta {
-            data,
-            tags: tags.iter().map(|&s| s.into()).collect(),
-        }
-    }
-}
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub enum Action {
@@ -45,13 +23,21 @@ pub enum Event {
     SpentMP { id: Id<Creature>, mp: i32 },
 }
 
-pub fn failure(err: Error) -> Meta<Event> {
-    Meta::new(Event::Failed { action: Action::Nothing, reason: format!("{:?}", err) })
+impl Event {   
+    pub fn failed(err: Error) -> Event {
+        Event::Failed { action: Action::Nothing, reason: format!("{:?}", err) }
+    }
+    pub fn is_failure(events: &[Event]) -> bool {
+        match events {
+            [Event::Failed { .. }, ..] => true,
+            _ => false,
+        }
+    }
 }
 
 pub trait Mod: ModClone + std::fmt::Debug + Send {
     fn name(&self) -> &'static str;
-    fn apply(&mut self, action: &mut Meta<Action>);
+    fn apply(&mut self, action: &mut Action);
 }
 
 pub trait ModClone {
@@ -75,7 +61,7 @@ impl Clone for Box<dyn Mod> {
 
 pub trait Trigger: TriggerClone + std::fmt::Debug + Send {
     fn name(&self) -> &'static str;
-    fn apply(&mut self, event: &Meta<Event>) -> Vec<Meta<Action>>;
+    fn apply(&mut self, event: &Event) -> Vec<Action>;
 }
 
 pub type TriggerId = Id<Box<dyn Trigger>>;
