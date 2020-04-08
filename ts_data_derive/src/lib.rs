@@ -22,7 +22,7 @@ pub fn ts_data_derive(input: TokenStream) -> TokenStream {
         syn::Data::Struct(s) => build_struct(&mut output, &ast.ident, &s),
         _ => panic!("unhandled ast.data branch in {}", &ast.ident),
     }
-    append!(output, "\n");
+    //append!(output, "\n");
 
     let gen = quote! {
         #[wasm_bindgen(typescript_custom_section)]
@@ -59,8 +59,10 @@ fn build_struct(buffer: &mut String, name: &syn::Ident, data: &syn::DataStruct) 
     };
     for v in &fields.named {
         let ident = v.ident.as_ref().expect("struct field ident");
-        if let Some(ty) = extract_option(&v.ty) {
-            append!(buffer, "    {}?: {},\n", ident, quote! { #ty })
+        if let Some(ty) = extract_generic("Option", &v.ty) {
+            append!(buffer, "    {}?: {},\n", ident, quote! { #ty });
+        } else if let Some(ty) = extract_generic("Vec", &v.ty) {
+            append!(buffer, "    {}: {}[],\n", ident, quote! { #ty });
         } else {
             let ty = &v.ty;
             append!(buffer, "    {}: {},\n", ident, quote! { #ty });
@@ -69,7 +71,7 @@ fn build_struct(buffer: &mut String, name: &syn::Ident, data: &syn::DataStruct) 
     append!(buffer, "}}");
 }
 
-fn extract_option(ty: &syn::Type) -> Option<&syn::Type> {
+fn extract_generic<'a>(name: &str, ty: &'a syn::Type) -> Option<&'a syn::Type> {
     let path = match ty {
         syn::Type::Path(p) => &p.path,
         _ => return None,
@@ -78,7 +80,7 @@ fn extract_option(ty: &syn::Type) -> Option<&syn::Type> {
         return None;
     }
     let segment = &path.segments[0];
-    if segment.ident.to_string() != "Option" {
+    if segment.ident.to_string() != name {
         return None;
     }
     let args = match &segment.arguments {
@@ -104,17 +106,22 @@ impl VisitMut for TypeMapper {
             // Pass through
             "Card" => (),
             "Creature" => (),
+            "Direction" => (),
+            "Hex" => (),
             "Id" => (),
             "Option" => (),
             "Part" => (),
             "Space" => (),
+            "Vec" => (),
             // De-path
             "card::Card" => replace_all(path, "Card"),
             "creature::Creature" => replace_all(path, "Creature"),
             "creature::Part" => replace_all(path, "Part"),
+            "hex::Direction" => replace_all(path, "Direction"),
             // Native types
             "HashMap" => replace_first(path, "Map"),
             "i32" => replace_first(path, "number"),
+            "String" => replace_first(path, "string"),
 
             _ => panic!("unhandled type {} : {:?}", name, path),
         }

@@ -251,7 +251,7 @@ impl Part {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, TsData)]
 #[allow(non_snake_case)]
 pub struct Card {
     id: Id<card::Card>,
@@ -311,7 +311,7 @@ impl Behavior {
     }
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TsData)]
 pub struct Boundary {
     pub hex: Hex,
     pub sides: Vec<hex::Direction>,
@@ -423,14 +423,6 @@ export interface Event {
     } | undefined,
 }
 
-export interface Card {
-    id: Id<Card>,
-    partId: Id<Part>,
-    creatureId: Id<Creature>,
-    name: string,
-    apCost: number,
-}
-
 export interface Tracer {
     startAction: (action: any) => void,
     modAction: (name: string, prev: any, new_: any) => void,
@@ -441,11 +433,6 @@ interface Behavior {
     highlight(world: World, cursor: Hex): Hex[];
     targetValid(world: World, cursor: Hex): boolean;
     apply(world: World, target: Hex): Event[];
-}
-
-export interface Boundary {
-    hex: Hex,
-    sides: Direction[],
 }
 
 export type Direction = "XY" | "XZ" | "YZ" | "YX" | "ZX" | "ZY";
