@@ -397,11 +397,6 @@ export interface Hex {
     y: number,
 }
 
-export interface Tile {
-    space: Space,
-    creature?: number,
-}
-
 export type Id<_> = number;
 
 export interface Event {

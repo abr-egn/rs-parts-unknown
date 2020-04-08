@@ -185,7 +185,7 @@ fn vacant_or<K, V, E>(e: Entry<K, V>, err: E) -> std::result::Result<VacantEntry
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TsData)]
 pub struct Tile {
     pub space: Space,
     pub creature: Option<Id<Creature>>,
