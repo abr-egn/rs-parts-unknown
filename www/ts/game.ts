@@ -5,7 +5,7 @@ import {World} from "../wasm";
 import {Render} from "./render";
 import {Stack, StateKey, StateUI} from "./stack";
 import {Index, index} from "../tsx/index";
-import {Hex, Tile, find_boundary} from "./types";
+import {Event, Tracer, find_boundary} from "./types";
 
 declare global {
     interface Window {
@@ -24,17 +24,7 @@ export class Game {
     public keys: Map<string, boolean> = new Map();
     constructor() {
         this._world = new World();
-        this._world.setTracer({
-            startAction: (action) => {
-                console.log("ACTION:", action);
-            },
-            modAction: (name, prev, new_) => {
-                console.log(" [%s]", name, prev, "->", new_);
-            },
-            resolveAction: (action, event) => {
-                console.log("==>", event);
-            },
-        });
+        this._world.setTracer(new ConsoleTracer());
         this._stack = new Stack();
 
         window.game = this;
@@ -85,5 +75,36 @@ export class Game {
 
     updateUI<T>(key: StateKey<T>, update: (draft: T & StateUI) => void) {
         this._index.current!.updateStack(key, update);
+    }
+}
+
+export class ConsoleTracer implements Tracer {
+    startAction(action: any) {
+        console.log("ACTION:", action);
+    }
+    modAction(name: string, prev: any, new_: any) {
+        console.log(" [%s]", name, prev, "->", new_);
+    }
+    resolveAction(action: any, event: Event) {
+        console.log("==>", event);
+    }
+}
+
+export class BufferTracer implements Tracer {
+    private _buffer: (() => void)[] = [];
+    constructor(private _wrapped: Tracer) {}
+    startAction(action: any) {
+        this._buffer.push(() => this._wrapped.startAction(action));
+    }
+    modAction(name: string, prev: any, new_: any) {
+        this._buffer.push(() => this._wrapped.modAction(name, prev, new_));
+    }
+    resolveAction(action: any, event: Event) {
+        this._buffer.push(() => this._wrapped.resolveAction(action, event));
+    }
+    runBuffer() {
+        for (let thunk of this._buffer) {
+            thunk();
+        }
     }
 }

@@ -4,6 +4,7 @@ import {
     Card, Creature, Event, Hex, Id,
     isFailure,
 } from "./types";
+import {BufferTracer, ConsoleTracer} from "./game";
 
 export namespace Base {
     export interface Data {
@@ -161,8 +162,8 @@ export class MovePlayer extends State {
     }
     onTileClicked(hex: Hex) {
         const next = window.game.world.clone();
-        // TODO: buffer trace
-        next.setTracer(undefined);
+        const buffer = new BufferTracer(new ConsoleTracer());
+        next.setTracer(buffer);
         let events = next.movePlayer(hex);
         let hasHex: boolean = false;
         for (let event of events) {
@@ -177,6 +178,8 @@ export class MovePlayer extends State {
             next.free();
             return;
         }
+        buffer.runBuffer();
+        next.setTracer(new ConsoleTracer());
         window.game.stack.swap(new Update(events, next));
     }
 }
