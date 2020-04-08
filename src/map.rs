@@ -2,14 +2,16 @@ use std::collections::{
     hash_map::{Entry, VacantEntry},
     HashMap, HashSet, VecDeque,
 };
-
 use fnv::FnvHashSet;
 use hex::Hex;
 use serde::Serialize;
-
-use crate::creature::Creature;
-use crate::error::{Error, Result};
-use crate::id_map::Id;
+use ts_data_derive::TsData;
+use wasm_bindgen::prelude::wasm_bindgen;
+use crate::{
+    creature::Creature,
+    error::{Error, Result},
+    id_map::Id,
+};
 
 #[derive(Debug, Clone)]
 pub struct Map {
@@ -189,7 +191,7 @@ pub struct Tile {
     pub creature: Option<Id<Creature>>,
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, TsData)]
 pub enum Space {
     Empty,
     Wall,

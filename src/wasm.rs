@@ -402,8 +402,6 @@ export interface Tile {
     creature?: number,
 }
 
-export type Space = "Empty" | "Wall";
-
 export type Id<_> = number;
 
 export interface Event {

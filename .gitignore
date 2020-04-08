@@ -1,4 +1,6 @@
 /target
+/ts_data_derive/target
+/ts_data_derive/Cargo.lock
 /www/js
 /www/wasm
 /www/node_modules
