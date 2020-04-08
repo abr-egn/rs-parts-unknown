@@ -149,4 +149,11 @@ export class MovePlayer extends State {
         // TODO: use immer patches to automatically unwind changes
         window.game.updateUI(Base, (draft) => { draft.highlight = []; });
     }
+    onTileEntered(hex: Hex) {
+        const check = window.game.world.clone();
+        check.logging = false;
+        let preview = check.movePlayer(hex);
+        window.game.updateUI(Base, (draft) => { draft.preview = preview; });
+        check.free();
+    }
 }

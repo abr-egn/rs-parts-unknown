@@ -183,7 +183,7 @@ impl World {
             }
             SpendMP { id, mp } => {
                 let creature = self.creatures.get_mut(&id).ok_or(Error::NoSuchCreature)?;
-                if creature.spend_ap(mp) {
+                if creature.spend_mp(mp) {
                     return Ok(Event::SpentMP { id, mp })
                 } else {
                     return Err(Error::NotEnough)
@@ -199,7 +199,7 @@ fn make_player() -> Creature {
     let part = creature::Part { cards, ap: 3 };
     let mut pc = Creature::new(&[part]);
     pc.cur_ap = pc.max_ap();
-    pc.cur_mp = 1;
+    pc.cur_mp = 2;
     pc
 }
 

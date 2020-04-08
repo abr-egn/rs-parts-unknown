@@ -132,7 +132,7 @@ impl World {
     }
 
     pub fn _movePlayer(&mut self, to: JsValue) -> Array /* Event[] */ {
-        self.movePlayer(to).iter()
+        self.move_player(to).iter()
             .map(to_js_value)
             .collect()
     }
@@ -151,7 +151,7 @@ impl World {
         self.wrapped.map().path_to(*from, to)
     }
 
-    fn movePlayer(&mut self, to: JsValue) -> Vec<event::Meta<event::Event>> {
+    fn move_player(&mut self, to: JsValue) -> Vec<event::Meta<event::Event>> {
         let path = match self.path(to) {
             Ok(p) => p,
             Err(e) => return vec![event::failure(e)],
