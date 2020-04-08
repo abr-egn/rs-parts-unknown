@@ -42,12 +42,20 @@ impl World {
 
     // Accessors
 
-    #[wasm_bindgen(getter)]
-    pub fn _playerId(&self) -> JsValue {
+    #[wasm_bindgen(getter, skip_typescript)]
+    pub fn playerId(&self) -> JsValue {
         to_js_value(&self.wrapped.player_id())
     }
 
-    pub fn _getTiles(&self) -> Array /* [Hex, Tile][] */ {
+    #[wasm_bindgen(skip_typescript)]
+    pub fn getTile(&self, hex: JsValue) -> JsValue /* Tile | undefined */ {
+        self.wrapped.map().tiles()
+            .get(&from_js_value::<Hex>(hex))
+            .map_or(JsValue::undefined(), |t| to_js_value(&t))
+    }
+
+    #[wasm_bindgen(skip_typescript)]
+    pub fn getTiles(&self) -> Array /* [Hex, Tile][] */ {
         self.wrapped.map().tiles().iter()
             .map(|(h, t)| {
                 let tuple = Array::new();
@@ -58,19 +66,15 @@ impl World {
             .collect()
     }
 
-    pub fn _getTile(&self, hex: JsValue) -> JsValue /* Tile | undefined */ {
-        self.wrapped.map().tiles()
-            .get(&from_js_value::<Hex>(hex))
-            .map_or(JsValue::undefined(), |t| to_js_value(&t))
-    }
-
-    pub fn _getCreature(&self, id: JsValue) -> JsValue {
+    #[wasm_bindgen(skip_typescript)]
+    pub fn getCreature(&self, id: JsValue) -> JsValue {
         let id: Id<creature::Creature> = from_js_value(id);
         self.wrapped.creatures().map().get(&id)
             .map_or(JsValue::undefined(), |c| Creature::new(id, c).js())
     }
 
-    pub fn _getCreatureMap(&self) -> Array /* [Id<Creature>, Hex][] */ {
+    #[wasm_bindgen(skip_typescript)]
+    pub fn getCreatureMap(&self) -> Array /* [Id<Creature>, Hex][] */ {
         self.wrapped.map().creatures().iter()
             .map(|(id, hex)| {
                 let tuple = Array::new();
@@ -81,13 +85,15 @@ impl World {
             .collect()
     }
 
-    pub fn _getCreatureHex(&self, id: JsValue) -> JsValue /* Hex | undefined */ {
+    #[wasm_bindgen(skip_typescript)]
+    pub fn getCreatureHex(&self, id: JsValue) -> JsValue /* Hex | undefined */ {
         let id: Id<creature::Creature> = from_js_value(id);
         self.wrapped.map().creatures().get(&id)
             .map_or(JsValue::undefined(), to_js_value::<Hex>)
     }
 
-    pub fn _getCreatureRange(&self, id: JsValue) -> Array /* Hex[] */ {
+    #[wasm_bindgen(skip_typescript)]
+    pub fn getCreatureRange(&self, id: JsValue) -> Array /* Hex[] */ {
         let id: Id<creature::Creature> = from_js_value(id);
         let range = match self.wrapped.creatures().map().get(&id) {
             Some(c) => c.cur_mp,
@@ -102,12 +108,16 @@ impl World {
             .collect()
     }
 
-    pub fn _checkSpendAP(&self, creature_id: JsValue, ap: i32) -> bool {
+    #[wasm_bindgen(skip_typescript)]
+    pub fn checkSpendAP(&self, creature_id: JsValue, ap: i32) -> bool {
         let id: Id<creature::Creature> = from_js_value(creature_id);
         return self.wrapped.check_action(&Action::SpendAP { id, ap });
     }
 
-    pub fn _startPlay(&self, card: JsValue) -> Option<Behavior> {
+    // Mutators
+
+    #[wasm_bindgen(skip_typescript)]
+    pub fn startPlay(&self, card: JsValue) -> Option<Behavior> {
         let card: Card = from_js_value(card);
         let creature = self.wrapped.creatures().map().get(&card.creature_id)?;
         let part = creature.parts.map().get(&card.part_id)?;
@@ -115,15 +125,15 @@ impl World {
         Some(Behavior::new((real_card.start_play)(&self.wrapped, &card.creature_id)))
     }
 
-    // Mutators
-
-    pub fn _npcTurn(&mut self) -> Array /* Event[] */ {
+    #[wasm_bindgen(skip_typescript)]
+    pub fn npcTurn(&mut self) -> Array /* Event[] */ {
         self.wrapped.npc_turn().iter()
             .map(to_js_value)
             .collect()
     }
 
-    pub fn _spendAP(&mut self, creature_id: JsValue, ap: i32) -> Array /* Event[] */ {
+    #[wasm_bindgen(skip_typescript)]
+    pub fn spendAP(&mut self, creature_id: JsValue, ap: i32) -> Array /* Event[] */ {
         let id: Id<creature::Creature> = from_js_value(creature_id);
         self.wrapped.execute(&Action::SpendAP { id, ap })
             .iter()
@@ -131,18 +141,20 @@ impl World {
             .collect()
     }
 
-    pub fn _movePlayer(&mut self, to: JsValue) -> Array /* Event[] */ {
+    #[wasm_bindgen(skip_typescript)]
+    pub fn movePlayer(&mut self, to: JsValue) -> Array /* Event[] */ {
         self.move_player(to).iter()
             .map(to_js_value)
             .collect()
     }
 
-    pub fn _setTracer(&mut self, tracer: &Tracer) {
-        self.wrapped.tracer = Some(Box::new(WrapTracer::new(tracer)));
-    }
-
-    pub fn _clearTracer(&mut self) {
-        self.wrapped.tracer = None;
+    pub fn setTracer(&mut self, tracer: JsValue) {
+        if tracer.is_undefined() {
+            self.wrapped.tracer = None;
+        } else {
+            self.wrapped.tracer = Some(Box::new(WrapTracer { wrapped: tracer }));
+        }
+        
     }
 }
 
@@ -340,9 +352,6 @@ struct WrapTracer {
 }
 
 impl WrapTracer {
-    fn new(t: &Tracer) -> Self {
-        WrapTracer { wrapped: JsValue::from(t) }
-    }
     fn wrapped(&self) -> &Tracer {
         self.wrapped.unchecked_ref()
     }
@@ -359,3 +368,85 @@ impl world::Tracer for WrapTracer {
         self.wrapped().resolveAction(&to_js_value(action), &to_js_value(event));
     }
 }
+
+#[wasm_bindgen(typescript_custom_section)]
+const TS_APPEND: &'static str = r#"
+interface World {
+    readonly playerId: Id<Creature>;
+    getTile(hex: Hex): Tile | undefined;
+    getTiles(): Array<[Hex, Tile]>;
+    getCreature(id: Id<Creature>): Creature | undefined;
+    getCreatureMap(): [Id<Creature>, Hex][];
+    getCreatureHex(id: Id<Creature>): Hex | undefined;
+    getCreatureRange(id: Id<Creature>): Hex[];
+    checkSpendAP(id: Id<Creature>, ap: number): boolean;
+
+    startPlay(card: Card): Behavior | undefined;
+    npcTurn(): Event[];
+    spendAP(id: Id<Creature>, ap: number): Event[];
+    movePlayer(to: Hex): Event[];
+}
+
+export interface Hex {
+    x: number,
+    y: number,
+}
+
+export interface Tile {
+    space: Space,
+    creature?: number,
+}
+
+export type Space = "Empty" | "Wall";
+
+export type Id<_> = number;
+
+export interface Event {
+    Nothing: {} | undefined,
+    Failed: {
+        action: any,
+        reason: string,
+    } | undefined,
+    CreatureMoved: {
+        id: Id<Creature>,
+        from: Hex,
+        to: Hex,
+    } | undefined,
+    SpentAP: {
+        id: Id<Creature>,
+        ap: number,
+    } | undefined,
+    ChangeMP: {
+        id: Id<Creature>,
+        mp: number,
+    } | undefined,
+}
+
+export interface Creature {
+    id: Id<Creature>,
+    parts: Map<Id<Part>, Part>,
+    curAp: number,
+    curMp: number,
+}
+
+export interface Player {}
+export interface NPC {
+    move_range: number,
+    attack_range: number,
+}
+
+export interface Part {
+    id: Id<Part>,
+    creatureId: Id<Creature>,
+    cards: Map<Id<Card>, Card>,
+    ap: number,
+}
+
+export interface Card {
+    id: Id<Card>,
+    partId: Id<Part>,
+    creatureId: Id<Creature>,
+    name: string,
+    apCost: number,
+}
+"#;

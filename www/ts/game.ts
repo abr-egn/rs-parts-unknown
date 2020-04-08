@@ -1,11 +1,11 @@
 import {RefObject} from "react";
 import * as ReactDOM from "react-dom";
 
-import {World} from "../wasm";
+import {Event, World} from "../wasm";
 import {Render} from "./render";
 import {Stack, StateKey, StateUI} from "./stack";
 import {Index, index} from "../tsx/index";
-import {Event, Tracer, find_boundary} from "./types";
+import {Tracer, find_boundary} from "./types";
 
 declare global {
     interface Window {

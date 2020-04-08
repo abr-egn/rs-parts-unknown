@@ -1,10 +1,9 @@
 import produce from "immer";
 import * as React from "react";
 
-import {World} from "../wasm";
-import {StateKey, StateUI, State} from "../ts/stack";
+import {Card, Creature, World} from "../wasm";
+import {StateKey, StateUI} from "../ts/stack";
 import * as States from "../ts/states";
-import {Id, Card, Creature} from "../ts/types";
 
 export function index(): [JSX.Element, React.RefObject<Index>] {
     let ref = React.createRef<Index>();

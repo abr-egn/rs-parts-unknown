@@ -1,9 +1,6 @@
-import {Behavior, World} from "../wasm";
+import {Behavior, Card, Creature, Event, Hex, Id, World} from "../wasm";
 import {State, StateUI} from "./stack";
-import {
-    Card, Creature, Event, Hex, Id,
-    isFailure,
-} from "./types";
+import {isFailure} from "./types";
 import {BufferTracer, ConsoleTracer} from "./game";
 
 export namespace Base {
