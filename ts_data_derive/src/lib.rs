@@ -2,7 +2,7 @@ extern crate proc_macro;
 
 use crate::proc_macro::TokenStream;
 use quote::quote;
-use syn;
+use syn::{self, visit_mut::{VisitMut, visit_derive_input_mut}};
 
 macro_rules! append {
     ($buf:ident, $($args:tt)*) => {
@@ -12,7 +12,8 @@ macro_rules! append {
 
 #[proc_macro_derive(TsData)]
 pub fn ts_data_derive(input: TokenStream) -> TokenStream {
-    let ast: syn::DeriveInput = syn::parse(input).unwrap();
+    let mut ast: syn::DeriveInput = syn::parse(input).unwrap();
+    visit_derive_input_mut(&mut TypeMapper {}, &mut ast);
 
     let mut output: String = String::new();
     append!(output, "\n/* TsData Generated */\n");
@@ -68,7 +69,7 @@ fn build_struct(buffer: &mut String, name: &syn::Ident, data: &syn::DataStruct) 
     append!(buffer, "}}");
 }
 
-fn extract_option(ty: &syn::Type) -> Option<&syn::Type> {
+fn extract_generic<'a>(name: &str, ty: &'a syn::Type) -> Option<&'a syn::punctuated::Punctuated<syn::GenericArgument, syn::token::Comma>> {
     let path = match ty {
         syn::Type::Path(p) => &p.path,
         _ => return None,
@@ -77,13 +78,17 @@ fn extract_option(ty: &syn::Type) -> Option<&syn::Type> {
         return None;
     }
     let segment = &path.segments[0];
-    if segment.ident.to_string() != "Option" {
+    if segment.ident.to_string() != name {
         return None;
     }
-    let args = match &segment.arguments {
-        syn::PathArguments::AngleBracketed(ab) => &ab.args,
+    match &segment.arguments {
+        syn::PathArguments::AngleBracketed(ab) => return Some(&ab.args),
         _ => return None,
-    };
+    }
+}
+
+fn extract_option(ty: &syn::Type) -> Option<&syn::Type> {
+    let args = extract_generic("Option", ty)?;
     if args.len() != 1 {
         return None;
     }
@@ -91,4 +96,54 @@ fn extract_option(ty: &syn::Type) -> Option<&syn::Type> {
         syn::GenericArgument::Type(t) => return Some(t),
         _ => return None,
     }
+}
+
+struct TypeMapper {}
+
+impl VisitMut for TypeMapper {
+    fn visit_attribute_mut(&mut self, _: &mut syn::Attribute) { }
+    fn visit_path_mut(&mut self, path: &mut syn::Path) {
+        let name = path_name(path);
+        match &name as &str {
+            // Pass through
+            "Creature" => (),
+            "Id" => (),
+            "Option" => (),
+            "Part" => (),
+            "Space" => (),
+            // De-path
+            "creature::Creature" => replace_all(path, "Creature"),
+            "creature::Part" => replace_all(path, "Part"),
+            // Native types
+            "HashMap" => replace_first(path, "Map"),
+            "i32" => replace_first(path, "number"),
+
+            _ => panic!("unhandled type {} : {:?}", name, path),
+        }
+        for s in &mut path.segments {
+            self.visit_path_segment_mut(s);
+        }
+    }
+}
+
+fn replace_first(path: &mut syn::Path, ident: &str) {
+    path.segments[0].ident = syn::Ident::new(ident, path.segments[0].ident.span());
+}
+
+fn replace_all(path: &mut syn::Path, ident: &str) {
+    let mut segments = syn::punctuated::Punctuated::new();
+    segments.push(syn::PathSegment {
+        ident: syn::Ident::new(ident, path.segments[0].ident.span()),
+        arguments: syn::PathArguments::None,
+    });
+    path.segments = segments;
+}
+
+fn path_name(path: &syn::Path) -> String {
+    let mut out = String::from(path.segments[0].ident.to_string());
+    for s in path.segments.iter().skip(1) {
+        out.push_str("::");
+        out.push_str(&s.ident.to_string())
+    }
+    out
 }

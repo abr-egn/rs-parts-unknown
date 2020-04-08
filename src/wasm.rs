@@ -3,6 +3,7 @@ use hex::Hex;
 use js_sys::Array;
 use serde::{Serialize, Deserialize, de::DeserializeOwned};
 use serde_wasm_bindgen::{from_value, to_value};
+use ts_data_derive::TsData;
 use wasm_bindgen::{
     prelude::*,
     JsCast,
@@ -200,7 +201,7 @@ impl World {
     }
 }
 
-#[derive(Serialize)]
+#[derive(Serialize, TsData)]
 #[serde(rename_all = "camelCase")]
 pub struct Creature {
     id: Id<creature::Creature>,
@@ -425,12 +426,6 @@ export interface Creature {
     parts: Map<Id<Part>, Part>,
     curAp: number,
     curMp: number,
-}
-
-export interface Player {}
-export interface NPC {
-    move_range: number,
-    attack_range: number,
 }
 
 export interface Part {
