@@ -1,12 +1,14 @@
 use hex::Hex;
 use serde::Serialize;
+use ts_data_derive::TsData;
+use wasm_bindgen::prelude::wasm_bindgen;
 use crate::{
     creature::Creature,
     error::Error,
     id_map::Id,
 };
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TsData)]
 pub enum Action {
     Nothing,
     MoveCreature { id: Id<Creature>, to: Hex },
@@ -15,7 +17,7 @@ pub enum Action {
     GainMP { id: Id<Creature>, mp: i32 },
 }
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, TsData)]
 pub enum Event {
     Nothing,
     Failed { action: Action, reason: String },

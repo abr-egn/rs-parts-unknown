@@ -22,7 +22,6 @@ pub fn ts_data_derive(input: TokenStream) -> TokenStream {
         syn::Data::Struct(s) => build_struct(&mut output, &ast.ident, &s),
         _ => panic!("unhandled ast.data branch in {}", &ast.ident),
     }
-    //append!(output, "\n");
 
     let gen = quote! {
         #[wasm_bindgen(typescript_custom_section)]
@@ -38,8 +37,18 @@ fn build_enum(buffer: &mut String, name: &syn::Ident, data: &syn::DataEnum) {
         build_simple_enum(buffer, name, data);
         return;
     }
-    // TODO
     append!(buffer, "export interface {} {{\n", name);
+    for v in &data.variants {
+        append!(buffer, "    {}: {{\n", v.ident);
+        match &v.fields {
+            syn::Fields::Unit => (),
+            syn::Fields::Named(n) => {
+                build_fields(buffer, "        ", n);
+            }
+            v => panic!("unhandled enum variant in {}: {:?}", name, v),
+        }
+        append!(buffer, "    }} | undefined,\n");
+    }
     append!(buffer, "}}\n");
 }
 
@@ -51,23 +60,27 @@ fn build_simple_enum(buffer: &mut String, name: &syn::Ident, data: &syn::DataEnu
     append!(buffer, ";");
 }
 
+fn build_fields(buffer: &mut String, pad: &str, fields: &syn::FieldsNamed) {
+    for v in &fields.named {
+        let ident = v.ident.as_ref().expect("field ident");
+        if let Some(ty) = extract_generic("Option", &v.ty) {
+            append!(buffer, "{}{}?: {},\n", pad, ident, quote! { #ty });
+        } else if let Some(ty) = extract_generic("Vec", &v.ty) {
+            append!(buffer, "{}{}: {}[],\n", pad, ident, quote! { #ty });
+        } else {
+            let ty = &v.ty;
+            append!(buffer, "{}{}: {},\n", pad, ident, quote! { #ty });
+        }
+    }
+}
+
 fn build_struct(buffer: &mut String, name: &syn::Ident, data: &syn::DataStruct) {
     append!(buffer, "export interface {} {{\n", name);
     let fields = match &data.fields {
         syn::Fields::Named(f) => f,
         _ => panic!("unhandled Fields branch in {}: {:?}", name, data.fields),
     };
-    for v in &fields.named {
-        let ident = v.ident.as_ref().expect("struct field ident");
-        if let Some(ty) = extract_generic("Option", &v.ty) {
-            append!(buffer, "    {}?: {},\n", ident, quote! { #ty });
-        } else if let Some(ty) = extract_generic("Vec", &v.ty) {
-            append!(buffer, "    {}: {}[],\n", ident, quote! { #ty });
-        } else {
-            let ty = &v.ty;
-            append!(buffer, "    {}: {},\n", ident, quote! { #ty });
-        }
-    }
+    build_fields(buffer, "    ", fields);
     append!(buffer, "}}");
 }
 
@@ -104,6 +117,7 @@ impl VisitMut for TypeMapper {
         let name = path_name(path);
         match &name as &str {
             // Pass through
+            "Action" => (),
             "Card" => (),
             "Creature" => (),
             "Direction" => (),

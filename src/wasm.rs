@@ -402,27 +402,6 @@ export interface Hex {
 
 export type Id<_> = number;
 
-export interface Event {
-    Nothing: {} | undefined,
-    Failed: {
-        action: any,
-        reason: string,
-    } | undefined,
-    CreatureMoved: {
-        id: Id<Creature>,
-        from: Hex,
-        to: Hex,
-    } | undefined,
-    SpentAP: {
-        id: Id<Creature>,
-        ap: number,
-    } | undefined,
-    ChangeMP: {
-        id: Id<Creature>,
-        mp: number,
-    } | undefined,
-}
-
 export interface Tracer {
     startAction: (action: any) => void,
     modAction: (name: string, prev: any, new_: any) => void,
