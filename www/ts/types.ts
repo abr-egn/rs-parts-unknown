@@ -74,7 +74,7 @@ export interface Event {
         id: Id<Creature>,
         ap: number,
     } | undefined,
-    SpentMP: {
+    ChangeMP: {
         id: Id<Creature>,
         mp: number,
     } | undefined,

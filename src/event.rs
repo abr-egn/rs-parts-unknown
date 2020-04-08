@@ -12,6 +12,7 @@ pub enum Action {
     MoveCreature { id: Id<Creature>, to: Hex },
     SpendAP { id: Id<Creature>, ap: i32 },
     SpendMP { id: Id<Creature>, mp: i32 },
+    GainMP { id: Id<Creature>, mp: i32 },
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -20,7 +21,7 @@ pub enum Event {
     Failed { action: Action, reason: String },
     CreatureMoved { id: Id<Creature>, from: Hex, to: Hex, },
     SpentAP { id: Id<Creature>, ap: i32 },
-    SpentMP { id: Id<Creature>, mp: i32 },
+    ChangeMP { id: Id<Creature>, mp: i32 },
 }
 
 impl Event {   

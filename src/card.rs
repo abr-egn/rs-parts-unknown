@@ -1,9 +1,7 @@
-use std::convert::TryInto;
 use hex::Hex;
 use serde::Serialize;
 use crate::{
     creature::Creature,
-    error::Error,
     event::{Action, Event},
     id_map::Id,
     world::World,
@@ -57,37 +55,16 @@ pub struct Walk {
 
 impl Behavior for Walk {
     fn highlight(&self, world: &World, _: Hex) -> Vec<Hex> {
-        world.map().range_from(self.start, self.range).into_iter().collect()
+        world.map().creatures().get(&world.player_id()).into_iter().cloned().collect()
     }
     fn target_valid(&self, world: &World, cursor: Hex) -> bool {
-        let range: usize = self.range.try_into().unwrap();
-        match world.map().path_to(self.start, cursor) {
-            Ok(path) => path.len() <= range + 1,
-            _ => false,
-        }
+        Some(&cursor) == world.map().creatures().get(&world.player_id())
     }
-    fn apply(&self, world: &mut World, target: Hex) -> Vec<Event> {
-        let path = match world.map().path_to(self.start, target) {
-            Ok(p) => p,
-            Err(e) => return vec![Event::failed(e)],
-        };
+    fn apply(&self, world: &mut World, _target: Hex) -> Vec<Event> {
         let mut out = vec![];
-        for (from, to) in path.iter().zip(path.iter().skip(1)) {
-            let actual = match world.map().creatures().get(&self.creature_id) {
-                Some(h) => h,
-                None => {
-                    out.push(Event::failed(Error::NoSuchCreature));
-                    return out;
-                }
-            };
-            if actual != from && actual.distance_to(*to) > 1 {
-                out.push(Event::failed(Error::Obstructed));
-                return out;
-            }
-            out.append(&mut world.execute(
-                &Action::MoveCreature { id: self.creature_id, to: *to }
-            ));
-        }
+        out.append(&mut world.execute(
+            &Action::GainMP { id: world.player_id(), mp: 1 }
+        ));
         out
     }
 }

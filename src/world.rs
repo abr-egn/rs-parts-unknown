@@ -165,10 +165,15 @@ impl World {
             SpendMP { id, mp } => {
                 let creature = self.creatures.get_mut(&id).ok_or(Error::NoSuchCreature)?;
                 if creature.spend_mp(mp) {
-                    return Ok(Event::SpentMP { id, mp })
+                    return Ok(Event::ChangeMP { id, mp: -mp })
                 } else {
                     return Err(Error::NotEnough)
                 }
+            }
+            GainMP { id, mp } => {
+                let creature = self.creatures.get_mut(&id).ok_or(Error::NoSuchCreature)?;
+                creature.cur_mp += mp;
+                return Ok(Event::ChangeMP { id, mp })
             }
         }
     }
