@@ -4,8 +4,6 @@ export interface StateUI {
     active: boolean,
 }
 
-//export type 
-
 export class State<T = {}> {
     constructor(private _init: T) {}
 
@@ -23,7 +21,7 @@ export class State<T = {}> {
     }
 
     _onPushed() {
-        console.log("  PUSHED:", this.constructor.name);
+        //console.log("  PUSHED:", this.constructor.name);
         this.updateUI(ui => {
             if (!ui) {
                 return Object.assign({active: false}, this._init);
@@ -34,18 +32,18 @@ export class State<T = {}> {
     }
 
     _onPopped() {
-        console.log("  POPPED:", this.constructor.name);
+        //console.log("  POPPED:", this.constructor.name);
         this.onPopped();
     }
 
     _onActivated() {
-        console.log("  ACTIVATED:", this.constructor.name);
+        //console.log("  ACTIVATED:", this.constructor.name);
         this.updateUI(ui => { ui.active = true; });
         this.onActivated();
     }
 
     _onDeactivated() {
-        console.log("  DEACTIVATED:", this.constructor.name);
+        //console.log("  DEACTIVATED:", this.constructor.name);
         this.updateUI(ui => { ui.active = false; });
         this.onDeactivated();
     }
@@ -77,7 +75,7 @@ export class Stack {
             console.log("POP: %s --> %s", top.constructor.name,
                 this._stack[this._stack.length - 2].constructor.name);
             top._onDeactivated();
-            top.onPopped();
+            top._onPopped();
             this._stack.pop();
             this._top()!._onActivated();
         });
@@ -91,7 +89,7 @@ export class Stack {
             console.log("SWAP: %s --> %s", top.constructor.name,
                 state.constructor.name);
             top._onDeactivated();
-            top.onPopped();
+            top._onPopped();
             this._stack.pop();
             this._stack.push(state);
             state._onPushed();
