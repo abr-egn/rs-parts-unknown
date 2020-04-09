@@ -15,6 +15,8 @@ interface IndexState {
   world: World,
 }
 
+const _UNDO_COMPRESS_THRESHOLD: number = 10;
+
 export class Index extends React.Component<{}, IndexState> {
   private _pending: number = 0;
   private _onZero: (() => void)[] = [];
@@ -49,6 +51,9 @@ export class Index extends React.Component<{}, IndexState> {
       }
       inversePatches.push(...prevUndo);
       this._undo.set(token, inversePatches);
+      if (inversePatches.length >= _UNDO_COMPRESS_THRESHOLD) {
+        this._compressUndo(token);
+      }
       return next;
     }, this._onSetState);
   }
@@ -70,6 +75,16 @@ export class Index extends React.Component<{}, IndexState> {
     this.setState((prev: IndexState) => {
       return applyPatches(prev, undo);
     }, this._onSetState);
+  }
+
+  private _compressUndo(token: any) {
+    const undo = this._undo.get(token);
+    if (!undo) { return; }
+    let [next, patches, inversePatches] = produceWithPatches(this.state,
+      (draft: IndexState) => {
+        return applyPatches(draft, undo);
+      });
+    this._undo.set(token, patches);
   }
 
   setWorld(world: World) {
