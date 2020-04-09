@@ -100,6 +100,8 @@ fn build_fields(buffer: &mut String, pad: &str, fields: &syn::FieldsNamed) {
             append!(buffer, "{}{}?: {},\n", pad, ident, quote! { #ty });
         } else if let Some(ty) = extract_generic("Vec", &v.ty) {
             append!(buffer, "{}{}: {}[],\n", pad, ident, quote! { #ty });
+        } else if let Some(ty) = extract_generic("Box", &v.ty) {
+            append!(buffer, "{}{}: {},\n", pad, ident, quote! { #ty });
         } else {
             let ty = &v.ty;
             append!(buffer, "{}{}: {},\n", pad, ident, quote! { #ty });
@@ -163,9 +165,11 @@ impl VisitMut for TypeMapper {
         match &name as &str {
             // Pass through
             "Action" => (),
+            "Box" => (),
             "Card" => (),
             "Creature" => (),
             "Direction" => (),
+            "Event" => (),
             "Hex" => (),
             "Id" => (),
             "Option" => (),
@@ -181,7 +185,6 @@ impl VisitMut for TypeMapper {
             "HashMap" => replace_first(path, "Map"),
             "i32" => replace_first(path, "number"),
             "String" => replace_first(path, "string"),
-            "Box" => replace_all(path, "any"),
 
             _ => {
                 self.error = Some(Error {
