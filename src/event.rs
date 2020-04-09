@@ -12,9 +12,10 @@ use crate::{
 pub enum Action {
     Nothing,
     MoveCreature { id: Id<Creature>, to: Hex },
+    GainAP { id: Id<Creature>, ap: i32 },
     SpendAP { id: Id<Creature>, ap: i32 },
-    SpendMP { id: Id<Creature>, mp: i32 },
     GainMP { id: Id<Creature>, mp: i32 },
+    SpendMP { id: Id<Creature>, mp: i32 },
 }
 
 #[derive(Debug, Clone, Serialize, TsData)]
@@ -22,7 +23,7 @@ pub enum Event {
     Nothing,
     Failed { action: Action, reason: String },
     CreatureMoved { id: Id<Creature>, from: Hex, to: Hex, },
-    SpentAP { id: Id<Creature>, ap: i32 },
+    ChangeAP { id: Id<Creature>, ap: i32 },
     ChangeMP { id: Id<Creature>, mp: i32 },
 }
 

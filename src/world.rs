@@ -60,8 +60,14 @@ impl World {
     }
 
     pub fn npc_turn(&mut self) -> Vec<Event> {
-        let player_hex = self.map.creatures().get(&self.player_id).unwrap();
+        let mut events = vec![];
 
+        // Refill player ap/mp
+        let player_id = self.player_id;
+        events.extend(self.refill(&player_id));
+        
+        // Move NPCs
+        let player_hex = self.map.creatures().get(&self.player_id).unwrap();
         let mut moves = vec![];
         for &id in self.creatures.map().keys() {
             if id == self.player_id { continue }
@@ -82,11 +88,18 @@ impl World {
                 moves.push((id, to));
             }
         }
-
-        let mut events = vec![];
         for (id, to) in moves {
             events.extend(self.execute(&Action::MoveCreature { id, to }));
         }
+
+        // Refill NPC ap/mp
+        let refills: Vec<Id<Creature>> = self.creatures.map().keys().cloned()
+            .filter(|&id| id != self.player_id)
+            .collect();
+        for id in &refills {
+            events.extend(self.refill(id));
+        }
+
         events
     }
 
@@ -154,18 +167,15 @@ impl World {
                 self.map.move_to(id, to)?;
                 return Ok(Event::CreatureMoved { id, from, to });
             }
+            GainAP { id, ap } => {
+                let creature = self.creatures.get_mut(&id).ok_or(Error::NoSuchCreature)?;
+                creature.cur_ap += ap;
+                return Ok(Event::ChangeAP { id, ap })
+            }
             SpendAP { id, ap } => {
                 let creature = self.creatures.get_mut(&id).ok_or(Error::NoSuchCreature)?;
                 if creature.spend_ap(ap) {
-                    return Ok(Event::SpentAP { id, ap })
-                } else {
-                    return Err(Error::NotEnough)
-                }
-            }
-            SpendMP { id, mp } => {
-                let creature = self.creatures.get_mut(&id).ok_or(Error::NoSuchCreature)?;
-                if creature.spend_mp(mp) {
-                    return Ok(Event::ChangeMP { id, mp: -mp })
+                    return Ok(Event::ChangeAP { id, ap: -ap })
                 } else {
                     return Err(Error::NotEnough)
                 }
@@ -175,7 +185,33 @@ impl World {
                 creature.cur_mp += mp;
                 return Ok(Event::ChangeMP { id, mp })
             }
+            SpendMP { id, mp } => {
+                let creature = self.creatures.get_mut(&id).ok_or(Error::NoSuchCreature)?;
+                if creature.spend_mp(mp) {
+                    return Ok(Event::ChangeMP { id, mp: -mp })
+                } else {
+                    return Err(Error::NotEnough)
+                }
+            }
         }
+    }
+
+    fn refill(&mut self, id: &Id<Creature>) -> Vec<Event> {
+        let mut events = vec![];
+        let (fill_ap, fill_mp) = {
+            let creature = match self.creatures.map().get(id) {
+                Some(c) => c,
+                None => return vec![],
+            };
+            (creature.max_ap() - creature.cur_ap, creature.max_mp() - creature.cur_mp)
+        };
+        if fill_ap > 0 {
+            events.extend(self.execute(&Action::GainAP { id: *id, ap: fill_ap }));
+        }
+        if fill_mp > 0 {
+            events.extend(self.execute(&Action::GainMP { id: *id, mp: fill_mp }));
+        }
+        events
     }
 }
 
@@ -200,7 +236,7 @@ impl Clone for Box<dyn Tracer> {
 fn make_player() -> Creature {
     let mut cards = IdMap::new();
     cards.add(Walk::card());
-    let part = creature::Part { cards, ap: 3 };
+    let part = creature::Part { cards, ap: 3, mp: 2 };
     let mut pc = Creature::new(&[part]);
     pc.cur_ap = pc.max_ap();
     pc.cur_mp = 2;

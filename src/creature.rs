@@ -34,6 +34,12 @@ impl Creature {
             .sum()
     }
 
+    pub fn max_mp(&self) -> i32 {
+        self.parts.map().values()
+            .map(|part| part.mp)
+            .sum()
+    }
+
     pub fn spend_ap(&mut self, ap: i32) -> bool {
         if ap > self.cur_ap { return false; }
         self.cur_ap -= ap;
@@ -51,6 +57,7 @@ impl Creature {
 pub struct Part {
     pub cards: IdMap<Card>,
     pub ap: i32,
+    pub mp: i32,
     /*
     power: i32,
     max_hp: i32,
