@@ -68,12 +68,6 @@ export class PlayCard extends State<PlayCard.Data> {
     }
 
     onPopped() {
-        /*
-        this.updateOther(Base, (draft) => {
-            draft.highlight = [];
-            draft.preview = [];
-        });
-        */
         this._behavior?.free();
         this._behavior = undefined;
     }
@@ -143,15 +137,6 @@ export class MovePlayer extends State {
     onPushed() {
         const range = window.game.world.getCreatureRange(window.game.world.playerId);
         this.updateOther(Base, (draft) => { draft.highlight = range; });
-    }
-    onPopped() {
-        // TODO: use immer patches to automatically unwind changes
-        /*
-        this.updateOther(Base, (draft) => {
-            draft.highlight = [];
-            draft.preview = [];
-        });
-        */
     }
     onTileEntered(hex: Hex) {
         const check = window.game.world.clone();
