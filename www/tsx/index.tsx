@@ -69,7 +69,6 @@ export class Index extends React.Component<{}, IndexState> {
   private _undoStack(token: any) {
     const undo = this._undo.get(token);
     if (!undo) { return; }
-    console.log("==> undo:", token, undo);
     ++this._pending;
     this._undo.delete(token);
     this.setState((prev: IndexState) => {
