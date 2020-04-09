@@ -40,6 +40,20 @@ impl World {
     }
     #[wasm_bindgen(js_name = "clone")]
     pub fn js_clone(&self) -> Self { self.clone() }
+    
+    pub fn makeWrap(&self) -> JsValue {
+        to_js_value(&Event::Wrap { inner: Box::new(Event::Nothing) })
+    }
+
+    pub fn makeNothing(&self) -> Array {
+        let out = Array::new();
+        out.push(&to_js_value(&Event::Nothing));
+        out.push(&to_js_value(&Event::ChangeAP {
+            id: self.wrapped.player_id(),
+            ap: 1,
+        }));
+        out
+    }
 
     // Accessors
 
@@ -393,6 +407,8 @@ interface World {
     spendAP(id: Id<Creature>, ap: number): Event[];
     movePlayer(to: Hex): Event[];
     setTracer(tracer: Tracer | undefined): void;
+
+    makeWrap(): Event;
 }
 
 export interface Hex {

@@ -124,11 +124,12 @@ export class EndTurn extends State {
 }
 
 export class MovePlayer extends State {
+    private _range: Hex[] = [];
     constructor() { super({}) }
 
     onPushed() {
-        const range = window.game.world.getCreatureRange(window.game.world.playerId);
-        this.updateOther(Base, (draft) => { draft.highlight = range; });
+        this._range = window.game.world.getCreatureRange(window.game.world.playerId);
+        this.updateOther(Base, (draft) => { draft.highlight = this._range; });
     }
     onTileEntered(hex: Hex) {
         const check = window.game.world.clone();
@@ -138,25 +139,10 @@ export class MovePlayer extends State {
         check.free();
     }
     onTileClicked(hex: Hex) {
+        if (!this._range.some((h) => h == hex)) { return; }
         const next = window.game.world.clone();
-        const buffer = new BufferTracer(new ConsoleTracer());
-        next.setTracer(buffer);
         let events = next.movePlayer(hex);
         let hasHex: boolean = false;
-        for (let event of events) {
-            if (event.CreatureMoved) {
-                const to = event.CreatureMoved.to;
-                if (to.x == hex.x && to.y == hex.y) {
-                    hasHex = true;
-                }
-            }
-        }
-        if (!hasHex) {
-            next.free();
-            return;
-        }
-        buffer.runBuffer();
-        next.setTracer(new ConsoleTracer());
         window.game.stack.swap(new Update(events, next));
     }
 }

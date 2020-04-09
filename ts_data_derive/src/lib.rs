@@ -1,8 +1,12 @@
 extern crate proc_macro;
 
 use crate::proc_macro::TokenStream;
-use quote::quote;
-use syn::{self, visit_mut::{VisitMut, visit_derive_input_mut}};
+use quote::{quote, quote_spanned};
+use syn::{
+    self,
+    parse_macro_input,
+    visit_mut::{VisitMut, visit_derive_input_mut},
+};
 
 macro_rules! append {
     ($buf:ident, $($args:tt)*) => {
@@ -12,44 +16,73 @@ macro_rules! append {
 
 #[proc_macro_derive(TsData)]
 pub fn ts_data_derive(input: TokenStream) -> TokenStream {
-    let mut ast: syn::DeriveInput = syn::parse(input).unwrap();
-    visit_derive_input_mut(&mut TypeMapper {}, &mut ast);
+    let ast = parse_macro_input!(input as syn::DeriveInput);
+
+    let tokens = match derive_impl(ast) {
+        Ok(output) => {
+            quote! {
+                #[wasm_bindgen(typescript_custom_section)]
+                const TS_APPEND: &'static str = #output;
+            }
+        }
+        Err(e) => {
+            let text = e.text;
+            quote_spanned! {e.span=>
+                compile_error!(#text);
+            }
+        }
+    };
+    tokens.into()
+}
+
+fn derive_impl(ast: syn::DeriveInput) -> Result<String, Error> {
+    let mut ast = ast;
+    let mut mapper = TypeMapper::new();
+    visit_derive_input_mut(&mut mapper, &mut ast);
+    if let Some(e) = mapper.error { return Err(e); }
 
     let mut output: String = String::new();
     append!(output, "\n/* TsData Generated */\n");
     match ast.data {
-        syn::Data::Enum(e) => build_enum(&mut output, &ast.ident, &e),
-        syn::Data::Struct(s) => build_struct(&mut output, &ast.ident, &s),
-        _ => panic!("unhandled ast.data branch in {}", &ast.ident),
+        syn::Data::Enum(e) => build_enum(&mut output, &ast.ident, &e)?,
+        syn::Data::Struct(s) => build_struct(&mut output, &ast.ident, &s)?,
+        _ => return Err(Error {
+            text: String::from("unhandled ast.data branch"),
+            span: ast.ident.span(),
+        }),
     }
-
-    let gen = quote! {
-        #[wasm_bindgen(typescript_custom_section)]
-        const TS_APPEND: &'static str = #output;
-    };
-    gen.into()
+    Ok(output)
 }
 
-fn build_enum(buffer: &mut String, name: &syn::Ident, data: &syn::DataEnum) {
+struct Error {
+    text: String,
+    span: proc_macro2::Span,
+}
+
+fn build_enum(buffer: &mut String, name: &syn::Ident, data: &syn::DataEnum) -> Result<(), Error> {
     let all_simple: bool = data.variants.iter()
         .all(|v| v.fields == syn::Fields::Unit);
     if all_simple {
         build_simple_enum(buffer, name, data);
-        return;
+        return Ok(());
     }
     append!(buffer, "export interface {} {{\n", name);
     for v in &data.variants {
-        append!(buffer, "    {}: {{\n", v.ident);
         match &v.fields {
-            syn::Fields::Unit => (),
+            syn::Fields::Unit => append!(buffer, "    {}: boolean | undefined,\n", v.ident),
             syn::Fields::Named(n) => {
+                append!(buffer, "    {}: {{\n", v.ident);
                 build_fields(buffer, "        ", n);
+                append!(buffer, "    }} | undefined,\n");
             }
-            v => panic!("unhandled enum variant in {}: {:?}", name, v),
+            v => return Err(Error {
+                text: format!("unhandled enum variant: {:?}", v),
+                span: name.span(),
+            })
         }
-        append!(buffer, "    }} | undefined,\n");
     }
     append!(buffer, "}}\n");
+    Ok(())
 }
 
 fn build_simple_enum(buffer: &mut String, name: &syn::Ident, data: &syn::DataEnum) {
@@ -74,14 +107,18 @@ fn build_fields(buffer: &mut String, pad: &str, fields: &syn::FieldsNamed) {
     }
 }
 
-fn build_struct(buffer: &mut String, name: &syn::Ident, data: &syn::DataStruct) {
+fn build_struct(buffer: &mut String, name: &syn::Ident, data: &syn::DataStruct) -> Result<(), Error> {
     append!(buffer, "export interface {} {{\n", name);
     let fields = match &data.fields {
         syn::Fields::Named(f) => f,
-        _ => panic!("unhandled Fields branch in {}: {:?}", name, data.fields),
+        _ => return Err(Error {
+            text: format!("unhandled Fields branch: {:?}", data.fields),
+            span: name.span(),
+        })
     };
     build_fields(buffer, "    ", fields);
     append!(buffer, "}}");
+    Ok(())
 }
 
 fn extract_generic<'a>(name: &str, ty: &'a syn::Type) -> Option<&'a syn::Type> {
@@ -109,12 +146,20 @@ fn extract_generic<'a>(name: &str, ty: &'a syn::Type) -> Option<&'a syn::Type> {
     }
 }
 
-struct TypeMapper {}
+struct TypeMapper {
+    error: Option<Error>,
+}
+
+impl TypeMapper {
+    fn new() -> Self { TypeMapper { error: None }}
+}
 
 impl VisitMut for TypeMapper {
     fn visit_attribute_mut(&mut self, _: &mut syn::Attribute) { }
     fn visit_path_mut(&mut self, path: &mut syn::Path) {
+        if self.error.is_some() { return; }
         let name = path_name(path);
+        let span = path.segments.first().expect("first").ident.span();
         match &name as &str {
             // Pass through
             "Action" => (),
@@ -136,8 +181,15 @@ impl VisitMut for TypeMapper {
             "HashMap" => replace_first(path, "Map"),
             "i32" => replace_first(path, "number"),
             "String" => replace_first(path, "string"),
+            "Box" => replace_all(path, "any"),
 
-            _ => panic!("unhandled type {} : {:?}", name, path),
+            _ => {
+                self.error = Some(Error {
+                    text: format!("unhandled type {}", name),
+                    span,
+                });
+                return;
+            },
         }
         for s in &mut path.segments {
             self.visit_path_segment_mut(s);
