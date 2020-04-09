@@ -64,14 +64,16 @@ export class PlayCard extends State<PlayCard.Data> {
         // Base initial highlight on player location
         const highlight = this._behavior!.highlight(
             world, world.getCreatureHex(world.playerId)!);
-        window.game.index.updateStack(Base, (draft) => { draft.highlight = highlight; });
+        this.updateOther(Base, (draft) => { draft.highlight = highlight; });
     }
 
     onPopped() {
-        window.game.index.updateStack(Base, (draft) => {
+        /*
+        this.updateOther(Base, (draft) => {
             draft.highlight = [];
             draft.preview = [];
         });
+        */
         this._behavior?.free();
         this._behavior = undefined;
     }
@@ -84,7 +86,7 @@ export class PlayCard extends State<PlayCard.Data> {
         if (this._behavior!.targetValid(check, hex)) {
             preview = this._behavior!.apply(check, hex);
         }
-        window.game.index.updateStack(Base, (draft) => {
+        this.updateOther(Base, (draft) => {
             draft.highlight = highlight;
             draft.preview = preview;
         })
@@ -140,20 +142,22 @@ export class MovePlayer extends State {
 
     onPushed() {
         const range = window.game.world.getCreatureRange(window.game.world.playerId);
-        window.game.index.updateStack(Base, (draft) => { draft.highlight = range; });
+        this.updateOther(Base, (draft) => { draft.highlight = range; });
     }
     onPopped() {
         // TODO: use immer patches to automatically unwind changes
-        window.game.index.updateStack(Base, (draft) => {
+        /*
+        this.updateOther(Base, (draft) => {
             draft.highlight = [];
             draft.preview = [];
         });
+        */
     }
     onTileEntered(hex: Hex) {
         const check = window.game.world.clone();
         check.setTracer(undefined);
         let preview = check.movePlayer(hex);
-        window.game.index.updateStack(Base, (draft) => { draft.preview = preview; });
+        this.updateOther(Base, (draft) => { draft.preview = preview; });
         check.free();
     }
     onTileClicked(hex: Hex) {

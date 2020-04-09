@@ -1,4 +1,4 @@
-import produce from "immer";
+import produce, {Patch, applyPatches, produceWithPatches} from "immer";
 import * as React from "react";
 
 import {Card, Creature, World} from "../wasm";
@@ -16,21 +16,60 @@ interface IndexState {
 }
 
 export class Index extends React.Component<{}, IndexState> {
+  private _pending: number = 0;
+  private _onZero: (() => void)[] = [];
+  private _undo: Map<any, Patch[]> = new Map();
   constructor(props: {}) {
     super(props);
     this.state = {
       stack: new Map(),
       world: window.game.world,
     };
-    this.cancelPlay = this.cancelPlay.bind(this);
+    this._onSetState = this._onSetState.bind(this);
   }
 
-  updateStack<T>(key: StateKey<T>, update: (draft: T & StateUI) => void) {
+  private _onSetState() {
+    if (--this._pending == 0) {
+      for (let thunk of this._onZero) {
+        thunk();
+      }
+      this._onZero = [];
+    }
+  }
+
+  updateStack<T>(token: any, key: StateKey<T>, update: (draft: T & StateUI) => void) {
+    ++this._pending;
     this.setState((prev: IndexState) => {
-      return produce(prev, (draft: IndexState) => {
+      const [next, patches, inversePatches] = produceWithPatches(prev, (draft: IndexState) => {
         draft.stack.set(key, produce(draft.stack.get(key), update));
       });
-    })
+      let prevUndo = this._undo.get(token);
+      if (prevUndo == undefined) {
+        prevUndo = [];
+      }
+      inversePatches.push(...prevUndo);
+      this._undo.set(token, inversePatches);
+      return next;
+    }, this._onSetState);
+  }
+
+  undoStack(token: any) {
+    if (this._pending == 0) {
+      this._undoStack(token);
+    } else {
+      this._onZero.push(() => { this._undoStack(token); });
+    }
+  }
+
+  private _undoStack(token: any) {
+    const undo = this._undo.get(token);
+    if (!undo) { return; }
+    console.log("==> undo:", token, undo);
+    ++this._pending;
+    this._undo.delete(token);
+    this.setState((prev: IndexState) => {
+      return applyPatches(prev, undo);
+    }, this._onSetState);
   }
 
   setWorld(world: World) {
@@ -41,10 +80,6 @@ export class Index extends React.Component<{}, IndexState> {
 
   getStack<T>(key: StateKey<T>): (T & StateUI) | undefined {
     return this.state.stack.get(key);
-  }
-
-  private cancelPlay() {
-    window.game.stack.pop();
   }
 
   render() {

@@ -5,6 +5,7 @@ export interface StateUI {
 }
 
 export class State<T = {}> {
+    private _canUpdate: boolean = true;
     constructor(private _init: T) {}
 
     onPushed() {}
@@ -16,8 +17,17 @@ export class State<T = {}> {
     onTileExited(hex: Hex) {}
 
     updateUI(update: (draft: T & StateUI) => void) {
+        if (!this._canUpdate) {
+            throw "Disallowed update";
+        }
         const key = this.constructor as StateKey<T>;
-        window.game.index.updateStack(key, update);
+        window.game.index.updateStack(this, key, update);
+    }
+    updateOther<O>(key: StateKey<O>, update: (draft: O & StateUI) => void) {
+        if (!this._canUpdate) {
+            throw "Disallowed update";
+        }
+        window.game.index.updateStack(this, key, update);
     }
 
     _onPushed() {
@@ -33,7 +43,10 @@ export class State<T = {}> {
 
     _onPopped() {
         //console.log("  POPPED:", this.constructor.name);
+        this._canUpdate = false;
         this.onPopped();
+        window.game.index.undoStack(this);
+        this._canUpdate = true;
     }
 
     _onActivated() {
