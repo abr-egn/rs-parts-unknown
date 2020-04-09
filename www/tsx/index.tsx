@@ -15,7 +15,6 @@ interface IndexState {
   world: World,
 }
 
-// <params, state>
 export class Index extends React.Component<{}, IndexState> {
   constructor(props: {}) {
     super(props);

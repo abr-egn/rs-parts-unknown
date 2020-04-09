@@ -80,11 +80,11 @@ export class Render {
             this._drawTile(hex, tile);
         }
         this._drawPreview(tsMillis);
-        const highlight = window.game.getUI(States.Base)?.highlight || [];
+        const highlight = window.game.index.getStack(States.Base)?.highlight || [];
         for (let hex of highlight) {
             this._drawHighlight(hex);
         }
-        const selected = window.game.getUI(States.Base)?.selected || [];
+        const selected = window.game.index.getStack(States.Base)?.selected || [];
         for (let id of selected) {
             this._drawRange(id);
             const hex = this._world.getCreatureHex(id);
@@ -146,7 +146,7 @@ export class Render {
         const size = HEX_SIZE * scale;
 
         let moves: Hex[] = [];
-        const preview = window.game.getUI(States.Base)?.preview || [];
+        const preview = window.game.index.getStack(States.Base)?.preview || [];
         for (let event of preview) {
             if (event.CreatureMoved) {
                 moves.push(event.CreatureMoved.to);

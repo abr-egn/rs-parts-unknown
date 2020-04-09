@@ -17,7 +17,7 @@ export class State<T = {}> {
 
     updateUI(update: (draft: T & StateUI) => void) {
         const key = this.constructor as StateKey<T>;
-        window.game.updateUI(key, update);
+        window.game.index.updateStack(key, update);
     }
 
     _onPushed() {

@@ -64,11 +64,11 @@ export class PlayCard extends State<PlayCard.Data> {
         // Base initial highlight on player location
         const highlight = this._behavior!.highlight(
             world, world.getCreatureHex(world.playerId)!);
-        window.game.updateUI(Base, (draft) => { draft.highlight = highlight; });
+        window.game.index.updateStack(Base, (draft) => { draft.highlight = highlight; });
     }
 
     onPopped() {
-        window.game.updateUI(Base, (draft) => {
+        window.game.index.updateStack(Base, (draft) => {
             draft.highlight = [];
             draft.preview = [];
         });
@@ -84,7 +84,7 @@ export class PlayCard extends State<PlayCard.Data> {
         if (this._behavior!.targetValid(check, hex)) {
             preview = this._behavior!.apply(check, hex);
         }
-        window.game.updateUI(Base, (draft) => {
+        window.game.index.updateStack(Base, (draft) => {
             draft.highlight = highlight;
             draft.preview = preview;
         })
@@ -140,11 +140,11 @@ export class MovePlayer extends State {
 
     onPushed() {
         const range = window.game.world.getCreatureRange(window.game.world.playerId);
-        window.game.updateUI(Base, (draft) => { draft.highlight = range; });
+        window.game.index.updateStack(Base, (draft) => { draft.highlight = range; });
     }
     onPopped() {
         // TODO: use immer patches to automatically unwind changes
-        window.game.updateUI(Base, (draft) => {
+        window.game.index.updateStack(Base, (draft) => {
             draft.highlight = [];
             draft.preview = [];
         });
@@ -153,7 +153,7 @@ export class MovePlayer extends State {
         const check = window.game.world.clone();
         check.setTracer(undefined);
         let preview = check.movePlayer(hex);
-        window.game.updateUI(Base, (draft) => { draft.preview = preview; });
+        window.game.index.updateStack(Base, (draft) => { draft.preview = preview; });
         check.free();
     }
     onTileClicked(hex: Hex) {

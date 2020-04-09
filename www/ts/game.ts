@@ -6,7 +6,7 @@ import {
     findBoundary,
 } from "../wasm";
 import {Render} from "./render";
-import {Stack, StateKey, StateUI} from "./stack";
+import {Stack} from "./stack";
 import {Index, index} from "../tsx/index";
 
 declare global {
@@ -62,8 +62,8 @@ export class Game {
         return this._stack;
     }
 
-    getUI<T>(key: StateKey<T>): (T & StateUI) | undefined {
-        return this._index.current?.getStack(key);
+    get index(): Index {
+        return this._index.current!;
     }
 
     // Mutators
@@ -73,10 +73,6 @@ export class Game {
         this._world = world;
         this._render.world = this._world;
         this._index.current!.setWorld(this._world);
-    }
-
-    updateUI<T>(key: StateKey<T>, update: (draft: T & StateUI) => void) {
-        this._index.current!.updateStack(key, update);
     }
 }
 
