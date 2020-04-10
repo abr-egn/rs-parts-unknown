@@ -12,7 +12,7 @@ export function index(): [JSX.Element, React.RefObject<Index>] {
 }
 
 interface IndexState {
-  map: UiState.Map,
+  map: UiState,
   world: World,
 }
 
@@ -27,7 +27,7 @@ export class Index extends React.Component<{}, IndexState> {
   constructor(props: {}) {
     super(props);
     this.state = {
-      map: new UiState.Map(),
+      map: new UiState(),
       world: window.game.world,
     };
     this._onSetState = this._onSetState.bind(this);
@@ -46,11 +46,15 @@ export class Index extends React.Component<{}, IndexState> {
     return this.state.map.get(key);
   }
 
-  update(token: any, update: (draft: UiState.Map) => void) {
+  update(token: any, update: (draft: UiState) => void) {
     ++this._pending;
     this.setState((prev: IndexState) => {
-      const [next, _, undo] = produceWithPatches(prev, (draft: IndexState) => {
-        draft.map = produce(draft.map, update);
+      let redo: Patch[] = [], undo: Patch[] = [];
+      const next = produce(prev, (draft: IndexState) => {
+        const [nm, nr, nu] = produceWithPatches(draft.map, update);
+        draft.map = nm;
+        redo = nr;
+        undo = nu;
       });
       let oldUndo = this._undo.get(token);
       if (oldUndo == undefined) {
@@ -76,18 +80,21 @@ export class Index extends React.Component<{}, IndexState> {
   private _undoImpl(token: any) {
     const undo = this._undo.get(token);
     if (!undo) { return; }
+    console.log("undo", token, undo);
     ++this._pending;
     this._undo.delete(token);
     this.setState((prev: IndexState) => {
-      return applyPatches(prev, undo);
+      return produce(prev, (draft: IndexState) => {
+        draft.map = applyPatches(draft.map, undo);
+      });
     }, this._onSetState);
   }
 
   private _compressUndo(token: any) {
     const undo = this._undo.get(token);
     if (!undo) { return; }
-    let [next, patches, inversePatches] = produceWithPatches(this.state,
-      (draft: IndexState) => {
+    let [next, patches, inversePatches] = produceWithPatches(this.state.map,
+      (draft: UiState) => {
         return applyPatches(draft, undo);
       });
     this._undo.set(token, patches);

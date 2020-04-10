@@ -1,5 +1,5 @@
 import {Hex} from "../wasm";
-import { UiState } from "./ui_state";
+import {UiState} from "./ui_state";
 
 export class Active {
     constructor(public state: State) {}
@@ -19,7 +19,7 @@ export class State {
     onTileEntered(hex: Hex) {}
     onTileExited(hex: Hex) {}
 
-    update(update: (draft: UiState.Map) => void) {
+    update(update: (draft: UiState) => void) {
         if (!this._canUpdate) {
             throw "Disallowed update";
         }
@@ -27,12 +27,12 @@ export class State {
     }
 
     _onPushed() {
-        //console.log("  PUSHED:", this.constructor.name);
+        console.log("  PUSHED:", this.constructor.name);
         this.onPushed();
     }
 
     _onPopped() {
-        //console.log("  POPPED:", this.constructor.name);
+        console.log("  POPPED:", this.constructor.name);
         this._canUpdate = false;
         this.onPopped();
         window.game.index.undo(this);
@@ -40,7 +40,7 @@ export class State {
     }
 
     _onActivated() {
-        //console.log("  ACTIVATED:", this.constructor.name);
+        console.log("  ACTIVATED:", this.constructor.name);
         this.update((draft) => {
             draft.set(Active, this);
         });
@@ -48,7 +48,7 @@ export class State {
     }
 
     _onDeactivated() {
-        //console.log("  DEACTIVATED:", this.constructor.name);
+        console.log("  DEACTIVATED:", this.constructor.name);
         this.onDeactivated();
     }
 }
