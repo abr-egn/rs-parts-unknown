@@ -20,7 +20,7 @@ export class State {
     onTileExited(hex: Hex) {}
 
     update(update: (draft: UiData) => void) {
-        this._data!.update(this, update);
+        this._data!.update(update);
     }
 
     _onPushed(data: DataPush) {
@@ -49,7 +49,7 @@ export class State {
 }
 
 export interface DataPush {
-    update(token: any, update: (draft: UiData) => void): void;
+    update(update: (draft: UiData) => void): void;
 }
 
 export class Stack {

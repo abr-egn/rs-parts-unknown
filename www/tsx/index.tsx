@@ -1,14 +1,17 @@
 import produce, {Patch, applyPatches, produceWithPatches} from "immer";
 import * as React from "react";
+import * as ReactDOM from "react-dom";
 
 import {Card, Creature, World} from "../wasm";
 import {Active} from "../ts/stack";
 import * as States from "../ts/states";
 import {UiData} from "../ts/ui_data";
 
-export function index(world: World): [JSX.Element, React.RefObject<Index>] {
+export function renderIndex(world: World, data: UiData): React.RefObject<Index> {
     let ref = React.createRef<Index>();
-    return [<Index ref={ref} world={world}/>, ref];
+    let content = <Index ref={ref} world={world} data={data}/>;
+    ReactDOM.render(content, document.getElementById("root"));
+    return ref;
 }
 
 const _UNDO_COMPRESS_THRESHOLD: number = 10;
@@ -17,11 +20,9 @@ type Constructor = new (...args: any[]) => any;
 
 interface IndexProps {
   world: World,
+  data: UiData,
 }
-interface IndexState {
-  map: UiData,
-}
-export class Index extends React.Component<IndexProps, IndexState> {
+export class Index extends React.Component<IndexProps, {}> {
   constructor(props: IndexProps) {
     super(props);
     this.state = {
@@ -29,19 +30,9 @@ export class Index extends React.Component<IndexProps, IndexState> {
     };
   }
 
-  get<T extends Constructor>(key: T): InstanceType<T> | undefined {
-    return this.state.map.get(key);
-  }
-
-  update(token: any, update: (draft: UiData) => void) {
-    this.setState((prev: IndexState) => {
-      return {map: produce(prev.map, update)};
-    });
-  }
-
   render() {
     const world = this.props.world;
-    const base = this.get(States.Base.UI);
+    const base = this.props.data.get(States.Base.UI);
     let creatures = [];
     if (base?.selected) {
       for (let id of base.selected.keys()) {
@@ -56,8 +47,8 @@ export class Index extends React.Component<IndexProps, IndexState> {
         <div id="leftSide" className="side">
           <Player
             player={world.getCreature(world.playerId)!}
-            active={this.get(Active)}
-            play={this.get(States.PlayCard.UI)}
+            active={this.props.data.get(Active)}
+            play={this.props.data.get(States.PlayCard.UI)}
           />
         </div>
         <canvas id="mainCanvas" width="800" height="800" tabIndex={1}></canvas>

@@ -1,5 +1,5 @@
+import produce from "immer";
 import {RefObject} from "react";
-import * as ReactDOM from "react-dom";
 
 import {
     Event, Tracer, World,
@@ -7,7 +7,8 @@ import {
 } from "../wasm";
 import {Render, DataQuery as RenderData} from "./render";
 import {Stack, DataView as StackView, DataPush as StackPush} from "./stack";
-import {Index, index} from "../tsx/index";
+import {Index, renderIndex} from "../tsx/index";
+import { UiData } from "./ui_data";
 
 declare global {
     interface Window {
@@ -21,6 +22,7 @@ Window.prototype.findBoundary = findBoundary;
 export class Game {
     private _world: World;
     private _stack: Stack;
+    private _data: UiData;
     private _index: RefObject<Index>;
     private _render: Render;
     public keys: Map<string, boolean> = new Map();
@@ -28,20 +30,26 @@ export class Game {
         this._world = new World();
         this._world.setTracer(new ConsoleTracer());
 
+        this._data = new UiData();
+
         const stackData: StackView & StackPush = {
-            get: () => { return this._index.current!.state.map },
-            set: (data) => { this._index.current!.setState({map: data}); },
-            update: (token, update) => { this._index.current!.update(token, update); }
+            get: () => { return this._data; },
+            set: (data) => {
+                this._data = data;
+                this._index = renderIndex(this._world, this._data);
+            },
+            update: (update) => {
+                this._data = produce(this._data, update);
+                this._index = renderIndex(this._world, this._data);
+            }
         };
         this._stack = new Stack(stackData);
 
-        let [content, ref] = index(this._world);
-        ReactDOM.render(content, document.getElementById("root"));
-        this._index = ref;
+        this._index = renderIndex(this._world, this._data);
 
         const canvas = document.getElementById("mainCanvas") as HTMLCanvasElement;
         const renderData: RenderData = {
-            get: (key) => { return this._index.current?.get(key); },
+            get: (key) => { return this._data.get(key); },
         };
         this._render = new Render(canvas, this._world, this._stack, renderData);
 
@@ -78,10 +86,7 @@ export class Game {
         this._world = world;
         this._render.updateWorld(this._world);
 
-        let [content, ref] = index(this._world);
-        ReactDOM.render(content, document.getElementById("root"));
-        this._index = ref;
-        //this._index.current!.setWorld(this._world);
+        this._index = renderIndex(this._world, this._data);
     }
 }
 
