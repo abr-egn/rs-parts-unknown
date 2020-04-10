@@ -1,6 +1,5 @@
 import {
     Boundary, Creature, Event, Hex, Id, Tile, World,
-    findBoundary,
 } from "../wasm";
 import * as States from "./states";
 
