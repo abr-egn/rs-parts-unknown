@@ -35,16 +35,12 @@ export class Index extends React.Component<{}, IndexState> {
 
   update(token: any, update: (draft: UiState) => void) {
     this.setState((prev: IndexState) => {
-      return produce(prev, (draft: IndexState) => {
-        draft.map = produce(draft.map, update);
-      });
+      return {map: produce(prev.map, update)};
     });
   }
 
   setWorld(world: World) {
-    this.setState(produce((draft: IndexState) => {
-      draft.world = world;
-    }));
+    this.setState({world});
   }
 
   render() {
