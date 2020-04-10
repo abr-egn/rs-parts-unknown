@@ -2,6 +2,7 @@ import {
     Behavior, Boundary, Card, Creature, Event, Hex, Id, World,
     findBoundary,
 } from "../wasm";
+import {Game} from "./game";
 import {State} from "./stack";
 
 export class Base extends State {
