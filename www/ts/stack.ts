@@ -1,12 +1,15 @@
 import {Hex} from "../wasm";
+import { UiState } from "./ui_state";
 
-export interface StateUI {
-    active: boolean,
+export class Active {
+    constructor(public state: State) {}
+    is(c: new (...args: any[]) => any): boolean {
+        return this.state.constructor == c;
+    }
 }
 
-export class State<T = {}> {
+export class State {
     private _canUpdate: boolean = true;
-    constructor(private _init: T) {}
 
     onPushed() {}
     onPopped() {}
@@ -16,28 +19,15 @@ export class State<T = {}> {
     onTileEntered(hex: Hex) {}
     onTileExited(hex: Hex) {}
 
-    updateUI(update: (draft: T & StateUI) => void) {
+    update(update: (draft: UiState.Map) => void) {
         if (!this._canUpdate) {
             throw "Disallowed update";
         }
-        const key = this.constructor as StateKey<T>;
-        window.game.index.updateStack(this, key, update);
-    }
-    updateOther<O>(key: StateKey<O>, update: (draft: O & StateUI) => void) {
-        if (!this._canUpdate) {
-            throw "Disallowed update";
-        }
-        window.game.index.updateStack(this, key, update);
+        window.game.index.update(this, update);
     }
 
     _onPushed() {
         //console.log("  PUSHED:", this.constructor.name);
-        this.updateUI(ui => {
-            if (!ui) {
-                return Object.assign({active: false}, this._init);
-            }
-            ui.active = false;
-        });
         this.onPushed();
     }
 
@@ -45,25 +35,22 @@ export class State<T = {}> {
         //console.log("  POPPED:", this.constructor.name);
         this._canUpdate = false;
         this.onPopped();
-        window.game.index.undoStack(this);
+        window.game.index.undo(this);
         this._canUpdate = true;
     }
 
     _onActivated() {
         //console.log("  ACTIVATED:", this.constructor.name);
-        this.updateUI(ui => { ui.active = true; });
+        this.update((draft) => {
+            draft.set(Active, this);
+        });
         this.onActivated();
     }
 
     _onDeactivated() {
         //console.log("  DEACTIVATED:", this.constructor.name);
-        this.updateUI(ui => { ui.active = false; });
         this.onDeactivated();
     }
-}
-
-export type StateKey<T> = {
-    new (...args: any[]): State<T>;
 }
 
 export class Stack {

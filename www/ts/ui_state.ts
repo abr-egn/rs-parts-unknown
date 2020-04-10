@@ -1,21 +1,34 @@
-export type UiStateKey<T> = {
-    new (...args: any[]): T;
-}
+import {immerable} from "immer";
 
-export class UiState {
-    private _chunks: Map<UiStateKey<any>, any> = new Map();
+type BaseMap<K, V> = Map<K, V>;
+const BaseMap = Map;
 
-    get<T>(key: UiStateKey<T>): T | undefined {
-        return this._chunks.get(key);
-    }
+export namespace UiState {
 
-    build<T>(key: UiStateKey<T>, ...args: any[]): T {
-        let chunk;
-        if (chunk = this.get(key)) {
+    type Constructor = new (...args: any[]) => any;
+
+    export class Map {
+        [immerable] = true;
+
+        private _chunks: BaseMap<any, any> = new BaseMap();
+
+        get<C extends Constructor>(key: C): InstanceType<C> | undefined {
+            return this._chunks.get(key);
+        }
+
+        build<C extends Constructor>(key: C, ...args: ConstructorParameters<C>): InstanceType<C> {
+            let chunk;
+            if (chunk = this.get(key)) {
+                return chunk;
+            }
+            chunk = new key(...args);
+            this._chunks.set(key, chunk);
             return chunk;
         }
-        chunk = new key(...args);
-        this._chunks.set(key, chunk);
-        return chunk;
+
+        set<C extends Constructor>(key: C, ...args: ConstructorParameters<C>) {
+            this._chunks.set(key, new key(...args));
+        }
     }
+
 }

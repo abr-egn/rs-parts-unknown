@@ -2,8 +2,9 @@ import produce, {Patch, applyPatches, produceWithPatches} from "immer";
 import * as React from "react";
 
 import {Card, Creature, World} from "../wasm";
-import {StateKey, StateUI} from "../ts/stack";
+import {Active, Stack} from "../ts/stack";
 import * as States from "../ts/states";
+import {UiState} from "../ts/ui_state";
 
 export function index(): [JSX.Element, React.RefObject<Index>] {
     let ref = React.createRef<Index>();
@@ -11,11 +12,13 @@ export function index(): [JSX.Element, React.RefObject<Index>] {
 }
 
 interface IndexState {
-  stack: Map<StateKey<any>, any>,
+  map: UiState.Map,
   world: World,
 }
 
 const _UNDO_COMPRESS_THRESHOLD: number = 10;
+
+type Constructor = new (...args: any[]) => any;
 
 export class Index extends React.Component<{}, IndexState> {
   private _pending: number = 0;
@@ -24,7 +27,7 @@ export class Index extends React.Component<{}, IndexState> {
   constructor(props: {}) {
     super(props);
     this.state = {
-      stack: new Map(),
+      map: new UiState.Map(),
       world: window.game.world,
     };
     this._onSetState = this._onSetState.bind(this);
@@ -39,34 +42,38 @@ export class Index extends React.Component<{}, IndexState> {
     }
   }
 
-  updateStack<T>(token: any, key: StateKey<T>, update: (draft: T & StateUI) => void) {
+  get<T extends Constructor>(key: T): InstanceType<T> | undefined {
+    return this.state.map.get(key);
+  }
+
+  update(token: any, update: (draft: UiState.Map) => void) {
     ++this._pending;
     this.setState((prev: IndexState) => {
-      const [next, patches, inversePatches] = produceWithPatches(prev, (draft: IndexState) => {
-        draft.stack.set(key, produce(draft.stack.get(key), update));
+      const [next, _, undo] = produceWithPatches(prev, (draft: IndexState) => {
+        draft.map = produce(draft.map, update);
       });
-      let prevUndo = this._undo.get(token);
-      if (prevUndo == undefined) {
-        prevUndo = [];
+      let oldUndo = this._undo.get(token);
+      if (oldUndo == undefined) {
+        oldUndo = [];
       }
-      inversePatches.push(...prevUndo);
-      this._undo.set(token, inversePatches);
-      if (inversePatches.length >= _UNDO_COMPRESS_THRESHOLD) {
+      undo.push(...oldUndo);
+      this._undo.set(token, undo);
+      if (undo.length >= _UNDO_COMPRESS_THRESHOLD) {
         this._compressUndo(token);
       }
       return next;
     }, this._onSetState);
   }
 
-  undoStack(token: any) {
+  undo(token: any) {
     if (this._pending == 0) {
-      this._undoStack(token);
+      this._undoImpl(token);
     } else {
-      this._onZero.push(() => { this._undoStack(token); });
+      this._onZero.push(() => { this._undoImpl(token); });
     }
   }
 
-  private _undoStack(token: any) {
+  private _undoImpl(token: any) {
     const undo = this._undo.get(token);
     if (!undo) { return; }
     ++this._pending;
@@ -92,13 +99,9 @@ export class Index extends React.Component<{}, IndexState> {
     }));
   }
 
-  getStack<T>(key: StateKey<T>): (T & StateUI) | undefined {
-    return this.state.stack.get(key);
-  }
-
   render() {
     const world = this.state.world;
-    const base = this.getStack(States.Base);
+    const base = this.get(States.Base.UI);
     let creatures = [];
     if (base?.selected) {
       for (let id of base.selected.keys()) {
@@ -113,9 +116,8 @@ export class Index extends React.Component<{}, IndexState> {
         <div id="leftSide" className="side">
           <Player
             player={world.getCreature(world.playerId)!}
-            canPlay={base?.active || false}
-            play={this.getStack(States.PlayCard)}
-            move={this.getStack(States.MovePlayer)}
+            active={this.get(Active)}
+            play={this.get(States.PlayCard.UI)}
           />
         </div>
         <canvas id="mainCanvas" width="800" height="800" tabIndex={1}></canvas>
@@ -143,9 +145,8 @@ function EndTurn(props: {active: boolean}): JSX.Element {
 
 function Player(props: {
   player: Creature,
-  canPlay: boolean,
+  active?: Active,
   play?: States.PlayCard.UI,
-  move?: StateUI,
 }): JSX.Element {
   const cards: Card[] = [];
   if (props.player) {
@@ -157,18 +158,21 @@ function Player(props: {
   const cancelPlay = () => window.game.stack.pop();
   const movePlayer = () => window.game.stack.push(new States.MovePlayer());
 
+  const canPlay = props.active?.is(States.Base) || false;
+  const inPlay = props.active?.is(States.PlayCard) || false;
+  const canCancel = (inPlay || props.active?.is(States.MovePlayer)) || false;
+
   return (<div>
     Player:
     <Creature creature={props.player}/>
     <CardList
-      active={props.canPlay}
+      active={canPlay}
       cards={cards}
     />
-    {props.play?.active && <div>Playing: {props.play.card.name}</div>}
-    <EndTurn active={props.canPlay}/>
-    {props.canPlay && <button onClick={movePlayer}>Move</button>}
-    {(props.play?.active || props.move?.active) && 
-    <div><button onClick={cancelPlay}>Cancel</button></div>}
+    {inPlay && <div>Playing: {props.play?.card.name}</div>}
+    <EndTurn active={canPlay}/>
+    {canPlay && <button onClick={movePlayer}>Move</button>}
+    {canCancel &&  <div><button onClick={cancelPlay}>Cancel</button></div>}
   </div>);
 }
 

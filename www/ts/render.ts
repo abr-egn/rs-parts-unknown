@@ -103,11 +103,11 @@ export class Render {
             this._drawTile(hex, tile);
         }
         this._drawPreview(tsMillis);
-        const highlight = window.game.index.getStack(States.Base)?.highlight || [];
+        const highlight = window.game.index.get(States.Highlight)?.hexes || [];
         for (let hex of highlight) {
             this._drawHighlight(hex);
         }
-        const selected = window.game.index.getStack(States.Base)?.selected || [];
+        const selected = window.game.index.get(States.Base.UI)?.selected || [];
         for (let [id, bounds] of selected) {
             for (let bound of bounds) {
                 this._drawBoundary(bound);
@@ -171,7 +171,7 @@ export class Render {
         const size = HEX_SIZE * scale;
 
         let moves: Hex[] = [];
-        const preview = window.game.index.getStack(States.Base)?.preview || [];
+        const preview = window.game.index.get(States.Highlight)?.events || [];
         for (let event of preview) {
             if (event.CreatureMoved) {
                 moves.push(event.CreatureMoved.to);
