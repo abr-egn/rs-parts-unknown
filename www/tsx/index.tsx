@@ -101,7 +101,7 @@ export class Index extends React.Component<{}, IndexState> {
     const base = this.getStack(States.Base);
     let creatures = [];
     if (base?.selected) {
-      for (let id of base.selected) {
+      for (let id of base.selected.keys()) {
         const creature = world.getCreature(id);
         if (creature) {
           creatures.push(<Creature key={id} creature={creature}/>);

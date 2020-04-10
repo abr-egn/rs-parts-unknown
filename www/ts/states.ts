@@ -1,10 +1,12 @@
-import {Behavior, Card, Creature, Event, Hex, Id, World} from "../wasm";
+import {
+    Behavior, Boundary, Card, Creature, Event, Hex, Id, World,
+    findBoundary,
+} from "../wasm";
 import {State, StateUI} from "./stack";
-import {BufferTracer, ConsoleTracer} from "./game";
 
 export namespace Base {
     export interface Data {
-        selected: Set<Id<Creature>>,
+        selected: Map<Id<Creature>, Boundary[]>,
         // Shared values for other states
         highlight: Hex[],
         preview: Event[],
@@ -14,16 +16,17 @@ export namespace Base {
 export class Base extends State<Base.Data> {
     constructor() {
         super({
-            selected: new Set(),
+            selected: new Map(),
             highlight: [],
             preview: [],
         })
     }
     onTileClicked(hex: Hex) {
-        let tile = window.game.world.getTile(hex);
+        const world = window.game.world;
+        let tile = world.getTile(hex);
         console.log("Tile:", hex, tile);
         if (!tile) { return; }
-        if (!tile.creature || tile.creature == window.game.world.playerId) {
+        if (!tile.creature || tile.creature == world.playerId) {
             this.updateUI((draft) => { draft.selected.clear(); });
         } else {
             const keys = window.game.keys;
@@ -32,7 +35,10 @@ export class Base extends State<Base.Data> {
                 if (!shift) {
                     draft.selected.clear();
                 }
-                draft.selected.add(tile!.creature!);
+                const id: Id<Creature> = tile!.creature!;
+                let range = world.getCreatureRange(id);
+                let bounds = findBoundary(range);
+                draft.selected.set(tile!.creature!, bounds);
             });
         }
     }

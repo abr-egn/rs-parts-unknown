@@ -71,7 +71,7 @@ export class Game {
     updateWorld(world: World) {
         this._world.free();
         this._world = world;
-        this._render.world = this._world;
+        this._render.updateWorld(this._world);
         this._index.current!.setWorld(this._world);
     }
 }
