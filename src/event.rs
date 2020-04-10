@@ -31,7 +31,6 @@ pub enum Event {
     CreatureMoved { id: Id<Creature>, from: Hex, to: Hex, },
     ChangeAP { id: Id<Creature>, ap: i32 },
     ChangeMP { id: Id<Creature>, mp: i32 },
-    Wrap { inner: Box<Event> },
 }
 
 fn ser_event_nothing<S: Serializer>(s: S) -> Result<S::Ok, S::Error> {
@@ -54,6 +53,8 @@ pub trait Mod: ModClone + std::fmt::Debug + Send {
     fn name(&self) -> &'static str;
     fn apply(&mut self, action: &mut Action);
 }
+
+pub type ModId = Id<Box<dyn Mod>>;
 
 pub trait ModClone {
     fn clone_box(&self) -> Box<dyn Mod>;

@@ -5,7 +5,7 @@ use hex::{self, Hex};
 use crate::card::Walk;
 use crate::creature::{self, Creature};
 use crate::error::{Error, Result};
-use crate::event::{Mod, Trigger, Event, Action, TriggerId};
+use crate::event::{Action, Event, Mod, ModId, Trigger, TriggerId};
 use crate::id_map::{Id, IdMap};
 use crate::map::{Tile, Map, Space};
 
@@ -49,6 +49,10 @@ impl World {
         let mut check = self.clone();
         check.tracer = None;
         !Event::is_failure(&check.execute(action))
+    }
+
+    pub fn preview_action(&self, action: &Action) -> Preview {
+        unimplemented!();
     }
 
     // Mutators
@@ -213,6 +217,31 @@ impl World {
         }
         events
     }
+}
+
+/*
+Problem: triggers *have* to be shown to the user, but triggers work on Events, not
+Actions.  There's no simple Action->Event function (MoveCreature doesn't have as
+much info as CreatureMoved, for example).
+
+Options:
+    1. Add a `would_apply` to Trigger.
+        Downside: requires triggers implement slightly different predicates twice.
+    2. Add a `to_event` to Action.
+        Downside: requires Actions to be a strict superset of Events.
+
+Problem the second: a card wants to randomly select an Action (i.e. ranged
+attack).  Which one gets shown?
+
+Options:
+    1. Add fake Action types to represent the overall act.
+        Downside: ... ugly?  Also, hard to tell what those would be.  Worst case
+        1 per card.
+*/
+pub struct Preview {
+    action: Action,
+    mods: Vec<ModId>,
+    triggers: Vec<TriggerId>,
 }
 
 pub trait Tracer: std::fmt::Debug + TracerClone {
