@@ -9,8 +9,6 @@ export class Active {
 }
 
 export class State {
-    private _canUpdate: boolean = true;
-
     onPushed() {}
     onPopped() {}
     onActivated() {}
@@ -20,27 +18,21 @@ export class State {
     onTileExited(hex: Hex) {}
 
     update(update: (draft: UiState) => void) {
-        if (!this._canUpdate) {
-            throw "Disallowed update";
-        }
         window.game.index.update(this, update);
     }
 
     _onPushed() {
-        console.log("  PUSHED:", this.constructor.name);
+        //console.log("  PUSHED:", this.constructor.name);
         this.onPushed();
     }
 
     _onPopped() {
-        console.log("  POPPED:", this.constructor.name);
-        this._canUpdate = false;
+        //console.log("  POPPED:", this.constructor.name);
         this.onPopped();
-        window.game.index.undo(this);
-        this._canUpdate = true;
     }
 
     _onActivated() {
-        console.log("  ACTIVATED:", this.constructor.name);
+        //console.log("  ACTIVATED:", this.constructor.name);
         this.update((draft) => {
             draft.set(Active, this);
         });
@@ -48,17 +40,19 @@ export class State {
     }
 
     _onDeactivated() {
-        console.log("  DEACTIVATED:", this.constructor.name);
+        //console.log("  DEACTIVATED:", this.constructor.name);
         this.onDeactivated();
     }
 }
 
 export class Stack {
     private _stack: State[] = [];
+    private _ui: UiState[] = [];
 
     push(state: State) {
         setTimeout(() => {
             console.log("PUSH: %s", state.constructor.name);
+            this._ui.push(window.game.index.state.map);
             this._top()?._onDeactivated();
             this._stack.push(state);
             state._onPushed();
@@ -77,6 +71,8 @@ export class Stack {
             top._onDeactivated();
             top._onPopped();
             this._stack.pop();
+            const ui = this._ui.pop()!;
+            window.game.index.setState({map: ui});
             this._top()!._onActivated();
         });
     }
