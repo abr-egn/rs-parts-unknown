@@ -1,5 +1,4 @@
 import produce from "immer";
-import {RefObject} from "react";
 
 import {
     Event, Tracer, World,
@@ -7,8 +6,8 @@ import {
 } from "../wasm";
 import {Render, DataQuery as RenderData} from "./render";
 import {Stack, DataView as StackView, DataPush as StackPush} from "./stack";
-import {Index, renderIndex} from "../tsx/index";
-import { UiData } from "./ui_data";
+import {renderIndex} from "../tsx/index";
+import {UiData} from "./ui_data";
 
 declare global {
     interface Window {
@@ -23,7 +22,6 @@ export class Game {
     private _world: World;
     private _stack: Stack;
     private _data: UiData;
-    private _index: RefObject<Index>;
     private _render: Render;
     public keys: Map<string, boolean> = new Map();
     constructor() {
@@ -36,16 +34,16 @@ export class Game {
             get: () => { return this._data; },
             set: (data) => {
                 this._data = data;
-                this._index = renderIndex(this._world, this._data);
+                renderIndex(this._world, this._data);
             },
             update: (update) => {
                 this._data = produce(this._data, update);
-                this._index = renderIndex(this._world, this._data);
+                renderIndex(this._world, this._data);
             }
         };
         this._stack = new Stack(stackData);
 
-        this._index = renderIndex(this._world, this._data);
+        renderIndex(this._world, this._data);
 
         const canvas = document.getElementById("mainCanvas") as HTMLCanvasElement;
         const renderData: RenderData = {
@@ -86,7 +84,7 @@ export class Game {
         this._world = world;
         this._render.updateWorld(this._world);
 
-        this._index = renderIndex(this._world, this._data);
+        renderIndex(this._world, this._data);
     }
 }
 
