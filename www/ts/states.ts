@@ -143,10 +143,9 @@ export class MovePlayer extends State {
         check.free();
     }
     onTileClicked(hex: Hex) {
-        if (!this._range.some((h) => h == hex)) { return; }
+        if (!this._range.some((h) => h.x == hex.x && h.y == hex.y)) { return; }
         const next = window.game.world.clone();
         let events = next.movePlayer(hex);
-        let hasHex: boolean = false;
         window.game.stack.swap(new Update(events, next));
     }
 }
