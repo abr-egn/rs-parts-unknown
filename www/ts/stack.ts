@@ -22,17 +22,17 @@ export class State {
     }
 
     _onPushed() {
-        //console.log("  PUSHED:", this.constructor.name);
+        console.log("  PUSHED:", this.constructor.name);
         this.onPushed();
     }
 
     _onPopped() {
-        //console.log("  POPPED:", this.constructor.name);
+        console.log("  POPPED:", this.constructor.name);
         this.onPopped();
     }
 
     _onActivated() {
-        //console.log("  ACTIVATED:", this.constructor.name);
+        console.log("  ACTIVATED:", this.constructor.name);
         this.update((draft) => {
             draft.set(Active, this);
         });
@@ -40,7 +40,7 @@ export class State {
     }
 
     _onDeactivated() {
-        //console.log("  DEACTIVATED:", this.constructor.name);
+        console.log("  DEACTIVATED:", this.constructor.name);
         this.onDeactivated();
     }
 }
@@ -87,6 +87,8 @@ export class Stack {
             top._onDeactivated();
             top._onPopped();
             this._stack.pop();
+            const ui = this._ui.pop()!;
+            window.game.index.setState({map: ui});
             this._stack.push(state);
             state._onPushed();
             state._onActivated();

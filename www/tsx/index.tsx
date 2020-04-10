@@ -2,30 +2,31 @@ import produce, {Patch, applyPatches, produceWithPatches} from "immer";
 import * as React from "react";
 
 import {Card, Creature, World} from "../wasm";
-import {Active, Stack} from "../ts/stack";
+import {Active} from "../ts/stack";
 import * as States from "../ts/states";
 import {UiState} from "../ts/ui_state";
 
-export function index(): [JSX.Element, React.RefObject<Index>] {
+export function index(world: World): [JSX.Element, React.RefObject<Index>] {
     let ref = React.createRef<Index>();
-    return [<Index ref={ref}/>, ref];
-}
-
-interface IndexState {
-  map: UiState,
-  world: World,
+    return [<Index ref={ref} world={world}/>, ref];
 }
 
 const _UNDO_COMPRESS_THRESHOLD: number = 10;
 
 type Constructor = new (...args: any[]) => any;
 
-export class Index extends React.Component<{}, IndexState> {
-  constructor(props: {}) {
+interface IndexProps {
+  world: World,
+}
+interface IndexState {
+  map: UiState,
+  //world: World,
+}
+export class Index extends React.Component<IndexProps, IndexState> {
+  constructor(props: IndexProps) {
     super(props);
     this.state = {
       map: new UiState(),
-      world: window.game.world,
     };
   }
 
@@ -39,12 +40,14 @@ export class Index extends React.Component<{}, IndexState> {
     });
   }
 
+  /*
   setWorld(world: World) {
     this.setState({world});
   }
+  */
 
   render() {
-    const world = this.state.world;
+    const world = this.props.world;
     const base = this.get(States.Base.UI);
     let creatures = [];
     if (base?.selected) {

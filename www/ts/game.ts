@@ -29,9 +29,7 @@ export class Game {
         this._world.setTracer(new ConsoleTracer());
         this._stack = new Stack();
 
-        window.game = this;
-
-        let [content, ref] = index();
+        let [content, ref] = index(this._world);
         ReactDOM.render(content, document.getElementById("root"));
         this._index = ref;
 
@@ -46,6 +44,8 @@ export class Game {
         canvas.addEventListener('keyup', (e) => {
             this.keys.set(e.code, false);
         });
+
+        window.game = this;
     }
 
     // Accessors
@@ -72,7 +72,11 @@ export class Game {
         this._world.free();
         this._world = world;
         this._render.updateWorld(this._world);
-        this._index.current!.setWorld(this._world);
+
+        let [content, ref] = index(this._world);
+        ReactDOM.render(content, document.getElementById("root"));
+        this._index = ref;
+        //this._index.current!.setWorld(this._world);
     }
 }
 
