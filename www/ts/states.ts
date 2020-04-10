@@ -4,7 +4,6 @@ import {
 } from "../wasm";
 import {State} from "./stack";
 
-
 export class Base extends State {
     onTileClicked(hex: Hex) {
         const world = window.game.world;
@@ -14,8 +13,7 @@ export class Base extends State {
         if (!tile.creature || tile.creature == world.playerId) {
             this.update((draft) => { draft.get(Base.UI)?.selected.clear(); });
         } else {
-            const keys = window.game.keys;
-            const shift = keys.get("ShiftLeft") || keys.get("ShiftRight");
+            const shift = window.game.key("ShiftLeft") || window.game.key("ShiftRight");
             this.update((draft) => {
                 let ui = draft.build(Base.UI);
                 if (!shift) {
@@ -111,7 +109,7 @@ class Update extends State {
     ) { super(); }
 
     onPushed() {
-        window.game.render.animateEvents(this._events).then(() => {
+        window.game.animateEvents(this._events).then(() => {
             window.game.updateWorld(this._nextWorld);
             window.game.stack.pop();
         });

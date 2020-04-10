@@ -1,4 +1,3 @@
-import produce, {Patch, applyPatches, produceWithPatches} from "immer";
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 

@@ -23,7 +23,7 @@ export class Game {
     private _stack: Stack;
     private _data: UiData;
     private _render: Render;
-    public keys: Map<string, boolean> = new Map();
+    private _keys: Map<string, boolean> = new Map();
     constructor() {
         this._world = new World();
         this._world.setTracer(new ConsoleTracer());
@@ -54,10 +54,10 @@ export class Game {
         canvas.focus();
         canvas.addEventListener('keydown', (e) => {
             e.shiftKey
-            this.keys.set(e.code, true);
+            this._keys.set(e.code, true);
         });
         canvas.addEventListener('keyup', (e) => {
-            this.keys.set(e.code, false);
+            this._keys.set(e.code, false);
         });
 
         window.game = this;
@@ -69,15 +69,19 @@ export class Game {
         return this._world;
     }
 
-    get render(): Render {
-        return this._render;
-    }
-
     get stack(): Stack {
         return this._stack;
     }
 
+    key(name: string): boolean {
+        return this._keys.get(name) || false;
+    }
+
     // Mutators
+
+    async animateEvents(events: Event[]) {
+        return this._render.animateEvents(events);
+    }
 
     updateWorld(world: World) {
         this._world.free();

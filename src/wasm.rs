@@ -170,7 +170,6 @@ impl World {
         } else {
             self.wrapped.tracer = Some(Box::new(WrapTracer { wrapped: tracer }));
         }
-        
     }
 }
 
