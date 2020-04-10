@@ -1,5 +1,5 @@
 use hex::Hex;
-use serde::Serialize;
+use serde::{Serialize, Serializer};
 use ts_data_derive::TsData;
 use wasm_bindgen::prelude::wasm_bindgen;
 use crate::{
@@ -10,6 +10,7 @@ use crate::{
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, TsData)]
 pub enum Action {
+    #[serde(serialize_with = "ser_action_nothing")]
     Nothing,
     MoveCreature { id: Id<Creature>, to: Hex },
     GainAP { id: Id<Creature>, ap: i32 },
@@ -18,13 +19,23 @@ pub enum Action {
     SpendMP { id: Id<Creature>, mp: i32 },
 }
 
+fn ser_action_nothing<S: Serializer>(s: S) -> Result<S::Ok, S::Error> {
+    s.serialize_bool(true)
+}
+
 #[derive(Debug, Clone, Serialize, TsData)]
 pub enum Event {
+    #[serde(serialize_with = "ser_event_nothing")]
     Nothing,
     Failed { action: Action, reason: String },
     CreatureMoved { id: Id<Creature>, from: Hex, to: Hex, },
     ChangeAP { id: Id<Creature>, ap: i32 },
     ChangeMP { id: Id<Creature>, mp: i32 },
+    Wrap { inner: Box<Event> },
+}
+
+fn ser_event_nothing<S: Serializer>(s: S) -> Result<S::Ok, S::Error> {
+    s.serialize_bool(true)
 }
 
 impl Event {   

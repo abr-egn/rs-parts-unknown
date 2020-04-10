@@ -1,10 +1,12 @@
-import {Behavior, Card, Creature, Event, Hex, Id, World} from "../wasm";
+import {
+    Behavior, Boundary, Card, Creature, Event, Hex, Id, World,
+    findBoundary,
+} from "../wasm";
 import {State, StateUI} from "./stack";
-import {BufferTracer, ConsoleTracer} from "./game";
 
 export namespace Base {
     export interface Data {
-        selected: Set<Id<Creature>>,
+        selected: Map<Id<Creature>, Boundary[]>,
         // Shared values for other states
         highlight: Hex[],
         preview: Event[],
@@ -14,16 +16,17 @@ export namespace Base {
 export class Base extends State<Base.Data> {
     constructor() {
         super({
-            selected: new Set(),
+            selected: new Map(),
             highlight: [],
             preview: [],
         })
     }
     onTileClicked(hex: Hex) {
-        let tile = window.game.world.getTile(hex);
+        const world = window.game.world;
+        let tile = world.getTile(hex);
         console.log("Tile:", hex, tile);
         if (!tile) { return; }
-        if (!tile.creature || tile.creature == window.game.world.playerId) {
+        if (!tile.creature || tile.creature == world.playerId) {
             this.updateUI((draft) => { draft.selected.clear(); });
         } else {
             const keys = window.game.keys;
@@ -32,7 +35,10 @@ export class Base extends State<Base.Data> {
                 if (!shift) {
                     draft.selected.clear();
                 }
-                draft.selected.add(tile!.creature!);
+                const id: Id<Creature> = tile!.creature!;
+                let range = world.getCreatureRange(id);
+                let bounds = findBoundary(range);
+                draft.selected.set(tile!.creature!, bounds);
             });
         }
     }
@@ -124,11 +130,12 @@ export class EndTurn extends State {
 }
 
 export class MovePlayer extends State {
+    private _range: Hex[] = [];
     constructor() { super({}) }
 
     onPushed() {
-        const range = window.game.world.getCreatureRange(window.game.world.playerId);
-        this.updateOther(Base, (draft) => { draft.highlight = range; });
+        this._range = window.game.world.getCreatureRange(window.game.world.playerId);
+        this.updateOther(Base, (draft) => { draft.highlight = this._range; });
     }
     onTileEntered(hex: Hex) {
         const check = window.game.world.clone();
@@ -138,25 +145,10 @@ export class MovePlayer extends State {
         check.free();
     }
     onTileClicked(hex: Hex) {
+        if (!this._range.some((h) => h == hex)) { return; }
         const next = window.game.world.clone();
-        const buffer = new BufferTracer(new ConsoleTracer());
-        next.setTracer(buffer);
         let events = next.movePlayer(hex);
         let hasHex: boolean = false;
-        for (let event of events) {
-            if (event.CreatureMoved) {
-                const to = event.CreatureMoved.to;
-                if (to.x == hex.x && to.y == hex.y) {
-                    hasHex = true;
-                }
-            }
-        }
-        if (!hasHex) {
-            next.free();
-            return;
-        }
-        buffer.runBuffer();
-        next.setTracer(new ConsoleTracer());
         window.game.stack.swap(new Update(events, next));
     }
 }

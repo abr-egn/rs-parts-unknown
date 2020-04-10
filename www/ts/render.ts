@@ -1,6 +1,5 @@
 import {
     Boundary, Creature, Event, Hex, Id, Tile, World,
-    findBoundary,
 } from "../wasm";
 import * as States from "./states";
 
@@ -12,17 +11,41 @@ export interface Listener {
     onTileExited(hex: Hex): void,
 }
 
+export class WorldCache {
+    tiles: [Hex, Tile][];
+    creatureHex: Map<Id<Creature>, Hex> = new Map();
+    playerId: Id<Creature>;
+
+    private _tileMap: Map<string, Tile> = new Map();
+
+    constructor(world: World) {
+        this.tiles = world.getTiles();
+        for (let [hex, tile] of this.tiles) {
+            this._tileMap.set(JSON.stringify(hex), tile);
+        }
+        for (let [id, hex] of world.getCreatureMap()) {
+            this.creatureHex.set(id, hex);
+        }
+        this.playerId = world.playerId;
+    }
+
+    getTile(hex: Hex): Tile | undefined {
+        return this._tileMap.get(JSON.stringify(hex));
+    }
+}
+
 export class Render {
     private readonly _ctx: CanvasRenderingContext2D;
     private _mouseHex?: Hex;
     private _tsMillis: DOMHighResTimeStamp;
     private _frameWaits: ((value: number) => void)[] = [];
     private _creaturePos: Map<Id<Creature>, DOMPointReadOnly> = new Map();
+    private _cache!: WorldCache;
     constructor(
             private readonly _canvas: HTMLCanvasElement,
-            private _world: World,
+            world: World,
             private readonly _listener: Listener) {
-        this.world = _world;  // trigger setter update
+        this.updateWorld(world);
         this._tsMillis = performance.now();
         this._ctx = this._canvas.getContext('2d')!;
         this._canvas.addEventListener("mousedown", (event) => this._onMouseDown(event));
@@ -30,10 +53,10 @@ export class Render {
         window.requestAnimationFrame((ts) => this._draw(ts));
     }
 
-    set world(d: World) {
-        this._world = d;
+    updateWorld(world: World) {
+        this._cache = new WorldCache(world);
         this._creaturePos.clear();
-        for (let [id, hex] of this._world.getCreatureMap()) {
+        for (let [id, hex] of world.getCreatureMap()) {
             this._creaturePos.set(id, hexToPixel(hex));
         }
     }
@@ -76,7 +99,7 @@ export class Render {
         this._canvas.width = this._canvas.width;
         this._ctx.translate(this._canvas.width / 2, this._canvas.height / 2);
 
-        for (let [hex, tile] of this._world.getTiles()) {
+        for (let [hex, tile] of this._cache.tiles) {
             this._drawTile(hex, tile);
         }
         this._drawPreview(tsMillis);
@@ -85,9 +108,11 @@ export class Render {
             this._drawHighlight(hex);
         }
         const selected = window.game.index.getStack(States.Base)?.selected || [];
-        for (let id of selected) {
-            this._drawRange(id);
-            const hex = this._world.getCreatureHex(id);
+        for (let [id, bounds] of selected) {
+            for (let bound of bounds) {
+                this._drawBoundary(bound);
+            }
+            const hex = this._cache.creatureHex.get(id);
             if (hex) {
                 this._drawHighlight(hex);
             }
@@ -126,7 +151,7 @@ export class Render {
         this._ctx.font = "30px sans-serif";
         this._ctx.fillStyle = "#FFFFFF";
         let text = "X";
-        if (id == this._world.playerId) {
+        if (id == this._cache.playerId) {
             text = "P";
         }
         const measure = this._ctx.measureText(text);
@@ -171,14 +196,6 @@ export class Render {
         this._ctx.stroke();
 
         this._ctx.restore();
-    }
-
-    private _drawRange(id: Id<Creature>) {
-        const shape = this._world.getCreatureRange(id);
-        const bounds = findBoundary(shape);
-        for (let bound of bounds) {
-            this._drawBoundary(bound);
-        }
     }
 
     private _drawBoundary(bound: Boundary) {
@@ -236,7 +253,7 @@ export class Render {
 
     private _onMouseMove(event: MouseEvent) {
         const hex = pixelToHex(this._mouseCoords(event));
-        if (this._world.getTile(hex) == undefined) { return; }
+        if (this._cache.getTile(hex) == undefined) { return; }
         if (hex.x != this._mouseHex?.x || hex.y != this._mouseHex?.y) {
             if (this._mouseHex) {
                 this._listener.onTileExited(this._mouseHex);
