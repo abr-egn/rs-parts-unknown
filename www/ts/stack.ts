@@ -54,13 +54,13 @@ export interface DataPush {
 
 export class Stack {
     private _stack: State[] = [];
-    private _ui: UiData[] = [];
+    private _prevData: UiData[] = [];
     constructor(private _data: DataView & DataPush) { }
 
     push(state: State) {
         setTimeout(() => {
             console.log("PUSH: %s", state.constructor.name);
-            this._ui.push(this._data.get());
+            this._prevData.push(this._data.get());
             this._top()?._onDeactivated();
             this._stack.push(state);
             state._onPushed(this._data);
@@ -79,7 +79,7 @@ export class Stack {
             top._onDeactivated();
             top._onPopped();
             this._stack.pop();
-            const ui = this._ui.pop()!;
+            const ui = this._prevData.pop()!;
             this._data.set(ui);
             this._top()!._onActivated();
         });
@@ -95,7 +95,7 @@ export class Stack {
             top._onDeactivated();
             top._onPopped();
             this._stack.pop();
-            const ui = this._ui.pop()!;
+            const ui = this._prevData.pop()!;
             this._data.set(ui);
             this._stack.push(state);
             state._onPushed(this._data);

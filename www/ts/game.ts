@@ -18,6 +18,14 @@ declare global {
 
 Window.prototype.findBoundary = findBoundary;
 
+/*
+This:
+    a. Initializes everything and sets up linkages, and
+    b. Is the interface through which the UI and the game states act.
+
+It is therefore made available as a global because there would be no gain to
+manually threading it through to both places.
+*/
 export class Game {
     private _world: World;
     private _stack: Stack;
