@@ -4,7 +4,7 @@ import * as React from "react";
 import {Card, Creature, World} from "../wasm";
 import {Active} from "../ts/stack";
 import * as States from "../ts/states";
-import {UiState} from "../ts/ui_state";
+import {UiData} from "../ts/ui_data";
 
 export function index(world: World): [JSX.Element, React.RefObject<Index>] {
     let ref = React.createRef<Index>();
@@ -19,14 +19,13 @@ interface IndexProps {
   world: World,
 }
 interface IndexState {
-  map: UiState,
-  //world: World,
+  map: UiData,
 }
 export class Index extends React.Component<IndexProps, IndexState> {
   constructor(props: IndexProps) {
     super(props);
     this.state = {
-      map: new UiState(),
+      map: new UiData(),
     };
   }
 
@@ -34,17 +33,11 @@ export class Index extends React.Component<IndexProps, IndexState> {
     return this.state.map.get(key);
   }
 
-  update(token: any, update: (draft: UiState) => void) {
+  update(token: any, update: (draft: UiData) => void) {
     this.setState((prev: IndexState) => {
       return {map: produce(prev.map, update)};
     });
   }
-
-  /*
-  setWorld(world: World) {
-    this.setState({world});
-  }
-  */
 
   render() {
     const world = this.props.world;

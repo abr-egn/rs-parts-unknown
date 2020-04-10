@@ -5,8 +5,8 @@ import {
     Event, Tracer, World,
     findBoundary,
 } from "../wasm";
-import {Render} from "./render";
-import {Stack} from "./stack";
+import {Render, DataQuery as RenderData} from "./render";
+import {Stack, DataView as StackView, DataPush as StackPush} from "./stack";
 import {Index, index} from "../tsx/index";
 
 declare global {
@@ -27,14 +27,23 @@ export class Game {
     constructor() {
         this._world = new World();
         this._world.setTracer(new ConsoleTracer());
-        this._stack = new Stack();
+
+        const stackData: StackView & StackPush = {
+            get: () => { return this._index.current!.state.map },
+            set: (data) => { this._index.current!.setState({map: data}); },
+            update: (token, update) => { this._index.current!.update(token, update); }
+        };
+        this._stack = new Stack(stackData);
 
         let [content, ref] = index(this._world);
         ReactDOM.render(content, document.getElementById("root"));
         this._index = ref;
 
         const canvas = document.getElementById("mainCanvas") as HTMLCanvasElement;
-        this._render = new Render(canvas, this._world, this._stack);
+        const renderData: RenderData = {
+            get: (key) => { return this._index.current?.get(key); },
+        };
+        this._render = new Render(canvas, this._world, this._stack, renderData);
 
         canvas.focus();
         canvas.addEventListener('keydown', (e) => {
@@ -60,10 +69,6 @@ export class Game {
 
     get stack(): Stack {
         return this._stack;
-    }
-
-    get index(): Index {
-        return this._index.current!;
     }
 
     // Mutators

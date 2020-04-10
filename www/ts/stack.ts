@@ -1,5 +1,5 @@
 import {Hex} from "../wasm";
-import {UiState} from "./ui_state";
+import {UiData} from "./ui_data";
 
 export class Active {
     constructor(public state: State) {}
@@ -9,6 +9,8 @@ export class Active {
 }
 
 export class State {
+    private _data?: DataPush;
+
     onPushed() {}
     onPopped() {}
     onActivated() {}
@@ -17,12 +19,13 @@ export class State {
     onTileEntered(hex: Hex) {}
     onTileExited(hex: Hex) {}
 
-    update(update: (draft: UiState) => void) {
-        window.game.index.update(this, update);
+    update(update: (draft: UiData) => void) {
+        this._data!.update(this, update);
     }
 
-    _onPushed() {
+    _onPushed(data: DataPush) {
         console.log("  PUSHED:", this.constructor.name);
+        this._data = data;
         this.onPushed();
     }
 
@@ -45,17 +48,22 @@ export class State {
     }
 }
 
+export interface DataPush {
+    update(token: any, update: (draft: UiData) => void): void;
+}
+
 export class Stack {
     private _stack: State[] = [];
-    private _ui: UiState[] = [];
+    private _ui: UiData[] = [];
+    constructor(private _data: DataView & DataPush) { }
 
     push(state: State) {
         setTimeout(() => {
             console.log("PUSH: %s", state.constructor.name);
-            this._ui.push(window.game.index.state.map);
+            this._ui.push(this._data.get());
             this._top()?._onDeactivated();
             this._stack.push(state);
-            state._onPushed();
+            state._onPushed(this._data);
             state._onActivated();
         });
     }
@@ -72,7 +80,7 @@ export class Stack {
             top._onPopped();
             this._stack.pop();
             const ui = this._ui.pop()!;
-            window.game.index.setState({map: ui});
+            this._data.set(ui);
             this._top()!._onActivated();
         });
     }
@@ -88,9 +96,9 @@ export class Stack {
             top._onPopped();
             this._stack.pop();
             const ui = this._ui.pop()!;
-            window.game.index.setState({map: ui});
+            this._data.set(ui);
             this._stack.push(state);
-            state._onPushed();
+            state._onPushed(this._data);
             state._onActivated();
         });
     }
@@ -106,4 +114,9 @@ export class Stack {
     private _top(): State | undefined {
         return this._stack[this._stack.length - 1];
     }
+}
+
+export interface DataView {
+    get(): UiData;
+    set(state: UiData): void;
 }

@@ -2,7 +2,7 @@ import {immerable} from "immer";
 
 type Constructor = new (...args: any[]) => any;
 
-export class UiState {
+export class UiData {
     [immerable] = true;
 
     private _chunks: Map<any, any> = new Map();

@@ -3,37 +3,6 @@ import {
 } from "../wasm";
 import * as States from "./states";
 
-const HEX_SIZE = 30;
-
-export interface Listener {
-    onTileClicked(hex: Hex): void,
-    onTileEntered(hex: Hex): void,
-    onTileExited(hex: Hex): void,
-}
-
-export class WorldCache {
-    tiles: [Hex, Tile][];
-    creatureHex: Map<Id<Creature>, Hex> = new Map();
-    playerId: Id<Creature>;
-
-    private _tileMap: Map<string, Tile> = new Map();
-
-    constructor(world: World) {
-        this.tiles = world.getTiles();
-        for (let [hex, tile] of this.tiles) {
-            this._tileMap.set(JSON.stringify(hex), tile);
-        }
-        for (let [id, hex] of world.getCreatureMap()) {
-            this.creatureHex.set(id, hex);
-        }
-        this.playerId = world.playerId;
-    }
-
-    getTile(hex: Hex): Tile | undefined {
-        return this._tileMap.get(JSON.stringify(hex));
-    }
-}
-
 export class Render {
     private readonly _ctx: CanvasRenderingContext2D;
     private _mouseHex?: Hex;
@@ -44,7 +13,8 @@ export class Render {
     constructor(
             private readonly _canvas: HTMLCanvasElement,
             world: World,
-            private readonly _listener: Listener) {
+            private readonly _listener: Listener,
+            private readonly _data: DataQuery) {
         this.updateWorld(world);
         this._tsMillis = performance.now();
         this._ctx = this._canvas.getContext('2d')!;
@@ -103,11 +73,11 @@ export class Render {
             this._drawTile(hex, tile);
         }
         this._drawPreview(tsMillis);
-        const highlight = window.game.index.get(States.Highlight)?.hexes || [];
+        const highlight = this._data.get(States.Highlight)?.hexes || [];
         for (let hex of highlight) {
             this._drawHighlight(hex);
         }
-        const selected = window.game.index.get(States.Base.UI)?.selected || [];
+        const selected = this._data.get(States.Base.UI)?.selected || [];
         for (let [id, bounds] of selected) {
             for (let bound of bounds) {
                 this._drawBoundary(bound);
@@ -171,7 +141,7 @@ export class Render {
         const size = HEX_SIZE * scale;
 
         let moves: Hex[] = [];
-        const preview = window.game.index.get(States.Highlight)?.events || [];
+        const preview = this._data.get(States.Highlight)?.events || [];
         for (let event of preview) {
             if (event.CreatureMoved) {
                 moves.push(event.CreatureMoved.to);
@@ -269,6 +239,43 @@ export class Render {
             event.clientX - rect.left, event.clientY - rect.top);
         return screenPoint.matrixTransform(this._ctx.getTransform().inverse());
     }   
+}
+
+const HEX_SIZE = 30;
+
+export interface Listener {
+    onTileClicked(hex: Hex): void,
+    onTileEntered(hex: Hex): void,
+    onTileExited(hex: Hex): void,
+}
+
+type Constructor = new (...args: any[]) => any;
+
+export interface DataQuery {
+    get<T extends Constructor>(key: T): InstanceType<T> | undefined;
+}
+
+export class WorldCache {
+    tiles: [Hex, Tile][];
+    creatureHex: Map<Id<Creature>, Hex> = new Map();
+    playerId: Id<Creature>;
+
+    private _tileMap: Map<string, Tile> = new Map();
+
+    constructor(world: World) {
+        this.tiles = world.getTiles();
+        for (let [hex, tile] of this.tiles) {
+            this._tileMap.set(JSON.stringify(hex), tile);
+        }
+        for (let [id, hex] of world.getCreatureMap()) {
+            this.creatureHex.set(id, hex);
+        }
+        this.playerId = world.playerId;
+    }
+
+    getTile(hex: Hex): Tile | undefined {
+        return this._tileMap.get(JSON.stringify(hex));
+    }
 }
 
 function hexToPixel(hex: Hex): DOMPointReadOnly {
