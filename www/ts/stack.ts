@@ -11,7 +11,7 @@ export class Active {
 const LOGGING = false;
 
 export class State {
-    private _data?: DataPush;
+    private _data?: DataUpdate;
 
     onPushed() {}
     onPopped() {}
@@ -25,7 +25,7 @@ export class State {
         this._data!.update(update);
     }
 
-    _onPushed(data: DataPush) {
+    _onPushed(data: DataUpdate) {
         if (LOGGING) {
             console.log("  PUSHED:", this.constructor.name);
         }
@@ -58,19 +58,21 @@ export class State {
     }
 }
 
-export interface DataPush {
+export interface DataUpdate {
     update(update: (draft: UiData) => void): void;
 }
 
 export class Stack {
     private _stack: State[] = [];
-    private _prevData: UiData[] = [];
-    constructor(private _data: DataView & DataPush) { }
+    constructor(
+        private _data: DataUpdate,
+        private _listener: Listener,
+    ) { }
 
     push(state: State) {
         setTimeout(() => {
             console.log("PUSH: %s", state.constructor.name);
-            this._prevData.push(this._data.get());
+            this._listener.prePush();
             this._top()?._onDeactivated();
             this._stack.push(state);
             state._onPushed(this._data);
@@ -89,8 +91,7 @@ export class Stack {
             top._onDeactivated();
             top._onPopped();
             this._stack.pop();
-            const ui = this._prevData.pop()!;
-            this._data.set(ui);
+            this._listener.postPop();
             this._top()!._onActivated();
         });
     }
@@ -105,8 +106,8 @@ export class Stack {
             top._onDeactivated();
             top._onPopped();
             this._stack.pop();
-            const ui = this._prevData.pop()!;
-            this._data.set(ui);
+            this._listener.postPop();
+            this._listener.prePush();
             this._stack.push(state);
             state._onPushed(this._data);
             state._onActivated();
@@ -126,7 +127,7 @@ export class Stack {
     }
 }
 
-export interface DataView {
-    get(): UiData;
-    set(state: UiData): void;
+export interface Listener {
+    prePush(): void;
+    postPop(): void;
 }

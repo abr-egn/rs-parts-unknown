@@ -4,8 +4,8 @@ import {
     Event, Tracer, World,
     findBoundary,
 } from "../wasm";
-import {Render, DataQuery as RenderData} from "./render";
-import {Stack, DataView as StackView, DataPush as StackPush} from "./stack";
+import * as render from "./render";
+import * as stack from "./stack";
 import {renderIndex} from "../tsx/index";
 import {UiData} from "./ui_data";
 
@@ -23,14 +23,15 @@ This:
     a. Initializes everything and sets up linkages, and
     b. Is the interface through which the UI and the game states act.
 
-It is therefore made available as a global because there would be no gain to
-manually threading it through to both places.
+Re. (b), it is made available as a global because there would be no gain to
+manually threading it through to all places.
 */
 export class Game {
     private _world: World;
-    private _stack: Stack;
+    private _stack: stack.Stack;
     private _data: UiData;
-    private _render: Render;
+    private _oldData: UiData[] = [];
+    private _render: render.Render;
     private _keys: Map<string, boolean> = new Map();
     constructor() {
         this._world = new World();
@@ -38,26 +39,30 @@ export class Game {
 
         this._data = new UiData();
 
-        const stackData: StackView & StackPush = {
-            get: () => { return this._data; },
-            set: (data) => {
-                this._data = data;
-                renderIndex(this._world, this._data);
-            },
+        const stackData: stack.DataUpdate = {
             update: (update) => {
                 this._data = produce(this._data, update);
                 renderIndex(this._world, this._data);
-            }
+            },
         };
-        this._stack = new Stack(stackData);
+        const stackListener: stack.Listener = {
+            prePush: () => {
+                this._oldData.push(this._data);
+            },
+            postPop: () => {
+                this._data = this._oldData.pop()!;
+                renderIndex(this._world, this._data);
+            },
+        };
+        this._stack = new stack.Stack(stackData, stackListener);
 
         renderIndex(this._world, this._data);
 
         const canvas = document.getElementById("mainCanvas") as HTMLCanvasElement;
-        const renderData: RenderData = {
+        const renderData: render.DataQuery = {
             get: (key) => { return this._data.get(key); },
         };
-        this._render = new Render(canvas, this._world, this._stack, renderData);
+        this._render = new render.Render(canvas, this._world, this._stack, renderData);
 
         canvas.focus();
         canvas.addEventListener('keydown', (e) => {
@@ -77,7 +82,7 @@ export class Game {
         return this._world;
     }
 
-    get stack(): Stack {
+    get stack(): stack.Stack {
         return this._stack;
     }
 
