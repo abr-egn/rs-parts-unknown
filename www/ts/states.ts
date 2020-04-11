@@ -39,7 +39,7 @@ export namespace Base {
 
 export class Highlight {
     hexes: Hex[] = [];
-    events: Event[] = [];
+    //events: Event[] = [];
 }
 
 export class PlayCard extends State {
