@@ -109,6 +109,7 @@ impl World {
             .collect()
     }
 
+    // TODO(random)
     #[wasm_bindgen(skip_typescript)]
     pub fn checkSpendAP(&self, creature_id: JsValue, ap: i32) -> bool {
         let id: Id<creature::Creature> = from_js_value(creature_id);
@@ -148,6 +149,8 @@ impl World {
             .map(to_js_value)
             .collect()
     }
+
+    // Debugging
 
     #[wasm_bindgen(skip_typescript)]
     pub fn setTracer(&mut self, tracer: JsValue) {

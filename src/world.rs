@@ -1,8 +1,5 @@
 use std::collections::HashSet;
 use hex::{self, Hex};
-use serde::Serialize;
-use ts_data_derive::TsData;
-use wasm_bindgen::prelude::wasm_bindgen;
 use crate::{
     card::Walk,
     creature::{self, Creature},
@@ -55,14 +52,23 @@ impl World {
     pub fn player_id(&self) -> Id<Creature> { self.player_id }
     pub fn creatures(&self) -> &IdMap<Creature> { &self.creatures }
 
+    // TODO(random)
     pub fn check_action(&self, action: &Action) -> bool {
         let mut check = self.clone();
         check.tracer = None;
         !Event::is_failure(&check.execute(action))
     }
 
-    pub fn preview_action(&self, action: &Action) -> Preview {
-        unimplemented!();
+    pub fn affects_action(&self, action: &Action) -> (Vec<ModId>, Vec<TriggerId>) {
+        let mods = self.mods.map().iter()
+            .filter(|(_, m)| m.applies(action))
+            .map(|(id, _)| *id)
+            .collect();
+        let triggers = self.triggers.map().iter()
+            .filter(|(_, t)| t.applies(action))
+            .map(|(id, _)| *id)
+            .collect();
+        (mods, triggers)
     }
 
     // Mutators
@@ -226,13 +232,6 @@ impl World {
         }
         events
     }
-}
-
-#[derive(Serialize, TsData)]
-pub struct Preview {
-    action: Action,
-    mods: Vec<ModId>,
-    triggers: Vec<TriggerId>,
 }
 
 pub trait Tracer: std::fmt::Debug + TracerClone {
