@@ -1,5 +1,5 @@
 use hex::Hex;
-use serde::{Serialize, Serializer};
+use serde::{Deserialize, Serialize, Serializer};
 use ts_data_derive::TsData;
 use wasm_bindgen::prelude::wasm_bindgen;
 use crate::{
@@ -8,9 +8,9 @@ use crate::{
     id_map::Id,
 };
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, TsData)]
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, TsData)]
 pub enum Action {
-    #[serde(serialize_with = "ser_action_nothing")]
+    #[serde(with = "serde_action_nothing")]
     Nothing,
     MoveCreature { id: Id<Creature>, to: Hex },
     GainAP { id: Id<Creature>, ap: i32 },
@@ -19,8 +19,17 @@ pub enum Action {
     SpendMP { id: Id<Creature>, mp: i32 },
 }
 
-fn ser_action_nothing<S: Serializer>(s: S) -> Result<S::Ok, S::Error> {
-    s.serialize_bool(true)
+mod serde_action_nothing {
+    use serde::{
+        Deserializer, Serializer,
+        de::IgnoredAny,
+    };
+    pub fn serialize<S: Serializer>(s: S) -> Result<S::Ok, S::Error> {
+        s.serialize_bool(true)
+    }
+    pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<(), D::Error> {
+        d.deserialize_any(IgnoredAny).map(|_| ())
+    }
 }
 
 #[derive(Debug, Clone, Serialize, TsData)]

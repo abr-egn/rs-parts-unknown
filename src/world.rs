@@ -51,6 +51,8 @@ impl World {
     pub fn map(&self) -> &Map { &self.map }
     pub fn player_id(&self) -> Id<Creature> { self.player_id }
     pub fn creatures(&self) -> &IdMap<Creature> { &self.creatures }
+    pub fn mods(&self) -> &IdMap<Box<dyn Mod>> { &self.mods }
+    pub fn triggers(&self) -> &IdMap<Box<dyn Trigger>> { &self.triggers }
 
     // TODO(random)
     pub fn check_action(&self, action: &Action) -> bool {

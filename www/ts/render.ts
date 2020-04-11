@@ -142,14 +142,13 @@ export class Render {
         const size = HEX_SIZE * scale;
 
         let moves: Hex[] = [];
-        /* TODO(action preview)
-        const preview = this._data.get(states.Highlight)?.events || [];
-        for (let event of preview) {
-            if (event.CreatureMoved) {
-                moves.push(event.CreatureMoved.to);
+        const preview = this._data.get(states.Highlight)?.preview || [];
+        for (let p of preview) {
+            // TODO: show p.affects
+            if (p.action.MoveCreature) {
+                moves.push(p.action.MoveCreature.to);
             }
         }
-        */
         for (let hex of moves) {
             this._ctx.save();
             this._pathHex(hex, size);

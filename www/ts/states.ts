@@ -1,5 +1,5 @@
 import {
-    Behavior, Boundary, Card, Creature, Event, Hex, Id, World,
+    Action, Behavior, Boundary, Card, Creature, Event, Hex, Id, World,
     findBoundary,
 } from "../wasm";
 import {Game} from "./game";
@@ -39,7 +39,12 @@ export namespace Base {
 
 export class Highlight {
     hexes: Hex[] = [];
-    //events: Event[] = [];
+    preview: Preview[] = [];
+}
+
+export interface Preview {
+    action: Action,
+    affects: string[],
 }
 
 export class PlayCard extends State {
@@ -71,20 +76,21 @@ export class PlayCard extends State {
 
     onTileEntered(hex: Hex) {
         let highlight: Hex[] = this._behavior!.highlight(window.game.world, hex);
-        /* TODO(action preview)
-        const check = window.game.world.clone();
-        check.setTracer(undefined);
-        let preview: Event[] = [];
-        if (this._behavior!.targetValid(check, hex)) {
-            preview = this._behavior!.apply(check, hex);
+        const preview: Preview[] = [];
+        if (this._behavior!.targetValid(window.game.world, hex)) {
+            const actions = this._behavior!.preview(window.game.world, hex);
+            for (let action of actions) {
+                preview.push({
+                    action,
+                    affects: window.game.world.affectsAction(action),
+                });
+            }
         }
-        */
         this.update((draft) => {
             const hi = draft.build(Highlight);
             hi.hexes = highlight;
-            //hi.events = preview;
+            hi.preview = preview;
         })
-        //check.free()
     }
 
     onTileClicked(hex: Hex) {

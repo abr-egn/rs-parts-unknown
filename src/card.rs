@@ -29,10 +29,17 @@ pub trait Behavior: BehaviorClone {
     fn highlight(&self, world: &World, cursor: Hex) -> Vec<Hex>;
     // TODO: allow for multiple targets
     fn target_valid(&self, world: &World, cursor: Hex) -> bool;
-    /* TODO(action preview)
     fn preview(&self, world: &World, target: Hex) -> Vec<Action>;
-    */
-    fn apply(&self, world: &mut World, target: Hex) -> Vec<Event>;
+    fn apply(&self, world: &mut World, target: Hex) -> Vec<Event> {
+        let mut out = vec![];
+        for act in self.preview(world, target) {
+            let events = world.execute(&act);
+            let failed = Event::is_failure(&events);
+            out.extend(events);
+            if failed { break; }
+        }
+        out
+    }
 }
 
 pub trait BehaviorClone {
@@ -63,12 +70,8 @@ impl Behavior for Walk {
     fn target_valid(&self, world: &World, cursor: Hex) -> bool {
         Some(&cursor) == world.map().creatures().get(&world.player_id())
     }
-    fn apply(&self, world: &mut World, _target: Hex) -> Vec<Event> {
-        let mut out = vec![];
-        out.append(&mut world.execute(
-            &Action::GainMP { id: world.player_id(), mp: 1 }
-        ));
-        out
+    fn preview(&self, world: &World, _target: Hex) -> Vec<Action> {
+        vec![Action::GainMP { id: world.player_id(), mp: 1 }]
     }
 }
 

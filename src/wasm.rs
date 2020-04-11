@@ -122,9 +122,26 @@ impl World {
         Some(Behavior::new((real_card.start_play)(&self.wrapped, &card.creatureId)))
     }
 
-    /* TODO(action preview)
-    pub fn affectsAction(&self, action: &Action) -> Vec<String>
-    */
+    pub fn affectsAction(&self, action: JsValue) -> Array /* string[] */ {
+        let action: Action = from_js_value(action);
+        let (mods, triggers) = self.wrapped.affects_action(&action);
+        let out = Array::new();
+        for mod_id in mods {
+            let m = match self.wrapped.mods().map().get(&mod_id) {
+                Some(m) => m,
+                None => continue,
+            };
+            out.push(&JsValue::from(m.name()));
+        }
+        for trigger_id in triggers {
+            let t = match self.wrapped.triggers().map().get(&trigger_id) {
+                Some(t) => t,
+                None => continue,
+            };
+            out.push(&JsValue::from(t.name()));
+        }
+        out
+    }
 
     // Updates
 
@@ -278,9 +295,13 @@ impl Behavior {
     pub fn targetValid(&self, world: &World, cursor: JsValue) -> bool {
         self.wrapped.target_valid(&world.wrapped, from_js_value::<Hex>(cursor))
     }
-    /* TODO(action preview)
-    pub fn preview(&self, world: &World, target: Jsvalue) -> Array /Hex[]/
-    */
+    #[wasm_bindgen(skip_typescript)]
+    pub fn preview(&self, world: &World, target: JsValue) -> Array /* Action[] */ {
+        let target: Hex = from_js_value(target);
+        self.wrapped.preview(&world.wrapped, target).iter()
+            .map(to_js_value)
+            .collect()
+    }
 }
 
 #[derive(Debug, Clone, Serialize, TsData)]
@@ -362,6 +383,7 @@ interface World {
     getCreatureRange(id: Id<Creature>): Hex[];
     checkSpendAP(id: Id<Creature>, ap: number): boolean;
     startPlay(card: Card): Behavior | undefined;
+    affectsAction(action: Action): string[];
 
     // Updates
 
@@ -390,9 +412,7 @@ export interface Tracer {
 interface Behavior {
     highlight(world: World, cursor: Hex): Hex[];
     targetValid(world: World, cursor: Hex): boolean;
-    /*
-    apply(world: World, target: Hex): Event[];
-    */
+    preview(world: World, target: Hex): Action[];
 }
 
 export type Direction = "XY" | "XZ" | "YZ" | "YX" | "ZX" | "ZY";
