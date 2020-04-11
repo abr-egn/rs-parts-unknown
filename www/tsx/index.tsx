@@ -17,12 +17,13 @@ function Index(props: {
 }): JSX.Element {
   const world = props.world;
   const base = props.data.get(states.Base.UI);
+  const stats = props.data.get(states.Highlight)?.stats;
   let creatures = [];
   if (base?.selected) {
     for (let id of base.selected.keys()) {
       const creature = world.getCreature(id);
       if (creature) {
-        creatures.push(<Creature key={id} creature={creature}/>);
+        creatures.push(<Creature key={id} creature={creature} stats={stats?.get(id)}/>);
       }
     }
   }
@@ -33,6 +34,7 @@ function Index(props: {
           player={world.getCreature(world.playerId)!}
           active={props.data.get(Active)}
           play={props.data.get(states.PlayCard.UI)}
+          stats={stats?.get(world.playerId)}
         />
       </div>
       <canvas id="mainCanvas" width="800" height="800" tabIndex={1}></canvas>
@@ -45,10 +47,25 @@ function Index(props: {
 
 function Creature(props: {
   creature: Creature,
+  stats?: Map<states.Stat, number>,
 }): JSX.Element {
+  let apDelta = props.stats?.get("AP") || 0;
+  const apStyle: React.CSSProperties = {};
+  if (apDelta < 0) {
+    apStyle.color = "red";
+  } else if (apDelta > 0) {
+    apStyle.color = "green";
+  }
+  let mpDelta = props.stats?.get("MP") || 0;
+  const mpStyle: React.CSSProperties = {};
+  if (mpDelta < 0) {
+    mpStyle.color = "red";
+  } else if (mpDelta > 0) {
+    mpStyle.color = "green";
+  }
   return (<div>
-    <div>AP: {props.creature.curAp}</div>
-    <div>MP: {props.creature.curMp}</div>
+    <div style={apStyle}>AP: {props.creature.curAp + apDelta}</div>
+    <div style={mpStyle}>MP: {props.creature.curMp + mpDelta}</div>
   </div>);
 }
 
@@ -61,6 +78,7 @@ function Player(props: {
   player: Creature,
   active?: Active,
   play?: states.PlayCard.UI,
+  stats?: Map<states.Stat, number>,
 }): JSX.Element {
   const cards: Card[] = [];
   if (props.player) {
@@ -78,7 +96,7 @@ function Player(props: {
 
   return (<div>
     Player:
-    <Creature creature={props.player}/>
+    <Creature creature={props.player} stats={props.stats}/>
     <CardList
       active={canPlay}
       cards={cards}

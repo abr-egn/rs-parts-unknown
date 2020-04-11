@@ -37,14 +37,31 @@ export namespace Base {
     }
 }
 
+export type Stat = "AP" | "MP";
+
 export class Highlight {
     hexes: Hex[] = [];
     preview: Preview[] = [];
+    stats: Map<Id<Creature>, Map<Stat, number>> = new Map();
+
+    setDelta(id: Id<Creature>, stat: Stat, delta: number) {
+        let c = this.stats.get(id);
+        if (!c) {
+            c = new Map();
+            this.stats.set(id, c);
+        }
+        c.set(stat, delta);
+    }
 }
 
 export interface Preview {
     action: Action,
     affects: string[],
+}
+
+export interface StatPreview {
+    stat: string,
+    value: number,
 }
 
 export class PlayCard extends State {
@@ -78,10 +95,9 @@ export class PlayCard extends State {
         const world = window.game.world;
         let highlight: Hex[] = this._behavior!.highlight(world, hex);
         const preview: Preview[] = [];
+        let apCost = 0;
         if (this._behavior!.targetValid(world, hex)) {
-            preview.push(makePreview({
-                SpendAP: {id: world.playerId, ap: this._card.apCost}
-            }));
+            apCost = this._card.apCost;
             const actions = this._behavior!.preview(world, hex);
             for (let action of actions) {
                 preview.push(makePreview(action));
@@ -91,7 +107,8 @@ export class PlayCard extends State {
             const hi = draft.build(Highlight);
             hi.hexes = highlight;
             hi.preview = preview;
-        })
+            hi.setDelta(world.playerId, "AP", -apCost);
+        });
     }
 
     onTileClicked(hex: Hex) {
@@ -156,20 +173,17 @@ export class MovePlayer extends State {
         const world = window.game.world;
         const path = world.path(this._from, hex);
         const preview: Preview[] = [];
-        if (path.length > 0) {
-            preview.push(makePreview({
-                SpendMP: {
-                    id: world.playerId,
-                    mp: Math.max(path.length, this._mp),
-                }
-            }));
-        }
+        const mpCost = Math.min(Math.max(0, path.length-1), this._mp);
         for (let hex of path.slice(0, this._mp+1)) {
             preview.push(makePreview({
                 MoveCreature: { id: world.playerId, to: hex }
             }));
         }
-        this.update((draft) => { draft.build(Highlight).preview = preview; });
+        this.update((draft) => {
+            const hi = draft.build(Highlight);
+            hi.preview = preview;
+            hi.setDelta(world.playerId, "MP", -mpCost);
+        });
     }
     onTileClicked(hex: Hex) {
         if (!this._range.some((h) => h.x == hex.x && h.y == hex.y)) { return; }
