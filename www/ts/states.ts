@@ -11,7 +11,7 @@ export class Base extends State {
         let tile = world.getTile(hex);
         console.log("Tile:", hex, tile);
         if (!tile) { return; }
-        if (!tile.creature || tile.creature == world.playerId) {
+        if (tile.creature == undefined) {
             this.update((draft) => { draft.get(Base.UI)?.selected.clear(); });
         } else {
             const shift = window.game.key("ShiftLeft") || window.game.key("ShiftRight");
@@ -21,9 +21,13 @@ export class Base extends State {
                     ui.selected.clear();
                 }
                 const id: Id<Creature> = tile!.creature!;
-                let range = world.getCreatureRange(id);
-                let bounds = findBoundary(range);
-                ui.selected.set(tile!.creature!, bounds);
+                if (ui.selected.has(id)) {
+                    ui.selected.delete(id);
+                } else {
+                    let range = world.getCreatureRange(id);
+                    let bounds = findBoundary(range);
+                    ui.selected.set(id, bounds);
+                }
             });
         }
     }
