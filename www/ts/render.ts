@@ -1,7 +1,7 @@
 import {
     Boundary, Creature, Event, Hex, Id, Tile, World,
 } from "../wasm";
-import * as States from "./states";
+import * as states from "./states";
 
 export class Render {
     private readonly _ctx: CanvasRenderingContext2D;
@@ -73,11 +73,11 @@ export class Render {
             this._drawTile(hex, tile);
         }
         this._drawPreview(tsMillis);
-        const highlight = this._data.get(States.Highlight)?.hexes || [];
+        const highlight = this._data.get(states.Highlight)?.hexes || [];
         for (let hex of highlight) {
             this._drawHighlight(hex);
         }
-        const selected = this._data.get(States.Base.UI)?.selected || [];
+        const selected = this._data.get(states.Base.UI)?.selected || [];
         for (let [id, bounds] of selected) {
             for (let bound of bounds) {
                 this._drawBoundary(bound);
@@ -141,7 +141,7 @@ export class Render {
         const size = HEX_SIZE * scale;
 
         let moves: Hex[] = [];
-        const preview = this._data.get(States.Highlight)?.events || [];
+        const preview = this._data.get(states.Highlight)?.events || [];
         for (let event of preview) {
             if (event.CreatureMoved) {
                 moves.push(event.CreatureMoved.to);

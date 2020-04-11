@@ -3,7 +3,7 @@ import * as ReactDOM from "react-dom";
 
 import {Card, Creature, World} from "../wasm";
 import {Active} from "../ts/stack";
-import * as States from "../ts/states";
+import * as states from "../ts/states";
 import {UiData} from "../ts/ui_data";
 
 export function renderIndex(world: World, data: UiData) {
@@ -16,7 +16,7 @@ function Index(props: {
   data: UiData,
 }): JSX.Element {
   const world = props.world;
-  const base = props.data.get(States.Base.UI);
+  const base = props.data.get(states.Base.UI);
   let creatures = [];
   if (base?.selected) {
     for (let id of base.selected.keys()) {
@@ -32,7 +32,7 @@ function Index(props: {
         <Player
           player={world.getCreature(world.playerId)!}
           active={props.data.get(Active)}
-          play={props.data.get(States.PlayCard.UI)}
+          play={props.data.get(states.PlayCard.UI)}
         />
       </div>
       <canvas id="mainCanvas" width="800" height="800" tabIndex={1}></canvas>
@@ -53,14 +53,14 @@ function Creature(props: {
 }
 
 function EndTurn(props: {active: boolean}): JSX.Element {
-  const onClick = () => window.game.stack.push(new States.EndTurn());
+  const onClick = () => window.game.stack.push(new states.EndTurn());
   return <button onClick={onClick} disabled={!props.active}>End Turn</button>;
 }
 
 function Player(props: {
   player: Creature,
   active?: Active,
-  play?: States.PlayCard.UI,
+  play?: states.PlayCard.UI,
 }): JSX.Element {
   const cards: Card[] = [];
   if (props.player) {
@@ -70,11 +70,11 @@ function Player(props: {
   }
 
   const cancelPlay = () => window.game.stack.pop();
-  const movePlayer = () => window.game.stack.push(new States.MovePlayer());
+  const movePlayer = () => window.game.stack.push(new states.MovePlayer());
 
-  const canPlay = props.active?.is(States.Base) || false;
-  const inPlay = props.active?.is(States.PlayCard) || false;
-  const canCancel = (inPlay || props.active?.is(States.MovePlayer)) || false;
+  const canPlay = props.active?.is(states.Base) || false;
+  const inPlay = props.active?.is(states.PlayCard) || false;
+  const canCancel = (inPlay || props.active?.is(states.MovePlayer)) || false;
 
   return (<div>
     Player:
@@ -95,7 +95,7 @@ function CardList(props: {
   cards: Card[],
 }): JSX.Element {
   function startPlay(card: Card) {
-    window.game.stack.push(new States.PlayCard(card));
+    window.game.stack.push(new states.PlayCard(card));
   }
   function canPlay(card: Card): boolean {
     const world = window.game.world;
