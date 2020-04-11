@@ -132,19 +132,32 @@ export class EndTurn extends State {
 
 export class MovePlayer extends State {
     private _range: Hex[] = [];
+    private _from!: Hex;
+    private _mp!: number;
     constructor() { super() }
 
     onPushed() {
-        this._range = window.game.world.getCreatureRange(window.game.world.playerId);
+        const world = window.game.world;
+        const playerId = world.playerId;
+        this._range = world.getCreatureRange(playerId);
+        this._from = world.getCreatureHex(playerId)!;
+        this._mp = world.getCreature(playerId)!.curMp;
         this.update((draft) => { draft.build(Highlight).hexes = this._range; });
     }
     onTileEntered(hex: Hex) {
-        /* TODO(action preview)
-        const check = window.game.world.clone();
-        check.setTracer(undefined);
-        let preview = check.movePlayer(hex);
-        this.update((draft) => { draft.build(Highlight).events = preview; });
-        */
+        const world = window.game.world;
+        const path = world.path(this._from, hex);
+        const preview: Preview[] = [];
+        for (let hex of path.slice(0, this._mp+1)) {
+            let action: Action = {
+                MoveCreature: { id: world.playerId, to: hex }
+            };
+            preview.push({
+                action,
+                affects: world.affectsAction(action),
+            });
+        }
+        this.update((draft) => { draft.build(Highlight).preview = preview; });
     }
     onTileClicked(hex: Hex) {
         if (!this._range.some((h) => h.x == hex.x && h.y == hex.y)) { return; }

@@ -122,6 +122,7 @@ impl World {
         Some(Behavior::new((real_card.start_play)(&self.wrapped, &card.creatureId)))
     }
 
+    #[wasm_bindgen(skip_typescript)]
     pub fn affectsAction(&self, action: JsValue) -> Array /* string[] */ {
         let action: Action = from_js_value(action);
         let (mods, triggers) = self.wrapped.affects_action(&action);
@@ -141,6 +142,15 @@ impl World {
             out.push(&JsValue::from(t.name()));
         }
         out
+    }
+
+    #[wasm_bindgen(skip_typescript)]
+    pub fn path(&self, from: JsValue, to: JsValue) -> Array /* Hex[] */ {
+        let from: Hex = from_js_value(from);
+        let to: Hex = from_js_value(to);
+        self.wrapped.map().path_to(from, to).unwrap_or(vec![]).iter()
+            .map(to_js_value)
+            .collect()
     }
 
     // Updates
@@ -384,6 +394,7 @@ interface World {
     checkSpendAP(id: Id<Creature>, ap: number): boolean;
     startPlay(card: Card): Behavior | undefined;
     affectsAction(action: Action): string[];
+    path(from: Hex, to: Hex): Hex[];
 
     // Updates
 

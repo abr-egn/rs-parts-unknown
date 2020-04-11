@@ -68,12 +68,13 @@ fn build_enum(buffer: &mut String, name: &syn::Ident, data: &syn::DataEnum) -> R
     }
     append!(buffer, "export interface {} {{\n", name);
     for v in &data.variants {
+        append!(buffer, "    {}?: ", v.ident);
         match &v.fields {
-            syn::Fields::Unit => append!(buffer, "    {}: boolean | undefined,\n", v.ident),
+            syn::Fields::Unit => append!(buffer, "boolean\n"),
             syn::Fields::Named(n) => {
-                append!(buffer, "    {}: {{\n", v.ident);
+                append!(buffer, "{{\n");
                 build_fields(buffer, "        ", n);
-                append!(buffer, "    }} | undefined,\n");
+                append!(buffer, "    }},\n");
             }
             v => return Err(Error {
                 text: format!("unhandled enum variant: {:?}", v),
