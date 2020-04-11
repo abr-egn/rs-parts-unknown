@@ -23,7 +23,7 @@ fn from_js_value<T: DeserializeOwned>(js: JsValue) -> T {
 }
 
 #[wasm_bindgen]
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct World {
     wrapped: world::World,
 }
@@ -37,8 +37,6 @@ impl World {
             wrapped: world::World::new()
         }
     }
-    #[wasm_bindgen(js_name = "clone")]
-    pub fn js_clone(&self) -> Self { self.clone() }
 
     // Accessors
 

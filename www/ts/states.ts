@@ -71,20 +71,20 @@ export class PlayCard extends State {
 
     onTileEntered(hex: Hex) {
         let highlight: Hex[] = this._behavior!.highlight(window.game.world, hex);
+        /* TODO(action preview)
         const check = window.game.world.clone();
         check.setTracer(undefined);
         let preview: Event[] = [];
         if (this._behavior!.targetValid(check, hex)) {
-            /* TODO(action preview)
             preview = this._behavior!.apply(check, hex);
-            */
         }
+        */
         this.update((draft) => {
             const hi = draft.build(Highlight);
             hi.hexes = highlight;
-            hi.events = preview;
+            //hi.events = preview;
         })
-        check.free()
+        //check.free()
     }
 
     onTileClicked(hex: Hex) {
