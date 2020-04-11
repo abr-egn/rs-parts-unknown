@@ -75,15 +75,16 @@ export class PlayCard extends State {
     }
 
     onTileEntered(hex: Hex) {
-        let highlight: Hex[] = this._behavior!.highlight(window.game.world, hex);
+        const world = window.game.world;
+        let highlight: Hex[] = this._behavior!.highlight(world, hex);
         const preview: Preview[] = [];
-        if (this._behavior!.targetValid(window.game.world, hex)) {
-            const actions = this._behavior!.preview(window.game.world, hex);
+        if (this._behavior!.targetValid(world, hex)) {
+            preview.push(makePreview({
+                SpendAP: {id: world.playerId, ap: this._card.apCost}
+            }));
+            const actions = this._behavior!.preview(world, hex);
             for (let action of actions) {
-                preview.push({
-                    action,
-                    affects: window.game.world.affectsAction(action),
-                });
+                preview.push(makePreview(action));
             }
         }
         this.update((draft) => {
@@ -130,6 +131,13 @@ export class EndTurn extends State {
     }
 }
 
+function makePreview(act: Action): Preview {
+    return {
+        action: act,
+        affects: window.game.world.affectsAction(act),
+    };
+}
+
 export class MovePlayer extends State {
     private _range: Hex[] = [];
     private _from!: Hex;
@@ -148,14 +156,18 @@ export class MovePlayer extends State {
         const world = window.game.world;
         const path = world.path(this._from, hex);
         const preview: Preview[] = [];
+        if (path.length > 0) {
+            preview.push(makePreview({
+                SpendMP: {
+                    id: world.playerId,
+                    mp: Math.max(path.length, this._mp),
+                }
+            }));
+        }
         for (let hex of path.slice(0, this._mp+1)) {
-            let action: Action = {
+            preview.push(makePreview({
                 MoveCreature: { id: world.playerId, to: hex }
-            };
-            preview.push({
-                action,
-                affects: world.affectsAction(action),
-            });
+            }));
         }
         this.update((draft) => { draft.build(Highlight).preview = preview; });
     }
@@ -164,11 +176,4 @@ export class MovePlayer extends State {
         const [next, events] = window.game.world.movePlayer(hex);
         window.game.stack.swap(new Update(events, next));
     }
-}
-
-function isFailure(events: Event[]): boolean {
-    if (events.length < 1) {
-        return false;
-    }
-    return events[0].Failed != undefined;
 }
