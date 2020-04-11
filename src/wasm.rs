@@ -116,8 +116,6 @@ impl World {
         return self.wrapped.check_action(&Action::SpendAP { id, ap });
     }
 
-    // Mutators
-
     #[wasm_bindgen(skip_typescript)]
     pub fn startPlay(&self, card: JsValue) -> Option<Behavior> {
         let card: Card = from_js_value(card);
@@ -126,6 +124,33 @@ impl World {
         let real_card = part.cards.map().get(&card.id)?;
         Some(Behavior::new((real_card.start_play)(&self.wrapped, &card.creatureId)))
     }
+
+    /* TODO(action preview)
+    pub fn affectsAction(&self, action: &Action) -> Vec<String>
+    */
+
+    // Updates
+
+    #[wasm_bindgen(skip_typescript)]
+    pub fn playCard(&self, card: JsValue, behavior: Behavior, target: JsValue) -> Array /* [World, Event[]] */ {
+        let card: Card = from_js_value(card);
+        let target: Hex = from_js_value(target);
+        let mut newWorld = self.wrapped.clone();
+        let mut events: Vec<Event> = newWorld.execute(&Action::SpendAP {
+            id: card.creatureId,
+            ap: card.apCost,
+        });
+        if !Event::is_failure(&events) {
+            events.extend(behavior.wrapped.apply(&mut newWorld, target));
+        }
+
+        let out = Array::new();
+        out.push(&JsValue::from(World { wrapped: newWorld }));
+        out.push(&JsValue::from(events.iter().map(to_js_value).collect::<Array>()));
+        out
+    }
+
+    // Mutators
 
     #[wasm_bindgen(skip_typescript)]
     pub fn npcTurn(&mut self) -> Array /* Event[] */ {
@@ -304,13 +329,9 @@ impl Behavior {
     pub fn targetValid(&self, world: &World, cursor: JsValue) -> bool {
         self.wrapped.target_valid(&world.wrapped, from_js_value::<Hex>(cursor))
     }
-    #[wasm_bindgen(skip_typescript)]
-    pub fn apply(&self, world: &mut World, target: JsValue) -> Array /* Event[] */ {
-        let target: Hex = from_js_value(target);
-        self.wrapped.apply(&mut world.wrapped, target).iter()
-            .map(to_js_value)
-            .collect()
-    }
+    /* TODO(action preview)
+    pub fn preview(&self, world: &World, target: Jsvalue) -> Array /Hex[]/
+    */
 }
 
 #[derive(Debug, Clone, Serialize, TsData)]
@@ -381,6 +402,8 @@ impl world::Tracer for WrapTracer {
 #[wasm_bindgen(typescript_custom_section)]
 const TS_APPEND: &'static str = r#"
 interface World {
+    // Accessors
+
     readonly playerId: Id<Creature>;
     getTile(hex: Hex): Tile | undefined;
     getTiles(): Array<[Hex, Tile]>;
@@ -389,14 +412,21 @@ interface World {
     getCreatureHex(id: Id<Creature>): Hex | undefined;
     getCreatureRange(id: Id<Creature>): Hex[];
     checkSpendAP(id: Id<Creature>, ap: number): boolean;
-
     startPlay(card: Card): Behavior | undefined;
+
+    // Updates
+
+    playCard(card: Card, behavior: Behavior, target: Hex): [World, Event[]];
+
+    // Mutators
+
     npcTurn(): Event[];
     spendAP(id: Id<Creature>, ap: number): Event[];
     movePlayer(to: Hex): Event[];
-    setTracer(tracer: Tracer | undefined): void;
 
-    makeWrap(): Event;
+    // Debugging
+
+    setTracer(tracer: Tracer | undefined): void;
 }
 
 export interface Hex {
@@ -415,7 +445,9 @@ export interface Tracer {
 interface Behavior {
     highlight(world: World, cursor: Hex): Hex[];
     targetValid(world: World, cursor: Hex): boolean;
+    /*
     apply(world: World, target: Hex): Event[];
+    */
 }
 
 export type Direction = "XY" | "XZ" | "YZ" | "YX" | "ZX" | "ZY";

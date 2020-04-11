@@ -29,6 +29,9 @@ pub trait Behavior: BehaviorClone {
     fn highlight(&self, world: &World, cursor: Hex) -> Vec<Hex>;
     // TODO: allow for multiple targets
     fn target_valid(&self, world: &World, cursor: Hex) -> bool;
+    /* TODO(action preview)
+    fn preview(&self, world: &World, target: Hex) -> Vec<Action>;
+    */
     fn apply(&self, world: &mut World, target: Hex) -> Vec<Event>;
 }
 

@@ -75,7 +75,9 @@ export class PlayCard extends State {
         check.setTracer(undefined);
         let preview: Event[] = [];
         if (this._behavior!.targetValid(check, hex)) {
+            /* TODO(action preview)
             preview = this._behavior!.apply(check, hex);
+            */
         }
         this.update((draft) => {
             const hi = draft.build(Highlight);
@@ -89,11 +91,8 @@ export class PlayCard extends State {
         if (!this._behavior!.targetValid(window.game.world, hex)) {
             return;
         }
-        const nextWorld = window.game.world.clone();
-        const events = nextWorld.spendAP(this._card.creatureId, this._card.apCost);
-        if (!isFailure(events)) {
-            events.push(...this._behavior!.apply(nextWorld, hex));
-        }
+        const [nextWorld, events] = window.game.world.playCard(this._card, this._behavior!, hex);
+        this._behavior = undefined;
         window.game.stack.swap(new Update(events, nextWorld));
     }
 }
