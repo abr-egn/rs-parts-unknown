@@ -34,6 +34,7 @@ export class Render {
     async animateEvents(events: Event[]) {
         for (let event of events) {
             let move;
+            // TODO: update UI for AP/MP changes
             if (move = event.CreatureMoved) {
                 await this._moveCreatureTo(move.id, hexToPixel(move.to))
             }

@@ -1,13 +1,16 @@
 use std::collections::HashSet;
-
 use hex::{self, Hex};
-
-use crate::card::Walk;
-use crate::creature::{self, Creature};
-use crate::error::{Error, Result};
-use crate::event::{Action, Event, Mod, ModId, Trigger, TriggerId};
-use crate::id_map::{Id, IdMap};
-use crate::map::{Tile, Map, Space};
+use serde::Serialize;
+use ts_data_derive::TsData;
+use wasm_bindgen::prelude::wasm_bindgen;
+use crate::{
+    card::Walk,
+    creature::{self, Creature},
+    error::{Error, Result},
+    event::{Action, Event, Mod, ModId, Trigger, TriggerId},
+    id_map::{Id, IdMap},
+    map::{Tile, Map, Space},
+};
 
 #[derive(Debug, Clone)]
 pub struct World {
@@ -16,6 +19,13 @@ pub struct World {
     creatures: IdMap<Creature>,
     mods: IdMap<Box<dyn Mod>>,
     triggers: IdMap<Box<dyn Trigger>>,
+    /* TODO
+    Example: effect that changes the cost of cards.
+        - It can't just be a mod because that wouldn't be reflected in the UI,
+          and wouldn't work with a simple action test.
+        - Conclusion: stat changes (anything else?) need their own persistent category
+          alongside mods and triggers.
+    */
     pub tracer: Option<Box<dyn Tracer>>,
 }
 
@@ -218,6 +228,7 @@ impl World {
     }
 }
 
+#[derive(Serialize, TsData)]
 pub struct Preview {
     action: Action,
     mods: Vec<ModId>,

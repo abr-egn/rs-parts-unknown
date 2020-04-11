@@ -185,6 +185,7 @@ impl VisitMut for TypeMapper {
             "HashMap" => replace_first(path, "Map"),
             "i32" => replace_first(path, "number"),
             "String" => replace_first(path, "string"),
+            "ModId" | "TriggerId" => replace_first(path, "number"),
 
             _ => {
                 self.error = Some(Error {

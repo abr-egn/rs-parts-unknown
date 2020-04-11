@@ -1,5 +1,0 @@
-Game:
-    * Dash card: xAP => move x hexes in a straight line
-
-Code:
-    * Animation for stat changes that updates UI
