@@ -79,6 +79,41 @@ impl World {
         out
     }
 
+    pub fn move_creature(&mut self, creature_id: Id<Creature>, to: Hex) -> Vec<Event> {
+        let from = match self.map.creatures().get(&creature_id) {
+            Some(h) => h,
+            None => return vec![Event::failed(Error::NoSuchCreature)],
+        };
+        let path = match self.map.path_to(*from, to) {
+            Ok(p) => p,
+            Err(e) => return vec![Event::failed(e)],
+        };
+        let mut out = vec![];
+        for (from, to) in path.iter().zip(path.iter().skip(1)) {
+            let actual = match self.map.creatures().get(&creature_id) {
+                Some(h) => h,
+                None => {
+                    out.push(Event::failed(Error::NoSuchCreature));
+                    return out;
+                }
+            };
+            if actual != from && actual.distance_to(*to) > 1 {
+                out.push(Event::failed(Error::Obstructed));
+                return out;
+            }
+            let mut mp_evs = self.execute(
+                &Action::SpendMP { id: creature_id, mp: 1 }
+            );
+            let failed = Event::is_failure(&mp_evs);
+            out.append(&mut mp_evs);
+            if failed { return out; }
+            out.append(&mut self.execute(
+                &Action::MoveCreature { id: creature_id, to: *to }
+            ));
+        }
+        out
+    }
+
     pub fn npc_turn(&mut self) -> Vec<Event> {
         let mut events = vec![];
 

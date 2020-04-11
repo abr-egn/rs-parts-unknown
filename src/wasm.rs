@@ -11,7 +11,6 @@ use wasm_bindgen::{
 use crate::{
     card,
     creature,
-    error::{Error, Result},
     event::{Action, Event},
     id_map::Id,
     map::Tile,
@@ -143,36 +142,22 @@ impl World {
         if !Event::is_failure(&events) {
             events.extend(behavior.wrapped.apply(&mut newWorld, target));
         }
-
-        let out = Array::new();
-        out.push(&JsValue::from(World { wrapped: newWorld }));
-        out.push(&JsValue::from(events.iter().map(to_js_value).collect::<Array>()));
-        out
-    }
-
-    // Mutators
-
-    #[wasm_bindgen(skip_typescript)]
-    pub fn npcTurn(&mut self) -> Array /* Event[] */ {
-        self.wrapped.npc_turn().iter()
-            .map(to_js_value)
-            .collect()
+        world_update(newWorld, &events)
     }
 
     #[wasm_bindgen(skip_typescript)]
-    pub fn spendAP(&mut self, creature_id: JsValue, ap: i32) -> Array /* Event[] */ {
-        let id: Id<creature::Creature> = from_js_value(creature_id);
-        self.wrapped.execute(&Action::SpendAP { id, ap })
-            .iter()
-            .map(to_js_value)
-            .collect()
+    pub fn npcTurn(&self) -> Array /* [World, Event[]] */ {
+        let mut newWorld = self.wrapped.clone();
+        let events = newWorld.npc_turn();
+        world_update(newWorld, &events)
     }
 
     #[wasm_bindgen(skip_typescript)]
-    pub fn movePlayer(&mut self, to: JsValue) -> Array /* Event[] */ {
-        self.move_player(to).iter()
-            .map(to_js_value)
-            .collect()
+    pub fn movePlayer(&self, to: JsValue) -> Array /* [World, Event[]] */ {
+        let to: Hex = from_js_value(to);
+        let mut new = self.wrapped.clone();
+        let events = new.move_creature(new.player_id(), to);
+        world_update(new, &events)
     }
 
     // Debugging
@@ -187,45 +172,11 @@ impl World {
     }
 }
 
-impl World {
-    fn path(&self, to: JsValue) -> Result<Vec<Hex>> {
-        let to: Hex = from_js_value(to);
-        let from = self.wrapped.map().creatures().get(&self.wrapped.player_id())
-            .ok_or(Error::NoSuchCreature)?;
-        self.wrapped.map().path_to(*from, to)
-    }
-
-    fn move_player(&mut self, to: JsValue) -> Vec<Event> {
-        let path = match self.path(to) {
-            Ok(p) => p,
-            Err(e) => return vec![Event::failed(e)],
-        };
-        let mut out = vec![];
-        let player_id = self.wrapped.player_id();
-        for (from, to) in path.iter().zip(path.iter().skip(1)) {
-            let actual = match self.wrapped.map().creatures().get(&player_id) {
-                Some(h) => h,
-                None => {
-                    out.push(Event::failed(Error::NoSuchCreature));
-                    return out;
-                }
-            };
-            if actual != from && actual.distance_to(*to) > 1 {
-                out.push(Event::failed(Error::Obstructed));
-                return out;
-            }
-            let mut mp_evs = self.wrapped.execute(
-                &Action::SpendMP { id: player_id, mp: 1 }
-            );
-            let failed = Event::is_failure(&mp_evs);
-            out.append(&mut mp_evs);
-            if failed { return out; }
-            out.append(&mut self.wrapped.execute(
-                &Action::MoveCreature { id: player_id, to: *to }
-            ));
-        }
-        out
-    }
+fn world_update(new: world::World, events: &[Event]) -> Array {
+    let out = Array::new();
+    out.push(&JsValue::from(World { wrapped: new }));
+    out.push(&JsValue::from(events.iter().map(to_js_value).collect::<Array>()));
+    out
 }
 
 #[derive(Serialize, TsData)]
@@ -417,12 +368,8 @@ interface World {
     // Updates
 
     playCard(card: Card, behavior: Behavior, target: Hex): [World, Event[]];
-
-    // Mutators
-
-    npcTurn(): Event[];
-    spendAP(id: Id<Creature>, ap: number): Event[];
-    movePlayer(to: Hex): Event[];
+    npcTurn(): [World, Event[]];
+    movePlayer(to: Hex): [World, Event[]];
 
     // Debugging
 

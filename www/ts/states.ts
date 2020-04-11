@@ -119,8 +119,7 @@ class Update extends State {
 export class EndTurn extends State {
     constructor() { super(); }
     onPushed() {
-        const nextWorld = window.game.world.clone();
-        let events = nextWorld.npcTurn() as Event[];
+        const [nextWorld, events] = window.game.world.npcTurn();
         window.game.stack.swap(new Update(events, nextWorld));
     }
 }
@@ -134,16 +133,16 @@ export class MovePlayer extends State {
         this.update((draft) => { draft.build(Highlight).hexes = this._range; });
     }
     onTileEntered(hex: Hex) {
+        /* TODO(action preview)
         const check = window.game.world.clone();
         check.setTracer(undefined);
         let preview = check.movePlayer(hex);
         this.update((draft) => { draft.build(Highlight).events = preview; });
-        check.free();
+        */
     }
     onTileClicked(hex: Hex) {
         if (!this._range.some((h) => h.x == hex.x && h.y == hex.y)) { return; }
-        const next = window.game.world.clone();
-        let events = next.movePlayer(hex);
+        const [next, events] = window.game.world.movePlayer(hex);
         window.game.stack.swap(new Update(events, next));
     }
 }
