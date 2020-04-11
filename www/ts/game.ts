@@ -104,8 +104,8 @@ export class ConsoleTracer implements Tracer {
     startAction(action: any) {
         console.log("ACTION:", action);
     }
-    modAction(name: string, prev: any, new_: any) {
-        console.log(" [%s]", name, prev, "->", new_);
+    modAction(name: string, new_: any) {
+        console.log(" [%s]", name, " ->", new_);
     }
     resolveAction(action: any, event: Event) {
         console.log("==>", event);
@@ -118,8 +118,8 @@ export class BufferTracer implements Tracer {
     startAction(action: any) {
         this._buffer.push(() => this._wrapped.startAction(action));
     }
-    modAction(name: string, prev: any, new_: any) {
-        this._buffer.push(() => this._wrapped.modAction(name, prev, new_));
+    modAction(name: string, new_: any) {
+        this._buffer.push(() => this._wrapped.modAction(name, new_));
     }
     resolveAction(action: any, event: Event) {
         this._buffer.push(() => this._wrapped.resolveAction(action, event));

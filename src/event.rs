@@ -51,6 +51,7 @@ impl Event {
 
 pub trait Mod: ModClone + std::fmt::Debug + Send {
     fn name(&self) -> &'static str;
+    fn applies(&self, action: &Action) -> bool;
     fn apply(&mut self, action: &mut Action);
 }
 
@@ -77,7 +78,8 @@ impl Clone for Box<dyn Mod> {
 
 pub trait Trigger: TriggerClone + std::fmt::Debug + Send {
     fn name(&self) -> &'static str;
-    fn apply(&mut self, event: &Event) -> Vec<Action>;
+    fn applies(&self, action: &Action) -> bool;
+    fn apply(&mut self, action: &Action, event: &Event) -> Vec<Action>;
 }
 
 pub type TriggerId = Id<Box<dyn Trigger>>;

@@ -115,8 +115,17 @@ impl World {
         skip: &HashSet<TriggerId>,
         out: &mut Vec<Event>,
     ) {
-        let event = self.resolve_with_mods(action);
+        self.tracer.as_ref().map(|t| t.start_action(action));
+        let action = self.resolve_mods(action);
+        let event = self.resolve_action(&action).unwrap_or_else(|err|
+            Event::Failed {
+                action: action.clone(),
+                reason: format!("{:?}", err),
+            }
+        );
+        self.tracer.as_ref().map(|t| t.resolve_action(&action, &event));
         out.push(event.clone());
+
         let mut trigger_ids = self.trigger_order();
         trigger_ids.reverse();
         while let Some(id) = trigger_ids.pop() {
@@ -127,7 +136,8 @@ impl World {
                 None => continue,
                 Some(t) => t,
             };
-            let added = trigger.apply(&event);
+            if !trigger.applies(&action) { continue; }
+            let added = trigger.apply(&action, &event);
             let mut sub_skip = skip.clone();
             sub_skip.insert(id);
             for act in &added {
@@ -141,25 +151,14 @@ impl World {
         self.triggers.map().keys().cloned().collect()
     }
 
-    fn resolve_with_mods(&mut self, action: &Action) -> Event {
-        self.tracer.as_ref().map(|t| t.start_action(action));
+    fn resolve_mods(&mut self, action: &Action) -> Action {
         let mut modded = action.clone();
         for (_, m) in self.mods.iter_mut() {
-            let mut new = modded.clone();
-            m.apply(&mut new);
-            if new != modded {
-                self.tracer.as_ref().map(|t| t.mod_action(&m.name(), &modded, &new));
-                modded = new;
-            }
+            if !m.applies(&modded) { continue; }
+            m.apply(&mut modded);
+            self.tracer.as_ref().map(|t| t.mod_action(&m.name(), &modded));
         }
-        let result = self.resolve_action(&modded).unwrap_or_else(|err|
-            Event::Failed {
-                action: modded.clone(),
-                reason: format!("{:?}", err),
-            }
-        );
-        self.tracer.as_ref().map(|t| t.resolve_action(&modded, &result));
-        result
+        modded
     }
 
     fn resolve_action(&mut self, action: &Action) -> Result<Event> {
@@ -219,25 +218,6 @@ impl World {
     }
 }
 
-/*
-Problem: triggers *have* to be shown to the user, but triggers work on Events, not
-Actions.  There's no simple Action->Event function (MoveCreature doesn't have as
-much info as CreatureMoved, for example).
-
-Options:
-    1. Add a `would_apply` to Trigger.
-        Downside: requires triggers implement slightly different predicates twice.
-    2. Add a `to_event` to Action.
-        Downside: requires Actions to be a strict superset of Events.
-
-Problem the second: a card wants to randomly select an Action (i.e. ranged
-attack).  Which one gets shown?
-
-Options:
-    1. Add fake Action types to represent the overall act.
-        Downside: ... ugly?  Also, hard to tell what those would be.  Worst case
-        1 per card.
-*/
 pub struct Preview {
     action: Action,
     mods: Vec<ModId>,
@@ -246,7 +226,7 @@ pub struct Preview {
 
 pub trait Tracer: std::fmt::Debug + TracerClone {
     fn start_action(&self, action: &Action);
-    fn mod_action(&self, mod_name: &str, prev: &Action, new: &Action);
+    fn mod_action(&self, mod_name: &str, new: &Action);
     fn resolve_action(&self, action: &Action, event: &Event);
 }
 

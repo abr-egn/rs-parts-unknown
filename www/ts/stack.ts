@@ -8,6 +8,8 @@ export class Active {
     }
 }
 
+const LOGGING = false;
+
 export class State {
     private _data?: DataPush;
 
@@ -24,18 +26,24 @@ export class State {
     }
 
     _onPushed(data: DataPush) {
-        console.log("  PUSHED:", this.constructor.name);
+        if (LOGGING) {
+            console.log("  PUSHED:", this.constructor.name);
+        }
         this._data = data;
         this.onPushed();
     }
 
     _onPopped() {
-        console.log("  POPPED:", this.constructor.name);
+        if (LOGGING) {
+            console.log("  POPPED:", this.constructor.name);
+        }
         this.onPopped();
     }
 
     _onActivated() {
-        console.log("  ACTIVATED:", this.constructor.name);
+        if (LOGGING) {
+            console.log("  ACTIVATED:", this.constructor.name);
+        }
         this.update((draft) => {
             draft.set(Active, this);
         });
@@ -43,7 +51,9 @@ export class State {
     }
 
     _onDeactivated() {
-        console.log("  DEACTIVATED:", this.constructor.name);
+        if (LOGGING) {
+            console.log("  DEACTIVATED:", this.constructor.name);
+        }
         this.onDeactivated();
     }
 }
