@@ -38,19 +38,39 @@ export namespace Base {
 }
 
 export type Stat = "AP" | "MP";
+type StatMap = Map<Id<Creature>, Map<Stat, number>>;
 
 export class Highlight {
     hexes: Hex[] = [];
-    preview: Preview[] = [];
     stats: Map<Id<Creature>, Map<Stat, number>> = new Map();
+    private _preview: Readonly<Preview[]> = [];
 
-    setDelta(id: Id<Creature>, stat: Stat, delta: number) {
+    get preview(): Readonly<Preview[]> { return this._preview; }
+    set preview(value: Readonly<Preview[]>) {
+        this._preview = value;
+        this.stats = new Map();
+        for (let prev of this._preview) {
+            let act;
+            if (act = prev.action.GainAP) {
+                this._addDelta(act.id, "AP", act.ap);
+            } else if (act = prev.action.SpendAP) {
+                this._addDelta(act.id, "AP", -act.ap);
+            } else if (act = prev.action.GainMP) {
+                this._addDelta(act.id, "MP", act.mp);
+            } else if (act = prev.action.SpendMP) {
+                this._addDelta(act.id, "MP", -act.mp);
+            }
+        }
+    }
+
+    private _addDelta(id: Id<Creature>, stat: Stat, delta: number) {
         let c = this.stats.get(id);
         if (!c) {
             c = new Map();
             this.stats.set(id, c);
         }
-        c.set(stat, delta);
+        let oldDelta = c.get(stat) || 0;
+        c.set(stat, oldDelta + delta);
     }
 }
 
@@ -95,9 +115,10 @@ export class PlayCard extends State {
         const world = window.game.world;
         let highlight: Hex[] = this._behavior!.highlight(world, hex);
         const preview: Preview[] = [];
-        let apCost = 0;
         if (this._behavior!.targetValid(world, hex)) {
-            apCost = this._card.apCost;
+            preview.push(makePreview({
+                SpendAP: { id: world.playerId, ap: this._card.apCost }
+            }));
             const actions = this._behavior!.preview(world, hex);
             for (let action of actions) {
                 preview.push(makePreview(action));
@@ -107,7 +128,6 @@ export class PlayCard extends State {
             const hi = draft.build(Highlight);
             hi.hexes = highlight;
             hi.preview = preview;
-            hi.setDelta(world.playerId, "AP", -apCost);
         });
     }
 
@@ -174,6 +194,11 @@ export class MovePlayer extends State {
         const path = world.path(this._from, hex);
         const preview: Preview[] = [];
         const mpCost = Math.min(Math.max(0, path.length-1), this._mp);
+        if (mpCost > 0) {
+            preview.push(makePreview({
+                SpendMP: { id: world.playerId, mp: mpCost }
+            }));
+        }
         for (let hex of path.slice(0, this._mp+1)) {
             preview.push(makePreview({
                 MoveCreature: { id: world.playerId, to: hex }
@@ -182,7 +207,6 @@ export class MovePlayer extends State {
         this.update((draft) => {
             const hi = draft.build(Highlight);
             hi.preview = preview;
-            hi.setDelta(world.playerId, "MP", -mpCost);
         });
     }
     onTileClicked(hex: Hex) {

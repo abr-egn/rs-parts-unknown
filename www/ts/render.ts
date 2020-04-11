@@ -254,7 +254,7 @@ export interface Listener {
 type Constructor = new (...args: any[]) => any;
 
 export interface DataQuery {
-    get<T extends Constructor>(key: T): InstanceType<T> | undefined;
+    get<T extends Constructor>(key: T): Readonly<InstanceType<T>> | undefined;
 }
 
 export class WorldCache {
