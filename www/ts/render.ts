@@ -192,6 +192,7 @@ export class Render {
                 throb.push(p.action.MoveCreature.to);
             }
             if (p.action.HitCreature) {
+                // TODO: floating text
                 throb.push(this._cache.creatureHex.get(p.action.HitCreature.id)!);
             }
         }

@@ -124,6 +124,7 @@ export class PlayCard extends State {
         let highlight: Hex[] = this._behavior!.highlight(world, hex);
         const preview: Preview[] = [];
         if (this._behavior!.targetValid(world, hex)) {
+            // TODO: select creature in hex
             preview.push(makePreview({
                 SpendAP: { id: world.playerId, ap: this._card.apCost }
             }));
