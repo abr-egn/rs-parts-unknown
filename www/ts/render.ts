@@ -10,6 +10,7 @@ export class Render {
     private _frameWaits: ((value: number) => void)[] = [];
     private _creaturePos: Map<Id<Creature>, DOMPointReadOnly> = new Map();
     private _cache!: WorldCache;
+    private _floatText: Set<FloatText> = new Set();
     constructor(
             private readonly _canvas: HTMLCanvasElement,
             world: World,
@@ -39,10 +40,24 @@ export class Render {
 
     async animateEvents(events: Event[]) {
         for (let event of events) {
-            let move;
+            let data;
             // TODO: update UI for AP/MP changes
-            if (move = event.CreatureMoved) {
-                await this._moveCreatureTo(move.id, hexToPixel(move.to))
+            if (data = event.CreatureMoved) {
+                await this._moveCreatureTo(data.id, hexToPixel(data.to))
+            }
+            if (data = event.ChangeHP) {
+                let float: FloatText = {
+                    pos: this._creaturePos.get(data.creature)!,
+                    text: "ow!",
+                    style: "#FF0000",
+                };
+                this._floatText.add(float);
+                const start = this._tsMillis;
+                let now = this._tsMillis;
+                while (now - start < 1000) {
+                    now = await this._nextFrame();
+                }
+                this._floatText.delete(float);
             }
         }
     }
@@ -78,7 +93,9 @@ export class Render {
         for (let [hex, tile] of this._cache.tiles) {
             this._drawTile(hex, tile);
         }
+
         this._drawHighlight(this._data.get(states.Highlight));
+
         const selected = this._data.get(states.Base.UI)?.selected || [];
         for (let [id, bounds] of selected) {
             for (let bound of bounds) {
@@ -89,14 +106,25 @@ export class Render {
                 this._drawFocusedHex(hex);
             }
         }
+
         for (let [id, pos] of this._creaturePos) {
             this._drawCreature(id, pos);
+        }
+
+        for (let float of this._floatText) {
+            this._ctx.save();
+            this._ctx.translate(float.pos.x, float.pos.y);
+            this._ctx.font = "15px sans-serif";
+            this._ctx.fillStyle = float.style;
+            this._fillCenterText(float.text);
+            this._ctx.restore();
         }
 
         for (let resolve of this._frameWaits) {
             resolve(this._tsMillis);
         }
         this._frameWaits = [];
+
         window.requestAnimationFrame((ts) => this._draw(ts));
     }
 
@@ -126,11 +154,15 @@ export class Render {
         if (id == this._cache.playerId) {
             text = "P";
         }
+        this._fillCenterText(text);
+
+        this._ctx.restore();
+    }
+
+    private _fillCenterText(text: string) {
         const measure = this._ctx.measureText(text);
         const height = measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent;
         this._ctx.fillText(text, -measure.width / 2, height / 2);
-
-        this._ctx.restore();
     }
 
     private _drawPreview(preview: readonly states.Preview[]) {
@@ -293,6 +325,12 @@ export class WorldCache {
     getTile(hex: Hex): Tile | undefined {
         return this._tileMap.get(JSON.stringify(hex));
     }
+}
+
+export interface FloatText {
+    text: string,
+    pos: DOMPoint,
+    style: string,
 }
 
 function hexToPixel(hex: Hex): DOMPointReadOnly {

@@ -121,17 +121,28 @@ function CardList(props: {
   active: boolean,
   cards: Card[],
 }): JSX.Element {
-  function startPlay(card: Card) {
+  const startPlay = (card: Card) => {
     window.game.stack.push(new states.PlayCard(card));
-  }
-  function canPlay(card: Card): boolean {
-    const world = window.game.world;
-    return world.checkSpendAP(card.creatureId, card.apCost);
-  }
+  };
+  const canPlay = (card: Card): boolean => {
+    return window.game.world.checkSpendAP(card.creatureId, card.apCost);
+  };
+  const cardKey = (card: Card): string => {
+    return `(${card.creatureId},${card.partId},${card.id})`;
+  };
 
-  // TODO: better card key
-  const list = props.cards.map((card, index) =>
-    <li key={index}>
+  props.cards.sort((a, b) => {
+    if (a.creatureId != b.creatureId) {
+      return a.creatureId - b.creatureId;
+    }
+    if (a.partId != b.partId) {
+      return a.partId - b.partId;
+    }
+    return a.id - b.id;
+  });
+
+  const list = props.cards.map((card) =>
+    <li key={cardKey(card)}>
       <button
         onClick={() => startPlay(card)}
         disabled={!props.active || !canPlay(card)}>
