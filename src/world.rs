@@ -293,7 +293,6 @@ impl Clone for Box<dyn Tracer> {
 }
 
 fn make_player() -> Creature {
-    
     let head = creature::Part {
         name: "Head".into(),
         cards: IdMap::new(),
@@ -319,19 +318,28 @@ fn make_player() -> Creature {
     let leg_l = creature::Part {
         name: "Leg".into(),
         cards: IdMap::from_iter(vec![Walk::card()]),
-        ap: 0, mp: 2,
+        ap: 0, mp: 1,
         max_hp: 3, cur_hp: 3,
         vital: false,
     };
     let leg_r = leg_l.clone();
-    let mut pc = Creature::new(&[head, torso, arm_l, arm_r, leg_l, leg_r]);
-    pc.cur_ap = pc.max_ap();
-    pc.cur_mp = 2;
-    pc
+    Creature::new(&[head, torso, arm_l, arm_r, leg_l, leg_r])
 }
 
 fn make_npc() -> Creature {
-    let mut npc = Creature::new(&[]);
-    npc.cur_mp = 3;
-    npc
+    let head = creature::Part {
+        name: "Hed".into(),
+        cards: IdMap::new(),
+        ap: 1, mp: 0,
+        max_hp: 2, cur_hp: 2,
+        vital: true,
+    };
+    let foot = creature::Part {
+        name: "Fut".into(),
+        cards: IdMap::new(),
+        ap: 0, mp: 3,
+        max_hp: 2, cur_hp: 2,
+        vital: false,
+    };
+    Creature::new(&[head, foot])
 }

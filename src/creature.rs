@@ -17,7 +17,10 @@ impl Creature {
         for part in parts {
             pids.add(part.clone());
         }
-        Creature { parts: pids, cur_ap: 0, cur_mp: 0 }
+        let mut out = Creature { parts: pids, cur_ap: 0, cur_mp: 0 };
+        out.cur_ap = out.max_ap();
+        out.cur_mp = out.max_mp();
+        out
     }
 
     pub fn cards(&self) -> impl Iterator<Item=(Id<Part>, Id<Card>, &Card)> {
