@@ -117,7 +117,7 @@ impl Shoot {
         Card {
             name: "Shoot".into(),
             ap_cost: 1,
-            start_play: |world, source| Shoot::behavior(world, source, 3, 1),
+            start_play: |world, source| Shoot::behavior(world, source, 5, 1),
         }
     }
 }

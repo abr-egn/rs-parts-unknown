@@ -46,16 +46,24 @@ export class Render {
                 await this._moveCreatureTo(data.id, hexToPixel(data.to))
             }
             if (data = event.ChangeHP) {
+                const FLOAT_SPEED = 10.0;
+
+                const creature = this._cache.creatures.get(data.creature)!;
+                const part = creature.parts.get(data.part)!;
+                let point = this._creaturePos.get(data.creature)!;
                 let float: FloatText = {
-                    pos: this._creaturePos.get(data.creature)!,
-                    text: "ow!",
+                    pos: new DOMPoint(point.x, point.y),
+                    text: `${part.name}: ${data.delta} HP`,
                     style: "#FF0000",
                 };
                 this._floatText.add(float);
                 const start = this._tsMillis;
                 let now = this._tsMillis;
-                while (now - start < 1000) {
-                    now = await this._nextFrame();
+                while (now - start < 2000) {
+                    const tmp = await this._nextFrame();
+                    const delta = tmp - now;
+                    now = tmp;
+                    float.pos.y -= FLOAT_SPEED*(delta/1000);
                 }
                 this._floatText.delete(float);
             }
@@ -114,9 +122,12 @@ export class Render {
         for (let float of this._floatText) {
             this._ctx.save();
             this._ctx.translate(float.pos.x, float.pos.y);
-            this._ctx.font = "15px sans-serif";
+            this._ctx.font = "bold 20px sans-serif";
             this._ctx.fillStyle = float.style;
-            this._fillCenterText(float.text);
+            this._ctx.strokeStyle = "#000000";
+            this._ctx.textAlign = "center";
+            this._ctx.fillText(float.text, 0, 0);
+            this._ctx.strokeText(float.text, 0, 0);
             this._ctx.restore();
         }
 
@@ -154,15 +165,15 @@ export class Render {
         if (id == this._cache.playerId) {
             text = "P";
         }
-        this._fillCenterText(text);
+        this._ctx.textAlign = "center";
+        this._ctx.fillText(text, 0, this._actualTextHeight(text)/2);
 
         this._ctx.restore();
     }
 
-    private _fillCenterText(text: string) {
+    private _actualTextHeight(text: string): number {
         const measure = this._ctx.measureText(text);
-        const height = measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent;
-        this._ctx.fillText(text, -measure.width / 2, height / 2);
+        return measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent;
     }
 
     private _drawPreview(preview: readonly states.Preview[]) {
@@ -306,6 +317,7 @@ export interface DataQuery {
 
 export class WorldCache {
     tiles: [Hex, Tile][];
+    creatures: Map<Id<Creature>, Creature>= new Map();
     creatureHex: Map<Id<Creature>, Hex> = new Map();
     playerId: Id<Creature>;
 
@@ -318,6 +330,7 @@ export class WorldCache {
         }
         for (let [id, hex] of world.getCreatureMap()) {
             this.creatureHex.set(id, hex);
+            this.creatures.set(id, world.getCreature(id)!);
         }
         this.playerId = world.playerId;
     }
