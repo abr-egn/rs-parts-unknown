@@ -28,8 +28,9 @@ function Index(props: {
     }
   }
   return (
-    <div className="center">
-      <div id="leftSide" className="side">
+    <div>
+      <canvas id="mainCanvas" tabIndex={1}></canvas>
+      <div className="topleft">
         <Player
           player={world.getCreature(world.playerId)!}
           active={props.data.get(Active)}
@@ -37,8 +38,7 @@ function Index(props: {
           stats={stats?.get(world.playerId)}
         />
       </div>
-      <canvas id="mainCanvas" width="800" height="800" tabIndex={1}></canvas>
-      <div className="side">
+      <div className="topright">
         {creatures}
       </div>
     </div>
@@ -71,7 +71,7 @@ function Creature(props: {
       HP: {part.curHp}/{part.maxHp}
     </li>);
   }
-  return (<div>
+  return (<div className="uibox">
     <div style={apStyle}>AP: {props.creature.curAp + apDelta}</div>
     <div style={mpStyle}>MP: {props.creature.curMp + mpDelta}</div>
     <ul>{parts}</ul>

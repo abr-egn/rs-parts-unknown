@@ -15,6 +15,12 @@ export class Render {
             world: World,
             private readonly _listener: Listener,
             private readonly _data: DataQuery) {
+        this._canvas.width = window.innerWidth;
+        this._canvas.height = window.innerHeight;
+        window.onresize = () => {
+            this._canvas.width = window.innerWidth;
+            this._canvas.height = window.innerHeight;
+        };
         this.updateWorld(world);
         this._tsMillis = performance.now();
         this._ctx = this._canvas.getContext('2d')!;
@@ -227,6 +233,7 @@ export class Render {
     }
 
     private _onMouseDown(event: MouseEvent) {
+        event.preventDefault();
         const point = this._mouseCoords(event);
         this._listener.onTileClicked(pixelToHex(point));
     }

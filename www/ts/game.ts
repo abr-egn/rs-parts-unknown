@@ -66,7 +66,6 @@ export class Game {
 
         canvas.focus();
         canvas.addEventListener('keydown', (e) => {
-            e.shiftKey
             this._keys.set(e.code, true);
         });
         canvas.addEventListener('keyup', (e) => {
