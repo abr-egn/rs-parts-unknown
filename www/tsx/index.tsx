@@ -63,9 +63,16 @@ function Creature(props: {
   } else if (mpDelta > 0) {
     mpStyle.color = "green";
   }
+  let parts = [];
+  for (let [id, part] of props.creature.parts) {
+    parts.push(<li key={id}>
+      HP: {part.curHp}/{part.maxHp}
+    </li>);
+  }
   return (<div>
     <div style={apStyle}>AP: {props.creature.curAp + apDelta}</div>
     <div style={mpStyle}>MP: {props.creature.curMp + mpDelta}</div>
+    <ul>{parts}</ul>
   </div>);
 }
 

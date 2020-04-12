@@ -292,7 +292,7 @@ impl Clone for Box<dyn Tracer> {
 fn make_player() -> Creature {
     let mut cards = IdMap::new();
     cards.add(Walk::card());
-    let part = creature::Part { cards, ap: 3, mp: 2 };
+    let part = creature::Part { cards, ap: 3, mp: 2, max_hp: 5, cur_hp: 5 };
     let mut pc = Creature::new(&[part]);
     pc.cur_ap = pc.max_ap();
     pc.cur_mp = 2;

@@ -235,6 +235,8 @@ pub struct Part {
     creatureId: Id<creature::Creature>,
     cards: HashMap<Id<card::Card>, Card>,
     ap: i32,
+    maxHp: i32,
+    curHp: i32,
 }
 
 #[allow(non_snake_case)]
@@ -250,6 +252,8 @@ impl Part {
         Part {
             id, creatureId, cards,
             ap: source.ap,
+            maxHp: source.max_hp,
+            curHp: source.cur_hp,
         }
     }
 }

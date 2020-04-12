@@ -58,10 +58,10 @@ pub struct Part {
     pub cards: IdMap<Card>,
     pub ap: i32,
     pub mp: i32,
+    pub max_hp: i32,
+    pub cur_hp: i32,
     /*
     power: i32,
-    max_hp: i32,
-    cur_hp: i32,
     capacity: i32,
     tags: HashSet<PartTag>,
     joints: Vec<Joint>,
