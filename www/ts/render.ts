@@ -136,14 +136,17 @@ export class Render {
         const scale = SCALE_MIN + ((this._tsMillis/1000 * SCALE_RATE) % SCALE_RANGE);
         const size = HEX_SIZE * scale;
 
-        let moves: Hex[] = [];
+        let throb: Hex[] = [];
         for (let p of preview) {
             // TODO: show p.affects
             if (p.action.MoveCreature) {
-                moves.push(p.action.MoveCreature.to);
+                throb.push(p.action.MoveCreature.to);
+            }
+            if (p.action.HitCreature) {
+                throb.push(this._cache.creatureHex.get(p.action.HitCreature.id)!);
             }
         }
-        for (let hex of moves) {
+        for (let hex of throb) {
             this._ctx.save();
             this._pathHex(hex, size);
             this._ctx.lineWidth = 2.0;

@@ -4,6 +4,7 @@ use crate::{
     creature::Creature,
     event::{Action, Event},
     id_map::Id,
+    map::Tile,
     world::World,
 };
 
@@ -48,6 +49,7 @@ pub trait Behavior: BehaviorClone {
 pub struct Source {
     creature: Id<Creature>,
     part: Id<Part>,
+    location: Hex,
 }
 */
 
@@ -74,13 +76,13 @@ pub struct Walk {
 
 impl Behavior for Walk {
     fn highlight(&self, world: &World, _: Hex) -> Vec<Hex> {
-        world.map().creatures().get(&world.player_id()).into_iter().cloned().collect()
+        world.map().creatures().get(&self.creature_id).into_iter().cloned().collect()
     }
     fn target_valid(&self, world: &World, cursor: Hex) -> bool {
-        Some(&cursor) == world.map().creatures().get(&world.player_id())
+        Some(&cursor) == world.map().creatures().get(&self.creature_id)
     }
-    fn preview(&self, world: &World, _target: Hex) -> Vec<Action> {
-        vec![Action::GainMP { id: world.player_id(), mp: 1 }]
+    fn preview(&self, _world: &World, _target: Hex) -> Vec<Action> {
+        vec![Action::GainMP { id: self.creature_id, mp: 1 }]
     }
 }
 
@@ -101,11 +103,43 @@ impl Walk {
 #[derive(Debug, Clone)]
 pub struct Shoot {
     source: Id<Creature>,
+    source_pos: Hex,
     range: i32,
+    damage: i32,
 }
 
-/*
+impl Shoot {
+    pub fn behavior(world: &World, source: &Id<Creature>, range: i32, damage: i32) -> Box<dyn Behavior> {
+        let pos = world.map().creatures().get(source).unwrap().clone();
+        Box::new(Shoot { source: *source, source_pos: pos, range, damage })
+    }
+    pub fn card() -> Card {
+        Card {
+            name: "Shoot".into(),
+            ap_cost: 1,
+            start_play: |world, source| Shoot::behavior(world, source, 3, 1),
+        }
+    }
+}
+
 impl Behavior for Shoot {
-
+    fn range(&self, world: &World) -> Vec<Hex> {
+        // TODO: line of sight rather than movement range
+        world.map().range_from(self.source_pos, self.range).into_iter().collect()
+    }
+    fn highlight(&self, world: &World, _cursor: Hex) -> Vec<Hex> {
+        self.range(world).into_iter()
+            .filter(|hex| self.target_valid(world, *hex))
+            .collect()
+    }
+    fn target_valid(&self, world: &World, cursor: Hex) -> bool {
+        match world.map().tiles().get(&cursor) {
+            Some(Tile { creature: Some(id), ..}) if *id != self.source => true,
+            _ => false,
+        }
+    }
+    fn preview(&self, world: &World, target: Hex) -> Vec<Action> {
+        let target_id = world.map().tiles().get(&target).unwrap().creature.unwrap();
+        vec![Action::HitCreature { id: target_id, damage: self.damage }]
+    }
 }
-*/

@@ -65,7 +65,7 @@ pub struct Part {
     pub max_hp: i32,
     pub cur_hp: i32,
     pub vital: bool,
-    /*
+    /* TODO
     power: i32,
     capacity: i32,
     tags: HashSet<PartTag>,

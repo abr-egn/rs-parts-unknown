@@ -10,15 +10,16 @@ edition = "2018"
 crate-type = ["cdylib"]
 
 [dependencies]
-wasm-bindgen = "0.2.59"
-hex = { path = "../rs-hex" }
-thiserror = "1.0"
-fnv = "1.0"
 console_error_panic_hook = "0.1.6"
-log = "0.4.8"
 console_log = "0.1.2"
+fnv = "1.0"
+hex = { path = "../rs-hex" }
 js-sys = "0.3.37"
+log = "0.4.8"
+rand = { version ="0.7.3", features = ["wasm-bindgen"] }
 serde = "1.0.105"
 serde_derive = "1.0.105"
 serde-wasm-bindgen = "0.1.3"
+thiserror = "1.0"
 ts_data_derive = { path = "./ts_data_derive" }
+wasm-bindgen = "0.2.59"

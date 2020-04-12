@@ -3,8 +3,9 @@ use std::{
     iter::FromIterator,
 };
 use hex::{self, Hex};
+use rand::prelude::*;
 use crate::{
-    card::Walk,
+    card::{Shoot, Walk},
     creature::{self, Creature},
     error::{Error, Result},
     event::{Action, Event, Mod, ModId, Trigger, TriggerId},
@@ -217,6 +218,7 @@ impl World {
         modded
     }
 
+    // TODO: -> Result<Vec<Event>> ?
     fn resolve_action(&mut self, action: &Action) -> Result<Event> {
         use Action::*;
         match *action {
@@ -229,12 +231,12 @@ impl World {
             GainAP { id, ap } => {
                 let creature = self.creatures.get_mut(&id).ok_or(Error::NoSuchCreature)?;
                 creature.cur_ap += ap;
-                return Ok(Event::ChangeAP { id, ap })
+                return Ok(Event::ChangeAP { id, delta: ap })
             }
             SpendAP { id, ap } => {
                 let creature = self.creatures.get_mut(&id).ok_or(Error::NoSuchCreature)?;
                 if creature.spend_ap(ap) {
-                    return Ok(Event::ChangeAP { id, ap: -ap })
+                    return Ok(Event::ChangeAP { id, delta: -ap })
                 } else {
                     return Err(Error::NotEnough)
                 }
@@ -242,15 +244,28 @@ impl World {
             GainMP { id, mp } => {
                 let creature = self.creatures.get_mut(&id).ok_or(Error::NoSuchCreature)?;
                 creature.cur_mp += mp;
-                return Ok(Event::ChangeMP { id, mp })
+                return Ok(Event::ChangeMP { id, delta: mp })
             }
             SpendMP { id, mp } => {
                 let creature = self.creatures.get_mut(&id).ok_or(Error::NoSuchCreature)?;
                 if creature.spend_mp(mp) {
-                    return Ok(Event::ChangeMP { id, mp: -mp })
+                    return Ok(Event::ChangeMP { id, delta: -mp })
                 } else {
                     return Err(Error::NotEnough)
                 }
+            }
+            HitCreature { id, damage } => {
+                let creature = self.creatures.get_mut(&id).ok_or(Error::NoSuchCreature)?;
+                let mut rng = thread_rng();
+                let (part_id, part) = creature.parts.iter_mut().choose(&mut rng).unwrap();
+                let damage = std::cmp::min(part.cur_hp, damage);
+                part.cur_hp -= damage;
+                // TODO: react to 0 hp
+                return Ok(Event::ChangeHP {
+                    creature: id,
+                    part: *part_id,
+                    delta: -damage,
+                });
             }
         }
     }
@@ -309,7 +324,7 @@ fn make_player() -> Creature {
     };
     let arm_l = creature::Part {
         name: "Arm".into(),
-        cards: IdMap::new(),
+        cards: IdMap::from_iter(vec![Shoot::card()]),
         ap: 0, mp: 0,
         max_hp: 3, cur_hp: 3,
         vital: false,
