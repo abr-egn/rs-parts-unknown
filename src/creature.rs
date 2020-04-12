@@ -55,11 +55,13 @@ impl Creature {
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Part {
+    pub name: String,
     pub cards: IdMap<Card>,
     pub ap: i32,
     pub mp: i32,
     pub max_hp: i32,
     pub cur_hp: i32,
+    pub vital: bool,
     /*
     power: i32,
     capacity: i32,

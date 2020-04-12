@@ -63,9 +63,11 @@ function Creature(props: {
   } else if (mpDelta > 0) {
     mpStyle.color = "green";
   }
+  let sorted = Array.from(props.creature.parts);
+  sorted.sort(([id_a, _p_a], [id_b, _p_b]) => id_a - id_b);
   let parts = [];
-  for (let [id, part] of props.creature.parts) {
-    parts.push(<li key={id}>
+  for (let [id, part] of sorted) {
+    parts.push(<li key={id}>{part.name}<br/>
       HP: {part.curHp}/{part.maxHp}
     </li>);
   }

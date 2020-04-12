@@ -233,6 +233,7 @@ impl Creature {
 pub struct Part {
     id: Id<creature::Part>,
     creatureId: Id<creature::Creature>,
+    name: String,
     cards: HashMap<Id<card::Card>, Card>,
     ap: i32,
     maxHp: i32,
@@ -251,6 +252,7 @@ impl Part {
             .collect();
         Part {
             id, creatureId, cards,
+            name: source.name.clone(),
             ap: source.ap,
             maxHp: source.max_hp,
             curHp: source.cur_hp,

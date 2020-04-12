@@ -1,4 +1,7 @@
-use std::collections::HashSet;
+use std::{
+    collections::HashSet,
+    iter::FromIterator,
+};
 use hex::{self, Hex};
 use crate::{
     card::Walk,
@@ -290,10 +293,38 @@ impl Clone for Box<dyn Tracer> {
 }
 
 fn make_player() -> Creature {
-    let mut cards = IdMap::new();
-    cards.add(Walk::card());
-    let part = creature::Part { cards, ap: 3, mp: 2, max_hp: 5, cur_hp: 5 };
-    let mut pc = Creature::new(&[part]);
+    
+    let head = creature::Part {
+        name: "Head".into(),
+        cards: IdMap::new(),
+        ap: 3, mp: 0,
+        max_hp: 2, cur_hp: 2,
+        vital: true,
+    };
+    let torso = creature::Part {
+        name: "Torso".into(),
+        cards: IdMap::new(),
+        ap: 0, mp: 0,
+        max_hp: 5, cur_hp: 5,
+        vital: true,
+    };
+    let arm_l = creature::Part {
+        name: "Arm".into(),
+        cards: IdMap::new(),
+        ap: 0, mp: 0,
+        max_hp: 3, cur_hp: 3,
+        vital: false,
+    };
+    let arm_r = arm_l.clone();
+    let leg_l = creature::Part {
+        name: "Leg".into(),
+        cards: IdMap::from_iter(vec![Walk::card()]),
+        ap: 0, mp: 2,
+        max_hp: 3, cur_hp: 3,
+        vital: false,
+    };
+    let leg_r = leg_l.clone();
+    let mut pc = Creature::new(&[head, torso, arm_l, arm_r, leg_l, leg_r]);
     pc.cur_ap = pc.max_ap();
     pc.cur_mp = 2;
     pc

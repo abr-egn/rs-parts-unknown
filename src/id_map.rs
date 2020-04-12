@@ -37,6 +37,16 @@ impl<T> IdMap<T> {
     pub fn remove(&mut self, id: &Id<T>) -> Option<T> { self.map.remove(id) }
 }
 
+impl<T> std::iter::FromIterator<T> for IdMap<T> {
+    fn from_iter<I: IntoIterator<Item=T>>(iter: I) -> Self {
+        let mut map = IdMap::new();
+        for v in iter {
+            map.add(v);
+        }
+        map
+    }
+}
+
 #[derive(Serialize, Deserialize)]
 #[serde(transparent)]
 pub struct Id<T> {
