@@ -302,6 +302,12 @@ impl Behavior {
 #[wasm_bindgen]
 impl Behavior {
     #[wasm_bindgen(skip_typescript)]
+    pub fn range(&self, world: &World) -> Array /* Hex[] */ {
+        self.wrapped.range(&world.wrapped).iter()
+            .map(to_js_value)
+            .collect()
+    }
+    #[wasm_bindgen(skip_typescript)]
     pub fn highlight(&self, world: &World, cursor: JsValue) -> Array /* Hex[] */ {
         self.wrapped.highlight(&world.wrapped, from_js_value::<Hex>(cursor)).into_iter()
             .map(|h| to_js_value::<Hex>(&h))
@@ -427,6 +433,7 @@ export interface Tracer {
 }
 
 interface Behavior {
+    range(world: World): Hex[];
     highlight(world: World, cursor: Hex): Hex[];
     targetValid(world: World, cursor: Hex): boolean;
     preview(world: World, target: Hex): Action[];

@@ -2,7 +2,6 @@ import {
     Action, Behavior, Boundary, Card, Creature, Event, Hex, Id, World,
     findBoundary,
 } from "../wasm";
-import {Game} from "./game";
 import {State} from "./stack";
 
 export class Base extends State {
@@ -46,6 +45,7 @@ type StatMap = Map<Id<Creature>, Map<Stat, number>>;
 
 export class Highlight {
     hexes: Hex[] = [];
+    range: Boundary[] = [];
     stats: Map<Id<Creature>, Map<Stat, number>> = new Map();
     private _preview: Readonly<Preview[]> = [];
 
@@ -100,13 +100,17 @@ export class PlayCard extends State {
             console.log("Card did not start play:");
             console.log(this._card);
             window.game.stack.pop();
+            return;
         }
+        const range = this._behavior.range(world);
         // Base initial highlight on player location
-        const highlight = this._behavior!.highlight(
+        const highlight = this._behavior.highlight(
             world, world.getCreatureHex(world.playerId)!);
         this.update((draft) => {
             draft.set(PlayCard.UI, this._card);
-            draft.build(Highlight).hexes = highlight;
+            const hi = draft.build(Highlight);
+            hi.hexes = highlight;
+            hi.range = findBoundary(range);
         });
     }
 
@@ -180,7 +184,8 @@ function makePreview(act: Action): Preview {
 }
 
 export class MovePlayer extends State {
-    private _range: Hex[] = [];
+    private _hexes: Hex[] = [];
+    private _range: Boundary[] = [];
     private _from!: Hex;
     private _mp!: number;
     constructor() { super() }
@@ -188,10 +193,11 @@ export class MovePlayer extends State {
     onPushed() {
         const world = window.game.world;
         const playerId = world.playerId;
-        this._range = world.getCreatureRange(playerId);
+        this._hexes = world.getCreatureRange(playerId);
+        this._range = findBoundary(this._hexes);
         this._from = world.getCreatureHex(playerId)!;
         this._mp = world.getCreature(playerId)!.curMp;
-        this.update((draft) => { draft.build(Highlight).hexes = this._range; });
+        this.update((draft) => { draft.build(Highlight).range = this._range; });
     }
     onTileEntered(hex: Hex) {
         const world = window.game.world;
@@ -214,7 +220,7 @@ export class MovePlayer extends State {
         });
     }
     onTileClicked(hex: Hex) {
-        if (!this._range.some((h) => h.x == hex.x && h.y == hex.y)) { return; }
+        if (!this._hexes.some((h) => h.x == hex.x && h.y == hex.y)) { return; }
         const [next, events] = window.game.world.movePlayer(hex);
         window.game.stack.swap(new Update(events, next));
     }

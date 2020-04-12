@@ -26,7 +26,8 @@ impl std::fmt::Debug for Card {
 
 // TODO: power scaling
 pub trait Behavior: BehaviorClone {
-    fn highlight(&self, world: &World, cursor: Hex) -> Vec<Hex>;
+    fn range(&self, _world: &World) -> Vec<Hex> { vec![] }
+    fn highlight(&self, _world: &World, _cursor: Hex) -> Vec<Hex> { vec![] }
     // TODO: allow for multiple targets
     fn target_valid(&self, world: &World, cursor: Hex) -> bool;
     fn preview(&self, world: &World, target: Hex) -> Vec<Action>;
@@ -41,6 +42,14 @@ pub trait Behavior: BehaviorClone {
         out
     }
 }
+
+/* TODO
+#[derive(Debug, Clone)]
+pub struct Source {
+    creature: Id<Creature>,
+    part: Id<Part>,
+}
+*/
 
 pub trait BehaviorClone {
     fn clone_box(&self) -> Box<dyn Behavior>;
@@ -88,3 +97,15 @@ impl Walk {
         }
     }
 }
+
+#[derive(Debug, Clone)]
+pub struct Shoot {
+    source: Id<Creature>,
+    range: i32,
+}
+
+/*
+impl Behavior for Shoot {
+
+}
+*/

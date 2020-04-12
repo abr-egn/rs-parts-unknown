@@ -129,8 +129,9 @@ function CardList(props: {
     return world.checkSpendAP(card.creatureId, card.apCost);
   }
 
-  const list = props.cards.map((card) =>
-    <li key={card.name}>
+  // TODO: better card key
+  const list = props.cards.map((card, index) =>
+    <li key={index}>
       <button
         onClick={() => startPlay(card)}
         disabled={!props.active || !canPlay(card)}>

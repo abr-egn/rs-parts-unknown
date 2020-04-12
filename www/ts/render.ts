@@ -64,7 +64,6 @@ export class Render {
     }
 
     private _draw(tsMillis: DOMHighResTimeStamp) {
-        const deltaMillis = tsMillis - this._tsMillis;
         this._tsMillis = tsMillis;
 
         this._canvas.width = this._canvas.width;
@@ -73,11 +72,7 @@ export class Render {
         for (let [hex, tile] of this._cache.tiles) {
             this._drawTile(hex, tile);
         }
-        this._drawPreview(tsMillis);
-        const highlight = this._data.get(states.Highlight)?.hexes || [];
-        for (let hex of highlight) {
-            this._drawHighlight(hex);
-        }
+        this._drawHighlight(this._data.get(states.Highlight));
         const selected = this._data.get(states.Base.UI)?.selected || [];
         for (let [id, bounds] of selected) {
             for (let bound of bounds) {
@@ -85,7 +80,7 @@ export class Render {
             }
             const hex = this._cache.creatureHex.get(id);
             if (hex) {
-                this._drawHighlight(hex);
+                this._drawFocusedHex(hex);
             }
         }
         for (let [id, pos] of this._creaturePos) {
@@ -93,7 +88,7 @@ export class Render {
         }
 
         for (let resolve of this._frameWaits) {
-            resolve(tsMillis);
+            resolve(this._tsMillis);
         }
         this._frameWaits = [];
         window.requestAnimationFrame((ts) => this._draw(ts));
@@ -132,17 +127,16 @@ export class Render {
         this._ctx.restore();
     }
 
-    private _drawPreview(tsMillis: DOMHighResTimeStamp) {
+    private _drawPreview(preview: readonly states.Preview[]) {
         const SCALE_MIN = 1.0;
         const SCALE_MAX = 1.2;
         const SCALE_RANGE = SCALE_MAX - SCALE_MIN;
         const SCALE_RATE = 0.25;
 
-        const scale = SCALE_MIN + ((tsMillis/1000 * SCALE_RATE) % SCALE_RANGE);
+        const scale = SCALE_MIN + ((this._tsMillis/1000 * SCALE_RATE) % SCALE_RANGE);
         const size = HEX_SIZE * scale;
 
         let moves: Hex[] = [];
-        const preview = this._data.get(states.Highlight)?.preview || [];
         for (let p of preview) {
             // TODO: show p.affects
             if (p.action.MoveCreature) {
@@ -159,7 +153,18 @@ export class Render {
         }
     }
 
-    private _drawHighlight(hex: Hex) {
+    private _drawHighlight(hi?: Readonly<states.Highlight>) {
+        if (!hi) { return; }
+        for (let bound of hi.range) {
+            this._drawBoundary(bound);
+        }
+        for (let hex of hi.hexes) {
+            this._drawFocusedHex(hex);
+        }
+        this._drawPreview(hi.preview);
+    }
+
+    private _drawFocusedHex(hex: Hex) {
         this._ctx.save();
 
         this._pathHex(hex, HEX_SIZE);
