@@ -133,6 +133,7 @@ impl Behavior for Shoot {
             .collect()
     }
     fn target_valid(&self, world: &World, cursor: Hex) -> bool {
+        if cursor.distance_to(self.source_pos) > self.range { return false; }
         match world.map().tiles().get(&cursor) {
             Some(Tile { creature: Some(id), ..}) if *id != self.source => true,
             _ => false,
