@@ -1,10 +1,7 @@
 import produce from "immer";
 
-import {
-    Event, Tracer, World,
-    findBoundary,
-} from "../wasm";
-import * as render from "./render";
+import {Event, Tracer, World} from "../wasm";
+import {GameBoard} from "./game_board";
 import * as stack from "./stack";
 import {renderIndex} from "../tsx/index";
 import {UiData} from "./ui_data";
@@ -12,11 +9,8 @@ import {UiData} from "./ui_data";
 declare global {
     interface Window {
         game: Game;
-        findBoundary: any;
     }
 }
-
-Window.prototype.findBoundary = findBoundary;
 
 /*
 This:
@@ -31,7 +25,7 @@ export class Game {
     private _stack: stack.Stack;
     private _data: UiData;
     private _oldData: UiData[] = [];
-    private _render: render.Render;
+    private _board: GameBoard;
     private _keys: Map<string, boolean> = new Map();
     constructor() {
         this._world = new World();
@@ -59,10 +53,10 @@ export class Game {
         renderIndex(this._world, this._data);
 
         const canvas = document.getElementById("mainCanvas") as HTMLCanvasElement;
-        const renderData: render.DataQuery = {
+        const boardData: GameBoard.DataQuery = {
             get: (key) => { return this._data.get(key); },
         };
-        this._render = new render.Render(canvas, this._world, this._stack, renderData);
+        this._board = new GameBoard(canvas, this._world, this._stack, boardData);
 
         canvas.focus();
         canvas.addEventListener('keydown', (e) => {
@@ -92,13 +86,13 @@ export class Game {
     // Mutators
 
     async animateEvents(events: Event[]) {
-        return this._render.animateEvents(events);
+        return this._board.animateEvents(events);
     }
 
     updateWorld(world: World) {
         this._world.free();
         this._world = world;
-        this._render.updateWorld(this._world);
+        this._board.updateWorld(this._world);
 
         renderIndex(this._world, this._data);
     }

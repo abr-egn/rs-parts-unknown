@@ -2,6 +2,7 @@ import {
     Action, Behavior, Boundary, Card, Creature, Event, Hex, Id, World,
     findBoundary,
 } from "../wasm";
+import {FloatText} from "./draw";
 import {State} from "./stack";
 
 export class Base extends State {
@@ -41,12 +42,13 @@ export namespace Base {
 }
 
 export type Stat = "AP" | "MP";
-type StatMap = Map<Id<Creature>, Map<Stat, number>>;
 
 export class Highlight {
     hexes: Hex[] = [];
     range: Boundary[] = [];
     stats: Map<Id<Creature>, Map<Stat, number>> = new Map();
+    float: FloatText[] = [];
+
     private _preview: Readonly<Preview[]> = [];
 
     get preview(): Readonly<Preview[]> { return this._preview; }
