@@ -2,7 +2,7 @@ import {
     Action, Behavior, Boundary, Card, Creature, Event, Hex, Id, World,
     findBoundary,
 } from "../wasm";
-import {FloatText} from "./draw";
+import {FloatText, hexToPixel} from "./draw";
 import {State} from "./stack";
 
 export class Base extends State {
@@ -43,18 +43,21 @@ export namespace Base {
 
 export type Stat = "AP" | "MP";
 
+type StatMap = Map<Id<Creature>, Map<Stat, number>>;
+
 export class Highlight {
     hexes: Hex[] = [];
     range: Boundary[] = [];
-    stats: Map<Id<Creature>, Map<Stat, number>> = new Map();
-    float: FloatText[] = [];
 
+    private _stats: StatMap = new Map();
+    private _float: FloatText[] = [];
     private _preview: Readonly<Preview[]> = [];
 
     get preview(): Readonly<Preview[]> { return this._preview; }
     set preview(value: Readonly<Preview[]>) {
         this._preview = value;
-        this.stats = new Map();
+        this._stats = new Map();
+        this._float = [];
         for (let prev of this._preview) {
             let act;
             if (act = prev.action.GainAP) {
@@ -65,9 +68,18 @@ export class Highlight {
                 this._addDelta(act.id, "MP", act.mp);
             } else if (act = prev.action.SpendMP) {
                 this._addDelta(act.id, "MP", -act.mp);
+            } else if (act = prev.action.HitCreature) {
+                const hex = window.game.world.getCreatureHex(act.id)!;
+                this._float.push({
+                    text: `-${act.damage} HP`,
+                    pos: hexToPixel(hex),
+                    style: "#FF0000",
+                });
             }
         }
     }
+    get stats(): Readonly<StatMap> { return this._stats; }
+    get float(): Readonly<FloatText[]> { return this._float; }
 
     private _addDelta(id: Id<Creature>, stat: Stat, delta: number) {
         let c = this.stats.get(id);

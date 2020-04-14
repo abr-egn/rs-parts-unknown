@@ -55,9 +55,10 @@ export class GameBoard {
                 const creature = this._cache.creatures.get(data.creature)!;
                 const part = creature.parts.get(data.part)!;
                 let point = this._creaturePos.get(data.creature)!;
+                const sign = data.delta < 0 ? "-" : "+";
                 let float: FloatText = {
                     pos: new DOMPoint(point.x, point.y),
-                    text: `${part.name}: ${data.delta} HP`,
+                    text: `${part.name}: ${sign}${Math.abs(data.delta)} HP`,
                     style: "#FF0000",
                 };
                 this._floatText.add(float);
@@ -105,7 +106,13 @@ export class GameBoard {
             this._draw.tile(hex, tile);
         }
 
-        this._drawHighlight(this._data.get(states.Highlight));
+        for (let [id, pos] of this._creaturePos) {
+            let text = "X";
+            if (id == this._cache.playerId) {
+                text = "P";
+            }
+            this._draw.creature(text, pos);
+        }
 
         const selected = this._data.get(states.Base.UI)?.selected || [];
         for (let [id, bounds] of selected) {
@@ -118,13 +125,7 @@ export class GameBoard {
             }
         }
 
-        for (let [id, pos] of this._creaturePos) {
-            let text = "X";
-            if (id == this._cache.playerId) {
-                text = "P";
-            }
-            this._draw.creature(text, pos);
-        }
+        this._drawHighlight(this._data.get(states.Highlight));
 
         for (let float of this._floatText) {
             this._draw.floatText(float);
@@ -164,6 +165,9 @@ export class GameBoard {
             this._draw.focusedHex(hex);
         }
         this._drawPreview(hi.preview);
+        for (let float of hi.float) {
+            this._draw.floatText(float);
+        }
     }
 
     private _onMouseDown(event: MouseEvent) {

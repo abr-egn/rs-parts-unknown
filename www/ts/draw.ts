@@ -11,13 +11,24 @@ export class Draw {
 
     floatText(float: FloatText) {
         this._ctx.save();
+
         this._ctx.translate(float.pos.x, float.pos.y);
-        this._ctx.font = "bold 20px sans-serif";
-        this._ctx.fillStyle = float.style;
-        this._ctx.strokeStyle = "#000000";
+        this._ctx.font = "16px sans-serif";
         this._ctx.textAlign = "center";
+
+        const measure = this._ctx.measureText(float.text);
+        this._ctx.fillStyle = "rgba(0, 0, 0, 0.5)";
+        const strokeWidth = 1;
+        this._ctx.fillRect(
+            -measure.actualBoundingBoxLeft - strokeWidth,
+            -measure.actualBoundingBoxAscent - strokeWidth,
+            measure.actualBoundingBoxLeft + measure.actualBoundingBoxRight + (strokeWidth*2),
+            measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent + (strokeWidth*2),
+        );
+
+        this._ctx.fillStyle = float.style;
         this._ctx.fillText(float.text, 0, 0);
-        this._ctx.strokeText(float.text, 0, 0);
+
         this._ctx.restore();
     }
 
