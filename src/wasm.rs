@@ -17,6 +17,18 @@ use crate::{
     world,
 };
 
+#[wasm_bindgen(typescript_custom_section)]
+const EXTERN_TS: &'static str = r#"
+export interface Hex {
+    x: number,
+    y: number,
+}
+
+export type Direction = "XY" | "XZ" | "YZ" | "YX" | "ZX" | "ZY";
+
+export type Id<_> = number;
+"#;
+
 fn to_js_value<T: Serialize>(t: &T) -> JsValue { to_value(t).unwrap() }
 fn from_js_value<T: DeserializeOwned>(js: JsValue) -> T { 
     from_value(js).unwrap()
@@ -199,6 +211,35 @@ impl World {
     }
 }
 
+#[wasm_bindgen(typescript_custom_section)]
+const WORLD_TS: &'static str = r#"
+interface World {
+    // Accessors
+
+    readonly playerId: Id<Creature>;
+    getTile(hex: Hex): Tile | undefined;
+    getTiles(): Array<[Hex, Tile]>;
+    getCreature(id: Id<Creature>): Creature | undefined;
+    getCreatureMap(): [Id<Creature>, Hex][];
+    getCreatureHex(id: Id<Creature>): Hex | undefined;
+    getCreatureRange(id: Id<Creature>): Hex[];
+    checkSpendAP(id: Id<Creature>, ap: number): boolean;
+    startPlay(card: Card): Behavior | undefined;
+    affectsAction(action: Action): string[];
+    path(from: Hex, to: Hex): Hex[];
+
+    // Updates
+
+    playCard(card: Card, behavior: Behavior, target: Hex): [World, Event[]];
+    npcTurn(): [World, Event[]];
+    movePlayer(to: Hex): [World, Event[]];
+
+    // Debugging
+
+    setTracer(tracer: Tracer | undefined): void;
+}
+"#;
+
 fn world_update(new: world::World, events: &[Event]) -> Array {
     let out = Array::new();
     out.push(&JsValue::from(World { wrapped: new }));
@@ -328,6 +369,16 @@ impl Behavior {
     }
 }
 
+#[wasm_bindgen(typescript_custom_section)]
+const BEHAVIOR_TS: &'static str = r#"
+interface Behavior {
+    range(world: World): Hex[];
+    highlight(world: World, cursor: Hex): Hex[];
+    targetValid(world: World, cursor: Hex): boolean;
+    preview(world: World, target: Hex): Action[];
+}
+"#;
+
 #[derive(Debug, Clone, Serialize, TsData)]
 pub struct Boundary {
     pub hex: Hex,
@@ -358,6 +409,11 @@ pub fn js_find_boundary(shape: &Array /* Hex[] */) -> Array /* Boundary[] */ {
     find_boundary(&shape).iter().map(to_js_value).collect()
 }
 
+#[wasm_bindgen(typescript_custom_section)]
+const FIND_BOUNDARY_TS: &'static str = r#"
+export function findBoundary(shape: Hex[]): Boundary[];
+"#;
+
 #[wasm_bindgen]
 extern "C" {
     pub type Tracer;
@@ -369,6 +425,15 @@ extern "C" {
     #[wasm_bindgen(structural, method)]
     pub fn resolveAction(this: &Tracer, action: &JsValue, events: &Array);
 }
+
+#[wasm_bindgen(typescript_custom_section)]
+const TRACER_TS: &'static str = r#"
+export interface Tracer {
+    startAction: (action: any) => void,
+    modAction: (name: string, new_: any) => void,
+    resolveAction: (action: any, events: [Event]) => void,
+}
+"#;
 
 #[derive(Debug, Clone)]
 struct WrapTracer {
@@ -393,56 +458,3 @@ impl world::Tracer for WrapTracer {
         self.wrapped().resolveAction(&to_js_value(action), &events);
     }
 }
-
-#[wasm_bindgen(typescript_custom_section)]
-const TS_APPEND: &'static str = r#"
-interface World {
-    // Accessors
-
-    readonly playerId: Id<Creature>;
-    getTile(hex: Hex): Tile | undefined;
-    getTiles(): Array<[Hex, Tile]>;
-    getCreature(id: Id<Creature>): Creature | undefined;
-    getCreatureMap(): [Id<Creature>, Hex][];
-    getCreatureHex(id: Id<Creature>): Hex | undefined;
-    getCreatureRange(id: Id<Creature>): Hex[];
-    checkSpendAP(id: Id<Creature>, ap: number): boolean;
-    startPlay(card: Card): Behavior | undefined;
-    affectsAction(action: Action): string[];
-    path(from: Hex, to: Hex): Hex[];
-
-    // Updates
-
-    playCard(card: Card, behavior: Behavior, target: Hex): [World, Event[]];
-    npcTurn(): [World, Event[]];
-    movePlayer(to: Hex): [World, Event[]];
-
-    // Debugging
-
-    setTracer(tracer: Tracer | undefined): void;
-}
-
-export interface Hex {
-    x: number,
-    y: number,
-}
-
-export type Id<_> = number;
-
-export interface Tracer {
-    startAction: (action: any) => void,
-    modAction: (name: string, new_: any) => void,
-    resolveAction: (action: any, events: [Event]) => void,
-}
-
-interface Behavior {
-    range(world: World): Hex[];
-    highlight(world: World, cursor: Hex): Hex[];
-    targetValid(world: World, cursor: Hex): boolean;
-    preview(world: World, target: Hex): Action[];
-}
-
-export type Direction = "XY" | "XZ" | "YZ" | "YX" | "ZX" | "ZY";
-
-export function findBoundary(shape: Hex[]): Boundary[];
-"#;
