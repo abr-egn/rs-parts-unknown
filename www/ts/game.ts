@@ -105,8 +105,10 @@ export class ConsoleTracer implements Tracer {
     modAction(name: string, new_: any) {
         console.log(" [%s]", name, " ->", new_);
     }
-    resolveAction(action: any, event: Event) {
-        console.log("==>", event);
+    resolveAction(action: any, events: [Event]) {
+        for (let event of events) {
+            console.log("==>", event);
+        }
     }
 }
 
@@ -119,8 +121,8 @@ export class BufferTracer implements Tracer {
     modAction(name: string, new_: any) {
         this._buffer.push(() => this._wrapped.modAction(name, new_));
     }
-    resolveAction(action: any, event: Event) {
-        this._buffer.push(() => this._wrapped.resolveAction(action, event));
+    resolveAction(action: any, events: [Event]) {
+        this._buffer.push(() => this._wrapped.resolveAction(action, events));
     }
     runBuffer() {
         for (let thunk of this._buffer) {

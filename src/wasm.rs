@@ -367,7 +367,7 @@ extern "C" {
     #[wasm_bindgen(structural, method)]
     pub fn modAction(this: &Tracer, modName: &str, new: &JsValue);
     #[wasm_bindgen(structural, method)]
-    pub fn resolveAction(this: &Tracer, action: &JsValue, event: &JsValue);
+    pub fn resolveAction(this: &Tracer, action: &JsValue, events: &Array);
 }
 
 #[derive(Debug, Clone)]
@@ -388,8 +388,9 @@ impl world::Tracer for WrapTracer {
     fn mod_action(&self, mod_name: &str, new: &Action) {
         self.wrapped().modAction(mod_name, &to_js_value(new));
     }
-    fn resolve_action(&self, action: &Action, event: &Event) {
-        self.wrapped().resolveAction(&to_js_value(action), &to_js_value(event));
+    fn resolve_action(&self, action: &Action, events: &[Event]) {
+        let events: Array = events.iter().map(to_js_value).collect();
+        self.wrapped().resolveAction(&to_js_value(action), &events);
     }
 }
 
@@ -431,7 +432,7 @@ export type Id<_> = number;
 export interface Tracer {
     startAction: (action: any) => void,
     modAction: (name: string, new_: any) => void,
-    resolveAction: (action: any, event: Event) => void,
+    resolveAction: (action: any, events: [Event]) => void,
 }
 
 interface Behavior {

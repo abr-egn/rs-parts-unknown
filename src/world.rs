@@ -167,14 +167,14 @@ impl World {
     ) {
         self.tracer.as_ref().map(|t| t.start_action(action));
         let action = self.resolve_mods(action);
-        let event = self.resolve_action(&action).unwrap_or_else(|err|
-            Event::Failed {
+        let events = self.resolve_action(&action).unwrap_or_else(|err|
+            vec![Event::Failed {
                 action: action.clone(),
                 reason: format!("{:?}", err),
-            }
+            }]
         );
-        self.tracer.as_ref().map(|t| t.resolve_action(&action, &event));
-        out.push(event.clone());
+        self.tracer.as_ref().map(|t| t.resolve_action(&action, &events));
+        out.extend(events.clone());
 
         let mut trigger_ids = self.trigger_order();
         trigger_ids.reverse();
@@ -187,7 +187,7 @@ impl World {
                 Some(t) => t,
             };
             if !trigger.applies(&action) { continue; }
-            let added = trigger.apply(&action, &event);
+            let added: Vec<_> = events.iter().flat_map(|event| trigger.apply(&action, &event)).collect();
             let mut sub_skip = skip.clone();
             sub_skip.insert(id);
             for act in &added {
@@ -211,25 +211,24 @@ impl World {
         modded
     }
 
-    // TODO: -> Result<Vec<Event>> ?
-    fn resolve_action(&mut self, action: &Action) -> Result<Event> {
+    fn resolve_action(&mut self, action: &Action) -> Result<Vec<Event>> {
         use Action::*;
         match *action {
-            Nothing => return Ok(Event::Nothing),
+            Nothing => return Ok(vec![Event::Nothing]),
             MoveCreature { id, to } => {
                 let &from = self.map.creatures().get(&id).ok_or(Error::NoSuchCreature)?;
                 self.map.move_to(id, to)?;
-                return Ok(Event::CreatureMoved { id, from, to });
+                return Ok(vec![Event::CreatureMoved { id, from, to }]);
             }
             GainAP { id, ap } => {
                 let creature = self.creatures.get_mut(&id).ok_or(Error::NoSuchCreature)?;
                 creature.cur_ap += ap;
-                return Ok(Event::ChangeAP { id, delta: ap })
+                return Ok(vec![Event::ChangeAP { id, delta: ap }])
             }
             SpendAP { id, ap } => {
                 let creature = self.creatures.get_mut(&id).ok_or(Error::NoSuchCreature)?;
                 if creature.spend_ap(ap) {
-                    return Ok(Event::ChangeAP { id, delta: -ap })
+                    return Ok(vec![Event::ChangeAP { id, delta: -ap }])
                 } else {
                     return Err(Error::NotEnough)
                 }
@@ -237,12 +236,12 @@ impl World {
             GainMP { id, mp } => {
                 let creature = self.creatures.get_mut(&id).ok_or(Error::NoSuchCreature)?;
                 creature.cur_mp += mp;
-                return Ok(Event::ChangeMP { id, delta: mp })
+                return Ok(vec![Event::ChangeMP { id, delta: mp }])
             }
             SpendMP { id, mp } => {
                 let creature = self.creatures.get_mut(&id).ok_or(Error::NoSuchCreature)?;
                 if creature.spend_mp(mp) {
-                    return Ok(Event::ChangeMP { id, delta: -mp })
+                    return Ok(vec![Event::ChangeMP { id, delta: -mp }])
                 } else {
                     return Err(Error::NotEnough)
                 }
@@ -254,11 +253,11 @@ impl World {
                 let damage = std::cmp::min(part.cur_hp, damage);
                 part.cur_hp -= damage;
                 // TODO: react to 0 hp
-                return Ok(Event::ChangeHP {
+                return Ok(vec![Event::ChangeHP {
                     creature: id,
                     part: *part_id,
                     delta: -damage,
-                });
+                }]);
             }
         }
     }
@@ -285,7 +284,7 @@ impl World {
 pub trait Tracer: std::fmt::Debug + TracerClone {
     fn start_action(&self, action: &Action);
     fn mod_action(&self, mod_name: &str, new: &Action);
-    fn resolve_action(&self, action: &Action, event: &Event);
+    fn resolve_action(&self, action: &Action, events: &[Event]);
 }
 
 pub trait TracerClone {
