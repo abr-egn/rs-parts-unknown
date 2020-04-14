@@ -31,9 +31,6 @@ export class Base extends State {
             });
         }
     }
-    onDeactivated() {
-        this.update((draft) => draft.get(Base.UI)?.selected.clear());
-    }
 }
 export namespace Base {
     export class UI {
