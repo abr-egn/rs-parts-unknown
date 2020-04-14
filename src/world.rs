@@ -58,13 +58,6 @@ impl World {
     pub fn mods(&self) -> &IdMap<Box<dyn Mod>> { &self.mods }
     pub fn triggers(&self) -> &IdMap<Box<dyn Trigger>> { &self.triggers }
 
-    // TODO(random)
-    pub fn check_action(&self, action: &Action) -> bool {
-        let mut check = self.clone();
-        check.tracer = None;
-        !Event::is_failure(&check.execute(action))
-    }
-
     pub fn affects_action(&self, action: &Action) -> (Vec<ModId>, Vec<TriggerId>) {
         let mods = self.mods.map().iter()
             .filter(|(_, m)| m.applies(action))

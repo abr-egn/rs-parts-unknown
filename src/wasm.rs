@@ -106,11 +106,13 @@ impl World {
             .collect()
     }
 
-    // TODO(random)
     #[wasm_bindgen(skip_typescript)]
     pub fn checkSpendAP(&self, creature_id: JsValue, ap: i32) -> bool {
         let id: Id<creature::Creature> = from_js_value(creature_id);
-        return self.wrapped.check_action(&Action::SpendAP { id, ap });
+        match self.wrapped.creatures().map().get(&id) {
+            Some(c) => c.cur_ap >= ap,
+            None => false,
+        }
     }
 
     #[wasm_bindgen(skip_typescript)]
