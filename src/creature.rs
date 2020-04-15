@@ -111,6 +111,8 @@ pub enum CreatureEvent {
     ChangeMP { delta: i32 },
 }
 
+// TODO: PartAction/Event => system mod for HitCreature
+
 #[derive(Debug, Clone, Serialize)]
 pub struct Part {
     pub name: String,
