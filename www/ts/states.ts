@@ -57,14 +57,17 @@ export class Highlight {
         this._float = [];
         for (let prev of this._preview) {
             let act;
-            if (act = prev.action.GainAP) {
-                this._addDelta(act.id, "AP", act.ap);
-            } else if (act = prev.action.SpendAP) {
-                this._addDelta(act.id, "AP", -act.ap);
-            } else if (act = prev.action.GainMP) {
-                this._addDelta(act.id, "MP", act.mp);
-            } else if (act = prev.action.SpendMP) {
-                this._addDelta(act.id, "MP", -act.mp);
+            if (act = prev.action.ToCreature) {
+                let tc;
+                if (tc = act.action.GainAP) {
+                    this._addDelta(act.id, "AP", tc.ap);
+                } else if (tc = act.action.SpendAP) {
+                    this._addDelta(act.id, "AP", -tc.ap);
+                } else if (tc = act.action.GainMP) {
+                    this._addDelta(act.id, "MP", tc.mp);
+                } else if (tc = act.action.SpendMP) {
+                    this._addDelta(act.id, "MP", -tc.mp);
+                }
             } else if (act = prev.action.HitCreature) {
                 const hex = window.game.world.getCreatureHex(act.id)!;
                 this._float.push({
@@ -137,7 +140,10 @@ export class PlayCard extends State {
         if (this._behavior!.targetValid(world, hex)) {
             // TODO: select creature in hex
             preview.push(makePreview({
-                SpendAP: { id: world.playerId, ap: this._card.apCost }
+                ToCreature: {
+                    id: world.playerId,
+                    action: { SpendAP: { ap: this._card.apCost } }
+                }
             }));
             const actions = this._behavior!.preview(world, hex);
             for (let action of actions) {
@@ -218,7 +224,10 @@ export class MovePlayer extends State {
         const mpCost = Math.min(Math.max(0, path.length-1), this._mp);
         if (mpCost > 0) {
             preview.push(makePreview({
-                SpendMP: { id: world.playerId, mp: mpCost }
+                ToCreature: {
+                    id: world.playerId,
+                    action: { SpendMP: { mp: mpCost } },
+                }
             }));
         }
         for (let hex of path.slice(0, this._mp+1)) {

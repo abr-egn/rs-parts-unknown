@@ -3,22 +3,18 @@ use serde::{Deserialize, Serialize, Serializer};
 use ts_data_derive::TsData;
 use wasm_bindgen::prelude::wasm_bindgen;
 use crate::{
-    creature::{Creature, Part},
+    creature::{Creature, CreatureAction, CreatureEvent, Part},
     error::Error,
     id_map::Id,
 };
 
-// TODO: reorg into ::ToCreature
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, TsData)]
 pub enum Action {
     #[serde(with = "serde_action_nothing")]
     Nothing,
     MoveCreature { id: Id<Creature>, to: Hex },
-    GainAP { id: Id<Creature>, ap: i32 },
-    SpendAP { id: Id<Creature>, ap: i32 },
-    GainMP { id: Id<Creature>, mp: i32 },
-    SpendMP { id: Id<Creature>, mp: i32 },
     HitCreature { id: Id<Creature>, damage: i32 },
+    ToCreature { id: Id<Creature>, action: CreatureAction },
 }
 
 mod serde_action_nothing {
@@ -40,11 +36,10 @@ pub enum Event {
     Nothing,
     Failed { action: Action, reason: String },
     CreatureMoved { id: Id<Creature>, from: Hex, to: Hex, },
-    ChangeAP { id: Id<Creature>, delta: i32 },
-    ChangeMP { id: Id<Creature>, delta: i32 },
     ChangeHP { creature: Id<Creature>, part: Id<Part>, delta: i32 },
     PartDied { creature: Id<Creature>, part: Id<Part> },
     CreatureDied { id: Id<Creature> },
+    OnCreature { id: Id<Creature>, event: CreatureEvent },
 }
 
 fn ser_event_nothing<S: Serializer>(s: S) -> Result<S::Ok, S::Error> {

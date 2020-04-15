@@ -1,7 +1,7 @@
 use hex::Hex;
 use serde::Serialize;
 use crate::{
-    creature::Creature,
+    creature::{Creature, CreatureAction},
     event::{Action, Event},
     id_map::Id,
     map::Tile,
@@ -82,7 +82,10 @@ impl Behavior for Walk {
         Some(&cursor) == world.map().creatures().get(&self.creature_id)
     }
     fn preview(&self, _world: &World, _target: Hex) -> Vec<Action> {
-        vec![Action::GainMP { id: self.creature_id, mp: 1 }]
+        vec![Action::ToCreature {
+            id: self.creature_id,
+            action: CreatureAction::GainMP { mp: 1 },
+        }]
     }
 }
 

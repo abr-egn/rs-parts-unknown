@@ -6,7 +6,7 @@ use hex::{self, Hex};
 use rand::prelude::*;
 use crate::{
     card::{Shoot, Walk},
-    creature::{self, Creature},
+    creature::{self, Creature, CreatureAction},
     error::{Error, Result},
     event::{Action, Event, Mod, ModId, Trigger, TriggerId},
     id_map::{Id, IdMap},
@@ -101,7 +101,10 @@ impl World {
                 return out;
             }
             let mut mp_evs = self.execute(
-                &Action::SpendMP { id: creature_id, mp: 1 }
+                &Action::ToCreature {
+                    id: creature_id,
+                    action: CreatureAction::SpendMP { mp: 1 },
+                }
             );
             let failed = Event::is_failure(&mp_evs);
             out.append(&mut mp_evs);
@@ -166,8 +169,8 @@ impl World {
         out: &mut Vec<Event>,
     ) {
         self.tracer.as_ref().map(|t| t.start_action(action));
-        let action = self.resolve_mods(action);
-        let events = self.resolve_action(&action).unwrap_or_else(|err|
+        let action = self.apply_mods(action);
+        let events = self.resolve(&action).unwrap_or_else(|err|
             vec![Event::Failed {
                 action: action.clone(),
                 reason: format!("{:?}", err),
@@ -201,7 +204,7 @@ impl World {
         self.triggers.map().keys().cloned().collect()
     }
 
-    fn resolve_mods(&mut self, action: &Action) -> Action {
+    fn apply_mods(&mut self, action: &Action) -> Action {
         let mut modded = action.clone();
         for (_, m) in self.mods.iter_mut() {
             if !m.applies(&modded) { continue; }
@@ -211,7 +214,7 @@ impl World {
         modded
     }
 
-    fn resolve_action(&mut self, action: &Action) -> Result<Vec<Event>> {
+    fn resolve(&mut self, action: &Action) -> Result<Vec<Event>> {
         use Action::*;
         match *action {
             Nothing => return Ok(vec![Event::Nothing]),
@@ -220,36 +223,12 @@ impl World {
                 self.map.move_to(id, to)?;
                 return Ok(vec![Event::CreatureMoved { id, from, to }]);
             }
-            GainAP { id, ap } => {
+            ToCreature { id, ref action } => {
                 let creature = self.creatures.get_mut(&id).ok_or(Error::NoSuchCreature)?;
-                if creature.dead { return Err(Error::DeadCreature); }
-                creature.cur_ap += ap;
-                return Ok(vec![Event::ChangeAP { id, delta: ap }])
-            }
-            SpendAP { id, ap } => {
-                let creature = self.creatures.get_mut(&id).ok_or(Error::NoSuchCreature)?;
-                if creature.dead { return Err(Error::DeadCreature); }
-                if creature.spend_ap(ap) {
-                    return Ok(vec![Event::ChangeAP { id, delta: -ap }])
-                } else {
-                    return Err(Error::NotEnough)
-                }
-            }
-            GainMP { id, mp } => {
-                let creature = self.creatures.get_mut(&id).ok_or(Error::NoSuchCreature)?;
-                if creature.dead { return Err(Error::DeadCreature); }
-                creature.cur_mp += mp;
-                return Ok(vec![Event::ChangeMP { id, delta: mp }])
-            }
-            SpendMP { id, mp } => {
-                let creature = self.creatures.get_mut(&id).ok_or(Error::NoSuchCreature)?;
-                if creature.dead { return Err(Error::DeadCreature); }
-                if creature.spend_mp(mp) {
-                    return Ok(vec![Event::ChangeMP { id, delta: -mp }])
-                } else {
-                    return Err(Error::NotEnough)
-                }
-            }
+                return creature.resolve(&action).map(|cevs| {
+                    cevs.into_iter().map(|cev| Event::OnCreature { id, event: cev }).collect()
+                });
+            },
             // TODO: this setup means there can't be mods on part damage
             // instead, this should pick the part and then resolve the part damage action
             // however, that would not play nice with effect resolution
@@ -295,10 +274,14 @@ impl World {
             (creature.max_ap() - creature.cur_ap, creature.max_mp() - creature.cur_mp)
         };
         if fill_ap > 0 {
-            events.extend(self.execute(&Action::GainAP { id: *id, ap: fill_ap }));
+            events.extend(self.execute(&Action::ToCreature {
+                id: *id, action: CreatureAction::GainAP { ap: fill_ap }
+            }));
         }
         if fill_mp > 0 {
-            events.extend(self.execute(&Action::GainMP { id: *id, mp: fill_mp }));
+            events.extend(self.execute(&Action::ToCreature {
+                id: *id, action: CreatureAction::GainMP { mp: fill_mp }
+            }));
         }
         events
     }

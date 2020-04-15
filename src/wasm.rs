@@ -10,7 +10,7 @@ use wasm_bindgen::{
 };
 use crate::{
     card,
-    creature,
+    creature::{self, CreatureAction},
     event::{Action, Event},
     id_map::Id,
     map::Tile,
@@ -176,9 +176,9 @@ impl World {
         let card: Card = from_js_value(card);
         let target: Hex = from_js_value(target);
         let mut newWorld = self.wrapped.clone();
-        let mut events: Vec<Event> = newWorld.execute(&Action::SpendAP {
+        let mut events: Vec<Event> = newWorld.execute(&Action::ToCreature {
             id: card.creatureId,
-            ap: card.apCost,
+            action: CreatureAction::SpendAP { ap: card.apCost },
         });
         if !Event::is_failure(&events) {
             events.extend(behavior.wrapped.apply(&mut newWorld, target));

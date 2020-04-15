@@ -1,6 +1,9 @@
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+use ts_data_derive::TsData;
+use wasm_bindgen::prelude::wasm_bindgen;
 use crate::{
     card::Card,
+    error::{Error, Result},
     id_map::{Id, IdMap},
 };
 
@@ -24,6 +27,8 @@ impl Creature {
         out
     }
 
+    // Accessors
+
     pub fn cards(&self) -> impl Iterator<Item=(Id<Part>, Id<Card>, &Card)> {
         self.parts.map().iter()
             .flat_map(|(&id, part)|
@@ -44,17 +49,66 @@ impl Creature {
             .sum()
     }
 
-    pub fn spend_ap(&mut self, ap: i32) -> bool {
-        if ap > self.cur_ap { return false; }
-        self.cur_ap -= ap;
-        true
+    // Mutators
+
+    pub fn resolve(&mut self, action: &CreatureAction) -> Result<Vec<CreatureEvent>> {
+        self.check_alive()?;
+        use CreatureAction::*;
+        use CreatureEvent::*;
+        match *action {
+            GainAP { ap } => {
+                self.cur_ap += ap;
+                return Ok(vec![ChangeAP { delta: ap }])
+            }
+            SpendAP { ap } => {
+                if self.cur_ap < ap { return Err(Error::NotEnough); }
+                self.cur_ap -= ap;
+                return Ok(vec![ChangeAP { delta: -ap }])
+            }
+            GainMP { mp } => {
+                self.cur_mp += mp;
+                return Ok(vec![ChangeMP { delta: mp }])
+            }
+            SpendMP { mp } => {
+                if self.cur_mp < mp { return Err(Error::NotEnough); }
+                self.cur_mp -= mp;
+                return Ok(vec![ChangeMP { delta: -mp }])
+            }
+        }
     }
 
-    pub fn spend_mp(&mut self, mp: i32) -> bool {
-        if mp > self.cur_mp { return false; }
-        self.cur_mp -= mp;
-        true
+    pub fn spend_ap(&mut self, ap: i32) -> Result<()> {
+        self.check_alive()?;
+        if ap > self.cur_ap { return Err(Error::NotEnough); }
+        self.cur_ap -= ap;
+        Ok(())
     }
+
+    pub fn spend_mp(&mut self, mp: i32) -> Result<()> {
+        self.check_alive()?;
+        if mp > self.cur_mp { return Err(Error::NotEnough); }
+        self.cur_mp -= mp;
+        Ok(())
+    }
+
+    fn check_alive(&self) -> Result<()> {
+        if self.dead { return Err(Error::DeadCreature); }
+        Ok(())
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, TsData)]
+pub enum CreatureAction {
+    GainAP { ap: i32 },
+    SpendAP { ap: i32 },
+    GainMP { mp: i32 },
+    SpendMP { mp: i32 },
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, TsData)]
+pub enum CreatureEvent {
+    ChangeAP { delta: i32 },
+    ChangeMP { delta: i32 },
 }
 
 #[derive(Debug, Clone, Serialize)]
