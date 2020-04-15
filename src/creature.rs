@@ -5,6 +5,7 @@ use crate::{
     card::Card,
     error::{Error, Result},
     id_map::{Id, IdMap},
+    serde_empty,
 };
 
 #[derive(Debug, Clone, Serialize)]
@@ -63,21 +64,32 @@ impl Creature {
         match *action {
             GainAP { ap } => {
                 self.cur_ap += ap;
-                return Ok(vec![ChangeAP { delta: ap }])
+                return Ok(vec![ChangeAP { delta: ap }]);
             }
             SpendAP { ap } => {
                 if self.cur_ap < ap { return Err(Error::NotEnough); }
                 self.cur_ap -= ap;
-                return Ok(vec![ChangeAP { delta: -ap }])
+                return Ok(vec![ChangeAP { delta: -ap }]);
             }
             GainMP { mp } => {
                 self.cur_mp += mp;
-                return Ok(vec![ChangeMP { delta: mp }])
+                return Ok(vec![ChangeMP { delta: mp }]);
             }
             SpendMP { mp } => {
                 if self.cur_mp < mp { return Err(Error::NotEnough); }
                 self.cur_mp -= mp;
-                return Ok(vec![ChangeMP { delta: -mp }])
+                return Ok(vec![ChangeMP { delta: -mp }]);
+            }
+            ToPart { id, ref action } => {
+                let part = self.parts.get_mut(&id).ok_or(Error::NoSuchPart)?;
+                return part.resolve(action).map(|pevs| {
+                    let died = pevs.iter().any(|pev| *pev == PartEvent::Died);
+                    let mut out: Vec<_> = pevs.into_iter().map(|pev| CreatureEvent::OnPart { id, event: pev }).collect();
+                    if died && part.vital {
+                        out.push(CreatureEvent::Died);
+                    }
+                    out
+                });
             }
         }
     }
@@ -89,14 +101,16 @@ pub enum CreatureAction {
     SpendAP { ap: i32 },
     GainMP { mp: i32 },
     SpendMP { mp: i32 },
-    //ToPart { id: Id<Part>, action: PartAction }
+    ToPart { id: Id<Part>, action: PartAction }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, TsData)]
 pub enum CreatureEvent {
     ChangeAP { delta: i32 },
     ChangeMP { delta: i32 },
-    //OnPart { id: Id<Part>, event: PartEvent }
+    OnPart { id: Id<Part>, event: PartEvent },
+    #[serde(with = "serde_empty")]
+    Died,
 }
 
 // TODO: PartAction/Event => system mod for HitCreature
@@ -117,6 +131,37 @@ pub struct Part {
     tags: HashSet<PartTag>,
     joints: Vec<Joint>,
     */
+}
+
+impl Part {
+    pub fn resolve(&mut self, action: &PartAction) -> Result<Vec<PartEvent>> {
+        if self.dead { return Err(Error::DeadPart); }
+        use PartAction::*;
+        match *action {
+            Hit { damage } => {
+                let damage = std::cmp::min(self.cur_hp, damage);
+                if damage <= 0 { return Ok(vec![]); }
+                self.cur_hp -= damage;
+                let mut out = vec![PartEvent::ChangeHP { delta: -damage }];
+                if self.cur_hp <= 0 {
+                    out.push(PartEvent::Died);
+                }
+                return Ok(out);
+            }
+        }
+    }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, TsData)]
+pub enum PartAction {
+    Hit { damage: i32 }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, TsData)]
+pub enum PartEvent {
+    ChangeHP { delta: i32 },
+    #[serde(with = "serde_empty")]
+    Died,
 }
 
 /*

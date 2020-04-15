@@ -177,6 +177,8 @@ impl VisitMut for TypeMapper {
             "Id" => (),
             "Option" => (),
             "Part" => (),
+            "PartAction" => (),
+            "PartEvent" => (),
             "Space" => (),
             "Vec" => (),
             // De-path

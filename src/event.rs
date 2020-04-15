@@ -1,38 +1,26 @@
 use hex::Hex;
-use serde::{Deserialize, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 use ts_data_derive::TsData;
 use wasm_bindgen::prelude::wasm_bindgen;
 use crate::{
     creature::{Creature, CreatureAction, CreatureEvent, Part},
     error::Error,
     id_map::Id,
+    serde_empty,
 };
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, TsData)]
 pub enum Action {
-    #[serde(with = "serde_action_nothing")]
+    #[serde(with = "serde_empty")]
     Nothing,
     MoveCreature { id: Id<Creature>, to: Hex },
     HitCreature { id: Id<Creature>, damage: i32 },
     ToCreature { id: Id<Creature>, action: CreatureAction },
 }
 
-mod serde_action_nothing {
-    use serde::{
-        Deserializer, Serializer,
-        de::IgnoredAny,
-    };
-    pub fn serialize<S: Serializer>(s: S) -> Result<S::Ok, S::Error> {
-        s.serialize_bool(true)
-    }
-    pub fn deserialize<'de, D: Deserializer<'de>>(d: D) -> Result<(), D::Error> {
-        d.deserialize_any(IgnoredAny).map(|_| ())
-    }
-}
-
 #[derive(Debug, Clone, Serialize, TsData)]
 pub enum Event {
-    #[serde(serialize_with = "ser_event_nothing")]
+    #[serde(with = "serde_empty")]
     Nothing,
     Failed { action: Action, reason: String },
     CreatureMoved { id: Id<Creature>, from: Hex, to: Hex, },
@@ -40,10 +28,6 @@ pub enum Event {
     PartDied { creature: Id<Creature>, part: Id<Part> },
     CreatureDied { id: Id<Creature> },
     OnCreature { id: Id<Creature>, event: CreatureEvent },
-}
-
-fn ser_event_nothing<S: Serializer>(s: S) -> Result<S::Ok, S::Error> {
-    s.serialize_bool(true)
 }
 
 impl Event {   

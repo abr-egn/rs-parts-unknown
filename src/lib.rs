@@ -5,6 +5,7 @@ mod error;
 mod event;
 mod id_map;
 mod map;
+mod serde_empty;
 mod wasm;
 mod wasm_behavior;
 mod world;

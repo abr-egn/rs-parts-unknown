@@ -6,7 +6,7 @@ use hex::{self, Hex};
 use rand::prelude::*;
 use crate::{
     card::{Shoot, Walk},
-    creature::{self, Creature, CreatureAction},
+    creature::{self, Creature, CreatureAction, PartAction},
     error::{Error, Result},
     event::{Action, Event, Mod, ModId, Trigger, TriggerId},
     id_map::{Id, IdMap},
@@ -206,12 +206,35 @@ impl World {
 
     fn apply_mods(&mut self, action: &Action) -> Action {
         let mut modded = action.clone();
+        if let Some(new) = self.apply_system_mod(&mut modded) {
+            self.tracer.as_ref().map(|t| t.mod_action("SYSTEM", &new));
+            modded = new;
+        }
         for (_, m) in self.mods.iter_mut() {
             if !m.applies(&modded) { continue; }
             m.apply(&mut modded);
             self.tracer.as_ref().map(|t| t.mod_action(&m.name(), &modded));
         }
         modded
+    }
+
+    fn apply_system_mod(&self, action: &Action) -> Option<Action> {
+        use Action::*;
+        match *action {
+            HitCreature { id, damage } => {
+                let creature = self.creatures.map().get(&id)?;
+                let mut rng = thread_rng();
+                let part_id = creature.parts().map().keys().choose(&mut rng)?;
+                return Some(ToCreature { 
+                    id,
+                    action: CreatureAction::ToPart {
+                        id: *part_id,
+                        action: PartAction::Hit { damage },
+                    }
+                });
+            }
+            _ => return None,
+        }
     }
 
     fn resolve(&mut self, action: &Action) -> Result<Vec<Event>> {
@@ -235,11 +258,12 @@ impl World {
             // possible answer: apply this as a "system" mod?
             //   - system mods always execute last
             //   - seems like it would be elegant
-            HitCreature { id, damage } => {
+            HitCreature { .. } => {
+                return Err(Error::InvalidAction);
                 /*
                 let creature = self.creatures.get_mut(&id).ok_or(Error::NoSuchCreature)?;
                 let mut rng = thread_rng();
-                let (part_id, part) = creature.parts().iter_mut().choose(&mut rng).unwrap();
+                let part_id = creature.parts().map().keys().choose(&mut rng).unwrap();
                 let damage = std::cmp::min(part.cur_hp, damage);
                 let new_hp = std::cmp::max(0, part.cur_hp - damage);
                 if new_hp == part.cur_hp {
@@ -262,7 +286,6 @@ impl World {
                 }
                 return Ok(out);
                 */
-                return Ok(vec![Event::Nothing]);
             }
         }
     }
