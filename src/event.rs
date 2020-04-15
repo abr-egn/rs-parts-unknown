@@ -43,6 +43,8 @@ pub enum Event {
     ChangeAP { id: Id<Creature>, delta: i32 },
     ChangeMP { id: Id<Creature>, delta: i32 },
     ChangeHP { creature: Id<Creature>, part: Id<Part>, delta: i32 },
+    PartDied { creature: Id<Creature>, part: Id<Part> },
+    CreatureDied { id: Id<Creature> },
 }
 
 fn ser_event_nothing<S: Serializer>(s: S) -> Result<S::Ok, S::Error> {

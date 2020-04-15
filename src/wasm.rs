@@ -429,9 +429,9 @@ extern "C" {
 #[wasm_bindgen(typescript_custom_section)]
 const TRACER_TS: &'static str = r#"
 export interface Tracer {
-    startAction: (action: any) => void,
-    modAction: (name: string, new_: any) => void,
-    resolveAction: (action: any, events: [Event]) => void,
+    startAction: (action: Action) => void,
+    modAction: (name: string, new_: Action) => void,
+    resolveAction: (action: Action, events: [Event]) => void,
 }
 "#;
 

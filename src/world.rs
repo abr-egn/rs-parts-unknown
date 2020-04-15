@@ -252,12 +252,20 @@ impl World {
                 let (part_id, part) = creature.parts.iter_mut().choose(&mut rng).unwrap();
                 let damage = std::cmp::min(part.cur_hp, damage);
                 part.cur_hp -= damage;
-                // TODO: react to 0 hp
-                return Ok(vec![Event::ChangeHP {
+                let mut out = vec![Event::ChangeHP {
                     creature: id,
                     part: *part_id,
                     delta: -damage,
-                }]);
+                }];
+                if part.cur_hp <= 0 {
+                    part.dead = true;
+                    out.push(Event::PartDied { creature: id, part: *part_id });
+                    if part.vital {
+                        creature.dead = true;
+                        out.push(Event::CreatureDied { id });
+                    }
+                }
+                return Ok(out);
             }
         }
     }
@@ -306,6 +314,7 @@ fn make_player() -> Creature {
         ap: 3, mp: 0,
         max_hp: 2, cur_hp: 2,
         vital: true,
+        dead: false,
     };
     let torso = creature::Part {
         name: "Torso".into(),
@@ -313,6 +322,7 @@ fn make_player() -> Creature {
         ap: 0, mp: 0,
         max_hp: 5, cur_hp: 5,
         vital: true,
+        dead: false,
     };
     let arm_l = creature::Part {
         name: "Arm".into(),
@@ -320,6 +330,7 @@ fn make_player() -> Creature {
         ap: 0, mp: 0,
         max_hp: 3, cur_hp: 3,
         vital: false,
+        dead: false,
     };
     let arm_r = arm_l.clone();
     let leg_l = creature::Part {
@@ -328,6 +339,7 @@ fn make_player() -> Creature {
         ap: 0, mp: 1,
         max_hp: 3, cur_hp: 3,
         vital: false,
+        dead: false,
     };
     let leg_r = leg_l.clone();
     Creature::new(&[head, torso, arm_l, arm_r, leg_l, leg_r])
@@ -340,6 +352,7 @@ fn make_npc() -> Creature {
         ap: 1, mp: 0,
         max_hp: 2, cur_hp: 2,
         vital: true,
+        dead: false,
     };
     let foot = creature::Part {
         name: "Fut".into(),
@@ -347,6 +360,7 @@ fn make_npc() -> Creature {
         ap: 0, mp: 3,
         max_hp: 2, cur_hp: 2,
         vital: false,
+        dead: false,
     };
     Creature::new(&[head, foot])
 }

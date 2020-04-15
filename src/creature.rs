@@ -9,6 +9,7 @@ pub struct Creature {
     pub parts: IdMap<Part>,
     pub cur_ap: i32,
     pub cur_mp: i32,
+    pub dead: bool,
 }
 
 impl Creature {
@@ -17,7 +18,7 @@ impl Creature {
         for part in parts {
             pids.add(part.clone());
         }
-        let mut out = Creature { parts: pids, cur_ap: 0, cur_mp: 0 };
+        let mut out = Creature { parts: pids, cur_ap: 0, cur_mp: 0, dead: false };
         out.cur_ap = out.max_ap();
         out.cur_mp = out.max_mp();
         out
@@ -65,6 +66,7 @@ pub struct Part {
     pub max_hp: i32,
     pub cur_hp: i32,
     pub vital: bool,
+    pub dead: bool,
     /* TODO
     power: i32,
     capacity: i32,
