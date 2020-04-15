@@ -6,6 +6,7 @@ mod event;
 mod id_map;
 mod map;
 mod wasm;
+mod wasm_behavior;
 mod world;
 
 use log::{Level, info};

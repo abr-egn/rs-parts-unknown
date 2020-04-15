@@ -169,6 +169,8 @@ impl VisitMut for TypeMapper {
             "Box" => (),
             "Card" => (),
             "Creature" => (),
+            "CreatureAction" => (),
+            "CreatureEvent" => (),
             "Direction" => (),
             "Event" => (),
             "Hex" => (),
