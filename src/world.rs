@@ -222,11 +222,13 @@ impl World {
             }
             GainAP { id, ap } => {
                 let creature = self.creatures.get_mut(&id).ok_or(Error::NoSuchCreature)?;
+                if creature.dead { return Err(Error::DeadCreature); }
                 creature.cur_ap += ap;
                 return Ok(vec![Event::ChangeAP { id, delta: ap }])
             }
             SpendAP { id, ap } => {
                 let creature = self.creatures.get_mut(&id).ok_or(Error::NoSuchCreature)?;
+                if creature.dead { return Err(Error::DeadCreature); }
                 if creature.spend_ap(ap) {
                     return Ok(vec![Event::ChangeAP { id, delta: -ap }])
                 } else {
@@ -235,32 +237,45 @@ impl World {
             }
             GainMP { id, mp } => {
                 let creature = self.creatures.get_mut(&id).ok_or(Error::NoSuchCreature)?;
+                if creature.dead { return Err(Error::DeadCreature); }
                 creature.cur_mp += mp;
                 return Ok(vec![Event::ChangeMP { id, delta: mp }])
             }
             SpendMP { id, mp } => {
                 let creature = self.creatures.get_mut(&id).ok_or(Error::NoSuchCreature)?;
+                if creature.dead { return Err(Error::DeadCreature); }
                 if creature.spend_mp(mp) {
                     return Ok(vec![Event::ChangeMP { id, delta: -mp }])
                 } else {
                     return Err(Error::NotEnough)
                 }
             }
+            // TODO: this setup means there can't be mods on part damage
+            // instead, this should pick the part and then resolve the part damage action
+            // however, that would not play nice with effect resolution
+            // possible answer: apply this as a "system" mod?
+            //   - system mods always execute last
+            //   - seems like it would be elegant
             HitCreature { id, damage } => {
                 let creature = self.creatures.get_mut(&id).ok_or(Error::NoSuchCreature)?;
                 let mut rng = thread_rng();
                 let (part_id, part) = creature.parts.iter_mut().choose(&mut rng).unwrap();
                 let damage = std::cmp::min(part.cur_hp, damage);
-                part.cur_hp -= damage;
+                let new_hp = std::cmp::max(0, part.cur_hp - damage);
+                if new_hp == part.cur_hp {
+                    return Ok(vec![Event::Nothing]);
+                }
+                part.cur_hp = new_hp;
                 let mut out = vec![Event::ChangeHP {
                     creature: id,
                     part: *part_id,
                     delta: -damage,
                 }];
-                if part.cur_hp <= 0 {
+                // TODO: find a better place for this
+                if part.cur_hp <= 0 && !part.dead {
                     part.dead = true;
                     out.push(Event::PartDied { creature: id, part: *part_id });
-                    if part.vital {
+                    if part.vital && !creature.dead {
                         creature.dead = true;
                         out.push(Event::CreatureDied { id });
                     }

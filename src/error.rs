@@ -8,6 +8,8 @@ pub enum Error {
     OutOfBounds,
     #[error("no such creature")]
     NoSuchCreature,
+    #[error("dead creature")]
+    DeadCreature,
     #[error("not enough")]
     NotEnough,
 }
