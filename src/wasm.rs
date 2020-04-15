@@ -108,7 +108,7 @@ impl World {
     pub fn getCreatureRange(&self, id: JsValue) -> Array /* Hex[] */ {
         let id: Id<creature::Creature> = from_js_value(id);
         let range = match self.wrapped.creatures().map().get(&id) {
-            Some(c) => c.cur_mp,
+            Some(c) => c.cur_mp(),
             None => return Array::new(),
         };
         let start = match self.wrapped.map().creatures().get(&id) {
@@ -124,7 +124,7 @@ impl World {
     pub fn checkSpendAP(&self, creature_id: JsValue, ap: i32) -> bool {
         let id: Id<creature::Creature> = from_js_value(creature_id);
         match self.wrapped.creatures().map().get(&id) {
-            Some(c) => c.cur_ap >= ap,
+            Some(c) => c.cur_ap() >= ap,
             None => false,
         }
     }
@@ -133,7 +133,7 @@ impl World {
     pub fn startPlay(&self, card: JsValue) -> Option<Behavior> {
         let card: Card = from_js_value(card);
         let creature = self.wrapped.creatures().map().get(&card.creatureId)?;
-        let part = creature.parts.map().get(&card.partId)?;
+        let part = creature.parts().map().get(&card.partId)?;
         let real_card = part.cards.map().get(&card.id)?;
         Some(Behavior::new((real_card.start_play)(&self.wrapped, &card.creatureId)))
     }
@@ -260,14 +260,14 @@ pub struct Creature {
 
 impl Creature {
     fn new(id: Id<creature::Creature>, source: &creature::Creature) -> Creature {
-        let parts = source.parts.map().iter()
+        let parts = source.parts().map().iter()
             .map(|(part_id, part)| (*part_id, Part::new(*part_id, id, part)))
             .collect();
         Creature {
             id,
             parts,
-            curAp: source.cur_ap,
-            curMp: source.cur_mp,
+            curAp: source.cur_ap(),
+            curMp: source.cur_mp(),
         }
     }
     fn js(&self) -> JsValue { to_js_value(&self) }

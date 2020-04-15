@@ -236,9 +236,10 @@ impl World {
             //   - system mods always execute last
             //   - seems like it would be elegant
             HitCreature { id, damage } => {
+                /*
                 let creature = self.creatures.get_mut(&id).ok_or(Error::NoSuchCreature)?;
                 let mut rng = thread_rng();
-                let (part_id, part) = creature.parts.iter_mut().choose(&mut rng).unwrap();
+                let (part_id, part) = creature.parts().iter_mut().choose(&mut rng).unwrap();
                 let damage = std::cmp::min(part.cur_hp, damage);
                 let new_hp = std::cmp::max(0, part.cur_hp - damage);
                 if new_hp == part.cur_hp {
@@ -260,6 +261,8 @@ impl World {
                     }
                 }
                 return Ok(out);
+                */
+                return Ok(vec![Event::Nothing]);
             }
         }
     }
@@ -271,7 +274,7 @@ impl World {
                 Some(c) => c,
                 None => return vec![],
             };
-            (creature.max_ap() - creature.cur_ap, creature.max_mp() - creature.cur_mp)
+            (creature.max_ap() - creature.cur_ap(), creature.max_mp() - creature.cur_mp())
         };
         if fill_ap > 0 {
             events.extend(self.execute(&Action::ToCreature {

@@ -9,10 +9,10 @@ use crate::{
 
 #[derive(Debug, Clone, Serialize)]
 pub struct Creature {
-    pub parts: IdMap<Part>,
-    pub cur_ap: i32,
-    pub cur_mp: i32,
-    pub dead: bool,
+    parts: IdMap<Part>,
+    cur_ap: i32,
+    cur_mp: i32,
+    dead: bool,
 }
 
 impl Creature {
@@ -28,6 +28,11 @@ impl Creature {
     }
 
     // Accessors
+
+    pub fn parts(&self) -> &IdMap<Part> { &self.parts }
+    pub fn cur_ap(&self) -> i32 { self.cur_ap }
+    pub fn cur_mp(&self) -> i32 { self.cur_mp }
+    pub fn dead(&self) -> bool { self.dead }
 
     pub fn cards(&self) -> impl Iterator<Item=(Id<Part>, Id<Card>, &Card)> {
         self.parts.map().iter()
@@ -52,7 +57,7 @@ impl Creature {
     // Mutators
 
     pub fn resolve(&mut self, action: &CreatureAction) -> Result<Vec<CreatureEvent>> {
-        self.check_alive()?;
+        if self.dead { return Err(Error::DeadCreature); }
         use CreatureAction::*;
         use CreatureEvent::*;
         match *action {
@@ -76,25 +81,6 @@ impl Creature {
             }
         }
     }
-
-    pub fn spend_ap(&mut self, ap: i32) -> Result<()> {
-        self.check_alive()?;
-        if ap > self.cur_ap { return Err(Error::NotEnough); }
-        self.cur_ap -= ap;
-        Ok(())
-    }
-
-    pub fn spend_mp(&mut self, mp: i32) -> Result<()> {
-        self.check_alive()?;
-        if mp > self.cur_mp { return Err(Error::NotEnough); }
-        self.cur_mp -= mp;
-        Ok(())
-    }
-
-    fn check_alive(&self) -> Result<()> {
-        if self.dead { return Err(Error::DeadCreature); }
-        Ok(())
-    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, TsData)]
@@ -103,12 +89,14 @@ pub enum CreatureAction {
     SpendAP { ap: i32 },
     GainMP { mp: i32 },
     SpendMP { mp: i32 },
+    //ToPart { id: Id<Part>, action: PartAction }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, TsData)]
 pub enum CreatureEvent {
     ChangeAP { delta: i32 },
     ChangeMP { delta: i32 },
+    //OnPart { id: Id<Part>, event: PartEvent }
 }
 
 // TODO: PartAction/Event => system mod for HitCreature
