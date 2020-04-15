@@ -3,7 +3,7 @@ use serde::{Deserialize, Serialize};
 use ts_data_derive::TsData;
 use wasm_bindgen::prelude::wasm_bindgen;
 use crate::{
-    creature::{Creature, CreatureAction, CreatureEvent, Part},
+    creature::{Creature, CreatureAction, CreatureEvent},
     error::Error,
     id_map::Id,
     serde_empty,
@@ -14,7 +14,7 @@ pub enum Action {
     #[serde(with = "serde_empty")]
     Nothing,
     MoveCreature { id: Id<Creature>, to: Hex },
-    HitCreature { id: Id<Creature>, damage: i32 },
+    //HitCreature { id: Id<Creature>, damage: i32 },
     ToCreature { id: Id<Creature>, action: CreatureAction },
 }
 
@@ -24,9 +24,6 @@ pub enum Event {
     Nothing,
     Failed { action: Action, reason: String },
     CreatureMoved { id: Id<Creature>, from: Hex, to: Hex, },
-    ChangeHP { creature: Id<Creature>, part: Id<Part>, delta: i32 },
-    PartDied { creature: Id<Creature>, part: Id<Part> },
-    CreatureDied { id: Id<Creature> },
     OnCreature { id: Id<Creature>, event: CreatureEvent },
 }
 

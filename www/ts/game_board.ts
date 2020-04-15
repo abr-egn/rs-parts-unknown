@@ -49,12 +49,13 @@ export class GameBoard {
             if (data = event.CreatureMoved) {
                 await this._moveCreatureTo(data.id, hexToPixel(data.to))
             }
-            if (data = event.ChangeHP) {
+            if (data = event.OnCreature?.event.OnPart?.event.ChangeHP) {
                 const FLOAT_SPEED = 10.0;
 
-                const creature = this._cache.creatures.get(data.creature)!;
-                const part = creature.parts.get(data.part)!;
-                let point = this._creaturePos.get(data.creature)!;
+                const creature_id = event.OnCreature.id;
+                const creature = this._cache.creatures.get(creature_id)!;
+                const part = creature.parts.get(event.OnCreature.event.OnPart.id)!;
+                let point = this._creaturePos.get(creature_id)!;
                 const sign = data.delta < 0 ? "-" : "+";
                 let float: FloatText = {
                     pos: new DOMPoint(point.x, point.y),
@@ -146,10 +147,12 @@ export class GameBoard {
             if (p.action.MoveCreature) {
                 throb.push(p.action.MoveCreature.to);
             }
+            /* TODO(hit preview)
             if (p.action.HitCreature) {
                 // TODO: floating text
                 throb.push(this._cache.creatureHex.get(p.action.HitCreature.id)!);
             }
+            */
         }
         for (let hex of throb) {
             this._draw.throb(hex, this._tsMillis);

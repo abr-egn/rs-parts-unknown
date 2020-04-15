@@ -68,7 +68,8 @@ export class Highlight {
                 } else if (tc = act.action.SpendMP) {
                     this._addDelta(act.id, "MP", -tc.mp);
                 }
-            } else if (act = prev.action.HitCreature) {
+            }/* TODO(hit preview)
+            else if (act = prev.action.HitCreature) {
                 const hex = window.game.world.getCreatureHex(act.id)!;
                 this._float.push({
                     text: `-${act.damage} HP`,
@@ -76,6 +77,7 @@ export class Highlight {
                     style: "#FF0000",
                 });
             }
+            */
         }
     }
     get stats(): Readonly<StatMap> { return this._stats; }

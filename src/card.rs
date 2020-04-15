@@ -142,8 +142,16 @@ impl Behavior for Shoot {
             _ => false,
         }
     }
-    fn preview(&self, world: &World, target: Hex) -> Vec<Action> {
+    fn preview(&self, _world: &World, _target: Hex) -> Vec<Action> {
+        vec![]
+    }
+    fn apply(&self, world: &mut World, target: Hex) -> Vec<Event> {
         let target_id = world.map().tiles().get(&target).unwrap().creature.unwrap();
-        vec![Action::HitCreature { id: target_id, damage: self.damage }]
+        let creature = world.creatures().map().get(&target_id).unwrap();
+        let action = Action::ToCreature {
+            id: target_id,
+            action: creature.hit_action(self.damage),
+        };
+        world.execute(&action)
     }
 }

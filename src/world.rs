@@ -3,10 +3,9 @@ use std::{
     iter::FromIterator,
 };
 use hex::{self, Hex};
-use rand::prelude::*;
 use crate::{
     card::{Shoot, Walk},
-    creature::{self, Creature, CreatureAction, PartAction},
+    creature::{self, Creature, CreatureAction},
     error::{Error, Result},
     event::{Action, Event, Mod, ModId, Trigger, TriggerId},
     id_map::{Id, IdMap},
@@ -206,35 +205,13 @@ impl World {
 
     fn apply_mods(&mut self, action: &Action) -> Action {
         let mut modded = action.clone();
-        if let Some(new) = self.apply_system_mod(&mut modded) {
-            self.tracer.as_ref().map(|t| t.mod_action("SYSTEM", &new));
-            modded = new;
-        }
+        // TODO: non-arbitrary order
         for (_, m) in self.mods.iter_mut() {
             if !m.applies(&modded) { continue; }
             m.apply(&mut modded);
             self.tracer.as_ref().map(|t| t.mod_action(&m.name(), &modded));
         }
         modded
-    }
-
-    fn apply_system_mod(&self, action: &Action) -> Option<Action> {
-        use Action::*;
-        match *action {
-            HitCreature { id, damage } => {
-                let creature = self.creatures.map().get(&id)?;
-                let mut rng = thread_rng();
-                let part_id = creature.parts().map().keys().choose(&mut rng)?;
-                return Some(ToCreature { 
-                    id,
-                    action: CreatureAction::ToPart {
-                        id: *part_id,
-                        action: PartAction::Hit { damage },
-                    }
-                });
-            }
-            _ => return None,
-        }
     }
 
     fn resolve(&mut self, action: &Action) -> Result<Vec<Event>> {
@@ -252,41 +229,6 @@ impl World {
                     cevs.into_iter().map(|cev| Event::OnCreature { id, event: cev }).collect()
                 });
             },
-            // TODO: this setup means there can't be mods on part damage
-            // instead, this should pick the part and then resolve the part damage action
-            // however, that would not play nice with effect resolution
-            // possible answer: apply this as a "system" mod?
-            //   - system mods always execute last
-            //   - seems like it would be elegant
-            HitCreature { .. } => {
-                return Err(Error::InvalidAction);
-                /*
-                let creature = self.creatures.get_mut(&id).ok_or(Error::NoSuchCreature)?;
-                let mut rng = thread_rng();
-                let part_id = creature.parts().map().keys().choose(&mut rng).unwrap();
-                let damage = std::cmp::min(part.cur_hp, damage);
-                let new_hp = std::cmp::max(0, part.cur_hp - damage);
-                if new_hp == part.cur_hp {
-                    return Ok(vec![Event::Nothing]);
-                }
-                part.cur_hp = new_hp;
-                let mut out = vec![Event::ChangeHP {
-                    creature: id,
-                    part: *part_id,
-                    delta: -damage,
-                }];
-                // TODO: find a better place for this
-                if part.cur_hp <= 0 && !part.dead {
-                    part.dead = true;
-                    out.push(Event::PartDied { creature: id, part: *part_id });
-                    if part.vital && !creature.dead {
-                        creature.dead = true;
-                        out.push(Event::CreatureDied { id });
-                    }
-                }
-                return Ok(out);
-                */
-            }
         }
     }
 

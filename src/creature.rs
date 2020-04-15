@@ -1,3 +1,4 @@
+use rand::prelude::*;
 use serde::{Deserialize, Serialize};
 use ts_data_derive::TsData;
 use wasm_bindgen::prelude::wasm_bindgen;
@@ -53,6 +54,15 @@ impl Creature {
         self.parts.map().values()
             .map(|part| part.mp)
             .sum()
+    }
+
+    pub fn hit_action(&self, damage: i32) -> CreatureAction {
+        let mut rng = thread_rng();
+        let part_id = self.parts.map().keys().choose(&mut rng).unwrap();
+        CreatureAction::ToPart {
+            id: *part_id,
+            action: PartAction::Hit { damage },
+        }
     }
 
     // Mutators
