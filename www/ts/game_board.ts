@@ -1,10 +1,12 @@
 import {
     Creature, Event, Hex, Id, Tile, World,
 } from "../wasm";
+
 import {
     Draw, FloatText,
     hexToPixel, pixelToHex,
 } from "./draw";
+import {Highlight} from "./highlight";
 import * as states from "./states";
 
 export class GameBoard {
@@ -126,7 +128,7 @@ export class GameBoard {
             }
         }
 
-        this._drawHighlight(this._data.get(states.Highlight));
+        this._drawHighlight(this._data.get(Highlight));
 
         for (let float of this._floatText) {
             this._draw.floatText(float);
@@ -140,7 +142,7 @@ export class GameBoard {
         window.requestAnimationFrame((ts) => this._frame(ts));
     }
 
-    private _drawHighlight(hi?: Readonly<states.Highlight>) {
+    private _drawHighlight(hi?: Readonly<Highlight>) {
         if (!hi) { return; }
         for (let bound of hi.range) {
             this._draw.boundary(bound);

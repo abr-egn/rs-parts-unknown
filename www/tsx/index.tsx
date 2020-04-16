@@ -2,6 +2,8 @@ import * as React from "react";
 import * as ReactDOM from "react-dom";
 
 import {Card, Creature, World} from "../wasm";
+
+import {Highlight, Stat} from "../ts/highlight";
 import {Active} from "../ts/stack";
 import * as states from "../ts/states";
 import {UiData} from "../ts/ui_data";
@@ -17,7 +19,7 @@ function Index(props: {
 }): JSX.Element {
   const world = props.world;
   const base = props.data.get(states.Base.UI);
-  const stats = props.data.get(states.Highlight)?.stats;
+  const stats = props.data.get(Highlight)?.stats;
   let creatures = [];
   if (base?.selected) {
     for (let id of base.selected.keys()) {
@@ -47,7 +49,7 @@ function Index(props: {
 
 function Creature(props: {
   creature: Creature,
-  stats?: Map<states.Stat, number>,
+  stats?: Map<Stat, number>,
 }): JSX.Element {
   let apDelta = props.stats?.get("AP") || 0;
   const apStyle: React.CSSProperties = {};
@@ -87,7 +89,7 @@ function Player(props: {
   player: Creature,
   active?: Active,
   play?: states.PlayCard.UI,
-  stats?: Map<states.Stat, number>,
+  stats?: Map<Stat, number>,
 }): JSX.Element {
   const cards: Card[] = [];
   if (props.player) {
