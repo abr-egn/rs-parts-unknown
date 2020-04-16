@@ -48,14 +48,18 @@ export class Highlight {
 
     private _stats: StatMap = new Map();
     private _float: FloatText[] = [];
-    private _preview: Readonly<Preview[]> = [];
+    private _throb: Hex[] = [];
 
-    get preview(): Readonly<Preview[]> { return this._preview; }
-    set preview(value: Readonly<Preview[]>) {
-        this._preview = value;
+    get stats(): Readonly<StatMap> { return this._stats; }
+    get float(): Readonly<FloatText[]> { return this._float; }
+    get throb(): Readonly<Hex[]> { return this._throb; }
+    
+    setPreview(preview: Readonly<Preview[]>) {
         this._stats = new Map();
         this._float = [];
-        for (let prev of this._preview) {
+        this._throb = [];
+        for (let prev of preview) {
+            // TODO: show p.affects
             let act;
             if (act = prev.action.ToCreature) {
                 let tc;
@@ -68,8 +72,12 @@ export class Highlight {
                 } else if (tc = act.action.SpendMP) {
                     this._addDelta(act.id, "MP", -tc.mp);
                 }
-            }/* TODO(hit preview)
+            } else if (act = prev.action.MoveCreature) {
+                this._throb.push(prev.action.MoveCreature.to);
+            }
+            /* TODO(hit preview)
             else if (act = prev.action.HitCreature) {
+                throb.push(this._cache.creatureHex.get(p.action.HitCreature.id)!);
                 const hex = window.game.world.getCreatureHex(act.id)!;
                 this._float.push({
                     text: `-${act.damage} HP`,
@@ -80,8 +88,6 @@ export class Highlight {
             */
         }
     }
-    get stats(): Readonly<StatMap> { return this._stats; }
-    get float(): Readonly<FloatText[]> { return this._float; }
 
     private _addDelta(id: Id<Creature>, stat: Stat, delta: number) {
         let c = this.stats.get(id);
@@ -155,7 +161,7 @@ export class PlayCard extends State {
         this.update((draft) => {
             const hi = draft.build(Highlight);
             hi.hexes = highlight;
-            hi.preview = preview;
+            hi.setPreview(preview);
         });
     }
 
@@ -239,7 +245,7 @@ export class MovePlayer extends State {
         }
         this.update((draft) => {
             const hi = draft.build(Highlight);
-            hi.preview = preview;
+            hi.setPreview(preview);
         });
     }
     onTileClicked(hex: Hex) {

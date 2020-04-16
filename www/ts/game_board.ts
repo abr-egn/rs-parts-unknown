@@ -140,25 +140,6 @@ export class GameBoard {
         window.requestAnimationFrame((ts) => this._frame(ts));
     }
 
-    private _drawPreview(preview: readonly states.Preview[]) {
-        let throb: Hex[] = [];
-        for (let p of preview) {
-            // TODO: show p.affects
-            if (p.action.MoveCreature) {
-                throb.push(p.action.MoveCreature.to);
-            }
-            /* TODO(hit preview)
-            if (p.action.HitCreature) {
-                // TODO: floating text
-                throb.push(this._cache.creatureHex.get(p.action.HitCreature.id)!);
-            }
-            */
-        }
-        for (let hex of throb) {
-            this._draw.throb(hex, this._tsMillis);
-        }
-    }
-
     private _drawHighlight(hi?: Readonly<states.Highlight>) {
         if (!hi) { return; }
         for (let bound of hi.range) {
@@ -167,7 +148,9 @@ export class GameBoard {
         for (let hex of hi.hexes) {
             this._draw.focusedHex(hex);
         }
-        this._drawPreview(hi.preview);
+        for (let hex of hi.throb) {
+            this._draw.throb(hex, this._tsMillis);
+        }
         for (let float of hi.float) {
             this._draw.floatText(float);
         }
