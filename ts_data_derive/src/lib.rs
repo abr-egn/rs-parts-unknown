@@ -191,6 +191,7 @@ impl VisitMut for TypeMapper {
             "i32" => replace_first(path, "number"),
             "String" => replace_first(path, "string"),
             "ModId" | "TriggerId" => replace_first(path, "number"),
+            "bool" => replace_first(path, "boolean"),
 
             _ => {
                 self.error = Some(Error {

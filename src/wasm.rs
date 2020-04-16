@@ -262,6 +262,7 @@ pub struct Creature {
     parts: HashMap<Id<creature::Part>, Part>,
     curAp: i32,
     curMp: i32,
+    dead: bool,
 }
 
 impl Creature {
@@ -274,6 +275,7 @@ impl Creature {
             parts,
             curAp: source.cur_ap(),
             curMp: source.cur_mp(),
+            dead: source.dead(),
         }
     }
     fn js(&self) -> JsValue { to_js_value(&self) }
@@ -289,6 +291,7 @@ pub struct Part {
     ap: i32,
     maxHp: i32,
     curHp: i32,
+    dead: bool,
 }
 
 #[allow(non_snake_case)]
@@ -307,6 +310,7 @@ impl Part {
             ap: source.ap,
             maxHp: source.max_hp,
             curHp: source.cur_hp,
+            dead: source.dead,
         }
     }
 }

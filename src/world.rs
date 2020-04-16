@@ -77,7 +77,9 @@ impl World {
         if player.dead() {
             return GameState::Lost;
         }
-        if self.creatures.iter().all(|(&id, c)| id != self.player_id && c.dead()) {
+        if self.creatures.iter()
+            .filter(|(&id, _)| id != self.player_id)
+            .all(|(_, c)| c.dead()) {
             return GameState::Won;
         }
         GameState::Play

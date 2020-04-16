@@ -92,14 +92,18 @@ impl Creature {
             }
             ToPart { id, ref action } => {
                 let part = self.parts.get_mut(&id).ok_or(Error::NoSuchPart)?;
-                return part.resolve(action).map(|pevs| {
+                let mut self_died = false;
+                let out = part.resolve(action).map(|pevs| {
                     let died = pevs.iter().any(|pev| *pev == PartEvent::Died);
                     let mut out: Vec<_> = pevs.into_iter().map(|pev| CreatureEvent::OnPart { id, event: pev }).collect();
-                    if died && part.vital {
+                    if died && part.vital && !self_died {
+                        self_died = true;
                         out.push(CreatureEvent::Died);
                     }
                     out
                 });
+                if self_died { self.dead = true; }
+                out
             }
         }
     }
@@ -123,8 +127,7 @@ pub enum CreatureEvent {
     Died,
 }
 
-// TODO: PartAction/Event => system mod for HitCreature
-
+// TODO: read-only
 #[derive(Debug, Clone, Serialize)]
 pub struct Part {
     pub name: String,

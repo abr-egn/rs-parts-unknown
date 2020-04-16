@@ -6,6 +6,7 @@ import {
 import {Highlight, Preview} from "./highlight";
 import {State} from "./stack";
 
+// TODO: selected doesn't get updated on action/turn end
 export class Base extends State {
     onTileClicked(hex: Hex) {
         const world = window.game.world;
@@ -187,7 +188,7 @@ export class MovePlayer extends State {
 export class GameOver extends State {
     constructor(private _state: GameState) { super(); }
     onPushed() {
-        this.update((draft) => draft.build(GameOver.UI, this._state));
+        this.update((draft) => { draft.build(GameOver.UI, this._state); });
     }
 }
 export namespace GameOver {
