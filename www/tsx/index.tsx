@@ -1,7 +1,7 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
-import {Card, Creature, World} from "../wasm";
+import {Card, Creature, World, GameState} from "../wasm";
 
 import {Highlight, Stat} from "../ts/highlight";
 import {Active} from "../ts/stack";
@@ -29,6 +29,11 @@ function Index(props: {
       }
     }
   }
+  const gameOverState = props.data.get(states.GameOver.UI)?.state;
+  let gameOver = undefined;
+  if (gameOverState) {
+    gameOver = <GameOver state={gameOverState}/>;
+  }
   return (
     <div>
       <canvas id="mainCanvas" tabIndex={1}></canvas>
@@ -43,6 +48,7 @@ function Index(props: {
       <div className="topright">
         {creatures}
       </div>
+      {gameOver}
     </div>
   );
 }
@@ -157,4 +163,14 @@ function CardList(props: {
     Cards:
     <ul>{list}</ul>
   </div>);
+}
+
+function GameOver(props: {state: GameState}): JSX.Element {
+  let text: string;
+  switch (props.state) {
+      case "Lost": text = "You Lost!"; break;
+      case "Won": text = "You Won!"; break;
+      default: text = `ERROR: ${props.state}`;
+  }
+  return <div className="gameOver uibox">{text}</div>;
 }

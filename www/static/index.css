@@ -32,3 +32,12 @@ div.topright {
     margin: 5px;
     padding: 5px;
 }
+
+.gameOver {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    z-index: 2;
+    background-color: rgba(0, 0, 0, 0.5);
+}

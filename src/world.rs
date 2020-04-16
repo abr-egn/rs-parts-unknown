@@ -73,6 +73,13 @@ impl World {
     }
 
     pub fn state(&self) -> GameState {
+        let player = self.creatures.get(self.player_id).unwrap();
+        if player.dead() {
+            return GameState::Lost;
+        }
+        if self.creatures.iter().all(|(&id, c)| id != self.player_id && c.dead()) {
+            return GameState::Won;
+        }
         GameState::Play
     }
 

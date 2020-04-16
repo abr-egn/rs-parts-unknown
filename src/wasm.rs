@@ -169,6 +169,11 @@ impl World {
             .collect()
     }
 
+    #[wasm_bindgen(skip_typescript)]
+    pub fn state(&self) -> JsValue /* GameState */ {
+        to_js_value(&self.wrapped.state())
+    }
+
     // Updates
 
     #[wasm_bindgen(skip_typescript)]
@@ -229,6 +234,7 @@ interface World {
     startPlay(card: Card): Behavior | undefined;
     affectsAction(action: Action): string[];
     path(from: Hex, to: Hex): Hex[];
+    state(): GameState;
 
     // Updates
 

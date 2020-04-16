@@ -1,5 +1,5 @@
 import {
-    Action, Behavior, Boundary, Card, Creature, Event, Hex, Id, World,
+    Action, Behavior, Boundary, Card, Creature, Event, GameState, Hex, Id, World,
     findBoundary,
 } from "../wasm";
 
@@ -118,12 +118,20 @@ class Update extends State {
     async onPushed() {
         await window.game.animateEvents(this._events);
         window.game.updateWorld(this._nextWorld);
-        window.game.stack.pop();
+        let state: GameState;
+        switch (state = window.game.world.state()) {
+            case "Play": {
+                window.game.stack.pop();
+                break;
+            }
+            default: {
+                window.game.stack.swap(new GameOver(state));
+            }
+        }
     }
 }
 
 export class EndTurn extends State {
-    constructor() { super(); }
     onPushed() {
         const [nextWorld, events] = window.game.world.npcTurn();
         window.game.stack.swap(new Update(events, nextWorld));
@@ -173,5 +181,17 @@ export class MovePlayer extends State {
         if (!this._hexes.some((h) => h.x == hex.x && h.y == hex.y)) { return; }
         const [next, events] = window.game.world.movePlayer(hex);
         window.game.stack.swap(new Update(events, next));
+    }
+}
+
+export class GameOver extends State {
+    constructor(private _state: GameState) { super(); }
+    onPushed() {
+        this.update((draft) => draft.build(GameOver.UI, this._state));
+    }
+}
+export namespace GameOver {
+    export class UI {
+        constructor(public state: GameState) { }
     }
 }
