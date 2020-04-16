@@ -81,7 +81,7 @@ impl World {
     #[wasm_bindgen(skip_typescript)]
     pub fn getCreature(&self, id: JsValue) -> JsValue {
         let id: Id<creature::Creature> = from_js_value(id);
-        self.wrapped.creatures().map().get(&id)
+        self.wrapped.creatures().get(id)
             .map_or(JsValue::undefined(), |c| Creature::new(id, c).js())
     }
 
@@ -107,7 +107,7 @@ impl World {
     #[wasm_bindgen(skip_typescript)]
     pub fn getCreatureRange(&self, id: JsValue) -> Array /* Hex[] */ {
         let id: Id<creature::Creature> = from_js_value(id);
-        let range = match self.wrapped.creatures().map().get(&id) {
+        let range = match self.wrapped.creatures().get(id) {
             Some(c) => c.cur_mp(),
             None => return Array::new(),
         };
@@ -123,7 +123,7 @@ impl World {
     #[wasm_bindgen(skip_typescript)]
     pub fn checkSpendAP(&self, creature_id: JsValue, ap: i32) -> bool {
         let id: Id<creature::Creature> = from_js_value(creature_id);
-        match self.wrapped.creatures().map().get(&id) {
+        match self.wrapped.creatures().get(id) {
             Some(c) => c.cur_ap() >= ap,
             None => false,
         }
@@ -132,9 +132,9 @@ impl World {
     #[wasm_bindgen(skip_typescript)]
     pub fn startPlay(&self, card: JsValue) -> Option<Behavior> {
         let card: Card = from_js_value(card);
-        let creature = self.wrapped.creatures().map().get(&card.creatureId)?;
-        let part = creature.parts().map().get(&card.partId)?;
-        let real_card = part.cards.map().get(&card.id)?;
+        let creature = self.wrapped.creatures().get(card.creatureId)?;
+        let part = creature.parts().get(card.partId)?;
+        let real_card = part.cards.get(card.id)?;
         Some(Behavior::new((real_card.start_play)(&self.wrapped, &card.creatureId)))
     }
 
@@ -144,14 +144,14 @@ impl World {
         let (mods, triggers) = self.wrapped.affects_action(&action);
         let out = Array::new();
         for mod_id in mods {
-            let m = match self.wrapped.mods().map().get(&mod_id) {
+            let m = match self.wrapped.mods().get(mod_id) {
                 Some(m) => m,
                 None => continue,
             };
             out.push(&JsValue::from(m.name()));
         }
         for trigger_id in triggers {
-            let t = match self.wrapped.triggers().map().get(&trigger_id) {
+            let t = match self.wrapped.triggers().get(trigger_id) {
                 Some(t) => t,
                 None => continue,
             };
@@ -260,7 +260,7 @@ pub struct Creature {
 
 impl Creature {
     fn new(id: Id<creature::Creature>, source: &creature::Creature) -> Creature {
-        let parts = source.parts().map().iter()
+        let parts = source.parts().iter()
             .map(|(part_id, part)| (*part_id, Part::new(*part_id, id, part)))
             .collect();
         Creature {
@@ -292,8 +292,8 @@ impl Part {
         creatureId: Id<creature::Creature>,
         source: &creature::Part,
     ) -> Self {
-        let cards = source.cards.map().iter()
-            .map(|(card_id, card)| (*card_id, Card::new(*card_id, id, creatureId, card)))
+        let cards = source.cards.iter()
+            .map(|(&card_id, card)| (card_id, Card::new(card_id, id, creatureId, card)))
             .collect();
         Part {
             id, creatureId, cards,

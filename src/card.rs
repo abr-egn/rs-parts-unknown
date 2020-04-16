@@ -147,7 +147,7 @@ impl Behavior for Shoot {
     }
     fn apply(&self, world: &mut World, target: Hex) -> Vec<Event> {
         let target_id = world.map().tiles().get(&target).unwrap().creature.unwrap();
-        let creature = world.creatures().map().get(&target_id).unwrap();
+        let creature = world.creatures().get(target_id).unwrap();
         let action = Action::ToCreature {
             id: target_id,
             action: creature.hit_action(self.damage),

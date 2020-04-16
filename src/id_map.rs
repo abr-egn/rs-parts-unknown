@@ -1,8 +1,13 @@
-use std::cmp::Ordering;
-use std::collections::HashMap;
-use std::fmt;
-use std::hash::{Hash, Hasher};
-use std::marker::PhantomData;
+use std::{
+    cmp::Ordering,
+    collections::{
+        HashMap,
+        hash_map::{Iter, Keys, Values},
+    },
+    fmt,
+    hash::{Hash, Hasher},
+    marker::PhantomData,
+};
 
 use serde::{Deserialize, Serialize};
 
@@ -24,7 +29,10 @@ impl<T> IdMap<T> {
         }
     }
 
-    pub fn map(&self) -> &HashMap<Id<T>, T> { &self.map }
+    pub fn get(&self, id: Id<T>) -> Option<&T> { self.map.get(&id) }
+    pub fn iter(&self) -> Iter<Id<T>, T> { self.map.iter() }
+    pub fn keys(&self) -> Keys<Id<T>, T> { self.map.keys() }
+    pub fn values(&self) -> Values<Id<T>, T> { self.map.values() }
 
     pub fn add(&mut self, value: T) -> Id<T> {
         let id = self.next_id.inc();
@@ -35,6 +43,12 @@ impl<T> IdMap<T> {
     pub fn values_mut(&mut self) -> impl Iterator<Item=&mut T> { self.map.values_mut() }
     pub fn iter_mut(&mut self) -> impl Iterator<Item=(&Id<T>, &mut T)> { self.map.iter_mut() }
     pub fn remove(&mut self, id: &Id<T>) -> Option<T> { self.map.remove(id) }
+}
+
+impl<'a, T> std::iter::IntoIterator for &'a IdMap<T> {
+    type Item = (&'a Id<T>, &'a T);
+    type IntoIter = Iter<'a, Id<T>, T>;
+    fn into_iter(self) -> Self::IntoIter { self.iter() }
 }
 
 impl<T> std::iter::FromIterator<T> for IdMap<T> {

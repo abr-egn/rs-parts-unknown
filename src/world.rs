@@ -61,11 +61,11 @@ impl World {
     pub fn triggers(&self) -> &IdMap<Box<dyn Trigger>> { &self.triggers }
 
     pub fn affects_action(&self, action: &Action) -> (Vec<ModId>, Vec<TriggerId>) {
-        let mods = self.mods.map().iter()
+        let mods = self.mods.iter()
             .filter(|(_, m)| m.applies(action))
             .map(|(id, _)| *id)
             .collect();
-        let triggers = self.triggers.map().iter()
+        let triggers = self.triggers.iter()
             .filter(|(_, t)| t.applies(action))
             .map(|(id, _)| *id)
             .collect();
@@ -127,12 +127,12 @@ impl World {
 
         // Refill player ap/mp
         let player_id = self.player_id;
-        events.extend(self.refill(&player_id));
+        events.extend(self.refill(player_id));
         
         // Move NPCs
         let player_hex = self.map.creatures().get(&self.player_id).unwrap();
         let mut moves = vec![];
-        for &id in self.creatures.map().keys() {
+        for &id in self.creatures.keys() {
             if id == self.player_id { continue }
             let hex = match self.map.creatures().get(&id) {
                 Some(v) => v,
@@ -156,11 +156,11 @@ impl World {
         }
 
         // Refill NPC ap/mp
-        let refills: Vec<Id<Creature>> = self.creatures.map().keys().cloned()
+        let refills: Vec<Id<Creature>> = self.creatures.keys().cloned()
             .filter(|&id| id != self.player_id)
             .collect();
         for id in &refills {
-            events.extend(self.refill(id));
+            events.extend(self.refill(*id));
         }
 
         events
@@ -207,7 +207,7 @@ impl World {
 
     fn trigger_order(&self) -> Vec<TriggerId> {
         // TODO: non-arbitrary
-        self.triggers.map().keys().cloned().collect()
+        self.triggers.keys().cloned().collect()
     }
 
     fn apply_mods(&mut self, action: &Action) -> Action {
@@ -239,10 +239,10 @@ impl World {
         }
     }
 
-    fn refill(&mut self, id: &Id<Creature>) -> Vec<Event> {
+    fn refill(&mut self, id: Id<Creature>) -> Vec<Event> {
         let mut events = vec![];
         let (fill_ap, fill_mp) = {
-            let creature = match self.creatures.map().get(id) {
+            let creature = match self.creatures.get(id) {
                 Some(c) => c,
                 None => return vec![],
             };
@@ -250,12 +250,12 @@ impl World {
         };
         if fill_ap > 0 {
             events.extend(self.execute(&Action::ToCreature {
-                id: *id, action: CreatureAction::GainAP { ap: fill_ap }
+                id, action: CreatureAction::GainAP { ap: fill_ap }
             }));
         }
         if fill_mp > 0 {
             events.extend(self.execute(&Action::ToCreature {
-                id: *id, action: CreatureAction::GainMP { mp: fill_mp }
+                id, action: CreatureAction::GainMP { mp: fill_mp }
             }));
         }
         events

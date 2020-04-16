@@ -37,28 +37,28 @@ impl Creature {
     pub fn dead(&self) -> bool { self.dead }
 
     pub fn cards(&self) -> impl Iterator<Item=(Id<Part>, Id<Card>, &Card)> {
-        self.parts.map().iter()
+        self.parts.iter()
             .flat_map(|(&id, part)|
-                part.cards.map().iter()
+                part.cards.iter()
                     .map(move |(&cid, card)| (id, cid, card))
             )
     }
 
     pub fn max_ap(&self) -> i32 {
-        self.parts.map().values()
+        self.parts.values()
             .map(|part| part.ap)
             .sum()
     }
 
     pub fn max_mp(&self) -> i32 {
-        self.parts.map().values()
+        self.parts.values()
             .map(|part| part.mp)
             .sum()
     }
 
     pub fn hit_action(&self, damage: i32) -> CreatureAction {
         let mut rng = thread_rng();
-        let part_id = self.parts.map().keys().choose(&mut rng).unwrap();
+        let part_id = self.parts.keys().choose(&mut rng).unwrap();
         CreatureAction::ToPart {
             id: *part_id,
             action: PartAction::Hit { damage },
