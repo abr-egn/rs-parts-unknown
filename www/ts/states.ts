@@ -115,11 +115,10 @@ class Update extends State {
         private _nextWorld: World,
     ) { super(); }
 
-    onPushed() {
-        window.game.animateEvents(this._events).then(() => {
-            window.game.updateWorld(this._nextWorld);
-            window.game.stack.pop();
-        });
+    async onPushed() {
+        await window.game.animateEvents(this._events);
+        window.game.updateWorld(this._nextWorld);
+        window.game.stack.pop();
     }
 }
 

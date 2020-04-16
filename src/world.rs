@@ -3,6 +3,9 @@ use std::{
     iter::FromIterator,
 };
 use hex::{self, Hex};
+use serde::Serialize;
+use ts_data_derive::TsData;
+use wasm_bindgen::prelude::wasm_bindgen;
 use crate::{
     card::{Shoot, Walk},
     creature::{self, Creature, CreatureAction},
@@ -67,6 +70,10 @@ impl World {
             .map(|(id, _)| *id)
             .collect();
         (mods, triggers)
+    }
+
+    pub fn state(&self) -> GameState {
+        GameState::Play
     }
 
     // Mutators
@@ -253,6 +260,13 @@ impl World {
         }
         events
     }
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TsData)]
+pub enum GameState {
+    Play,
+    Won,
+    Lost,
 }
 
 pub trait Tracer: std::fmt::Debug + TracerClone {
