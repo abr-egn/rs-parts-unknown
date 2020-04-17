@@ -144,20 +144,25 @@ impl World {
         let mut npc_plays = vec![];
         for (&id, creature) in &self.creatures {
             if let Some(npc) = creature.npc() {
-                npc_plays.push((id, npc.next_motion().clone(), npc.next_action().clone()));
+                npc_plays.push((id, npc.next_motion().cloned(), npc.next_action().cloned()));
             }
         }
 
         for (id, motion, action) in npc_plays {
-            match motion {
-                Motion::ToMelee => match self.move_to_melee(id) {
-                    Ok(es) => events.extend(es),
-                    Err(e) => warn!("NPC movement failed: {}", e),
+            if let Some(m) = motion {
+                match m {
+                    Motion::ToMelee => match self.move_to_melee(id) {
+                        Ok(es) => events.extend(es),
+                        Err(e) => warn!("NPC movement failed: {}", e),
+                    }
                 }
             }
-            match self.act_npc(id, action) {
-                Ok(es) => events.extend(es),
-                Err(e) => warn!("NPC action failed: {}", e),
+
+            if let Some(a) = action {
+                match self.act_npc(id, a) {
+                    Ok(es) => events.extend(es),
+                    Err(e) => warn!("NPC action failed: {}", e),
+                }
             }
         }
 

@@ -7,14 +7,14 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct Npc {
-    next_motion: Motion,
-    next_action: Action,
+    next_motion: Option<Motion>,
+    next_action: Option<Action>,
     behavior: Box<dyn Behavior>,
 }
 
 impl Npc {
-    pub fn next_motion(&self) -> &Motion { &self.next_motion }
-    pub fn next_action(&self) -> &Action { &self.next_action }
+    pub fn next_motion(&self) -> Option<&Motion> { self.next_motion.as_ref() }
+    pub fn next_action(&self) -> Option<&Action> { self.next_action.as_ref() }
 
     pub fn update(&mut self, world: &World, id: Id<Creature>) {
         let (motion, action) = self.behavior.next(world, id);
@@ -44,7 +44,7 @@ pub enum ActionKind {
 }
 
 trait Behavior: BehaviorClone + std::fmt::Debug + Send {
-    fn next(&mut self, world: &World, id: Id<Creature>) -> (Motion, Action);
+    fn next(&mut self, world: &World, id: Id<Creature>) -> (Option<Motion>, Option<Action>);
 }
 
 trait BehaviorClone {
@@ -61,4 +61,30 @@ where T: 'static + Behavior + Clone,
 
 impl Clone for Box<dyn Behavior> {
     fn clone(&self) -> Self { self.clone_box() }
+}
+
+#[derive(Debug, Clone)]
+pub struct Monopod {}
+
+impl Behavior for Monopod {
+    fn next(&mut self, world: &World, id: Id<Creature>) -> (Option<Motion>, Option<Action>) {
+        let action = find_card(world, id, "Kick")
+            .map(|(part, card)| Action {
+                kind: ActionKind::Attack,
+                part, card,
+            });
+        (Some(Motion::ToMelee), action)
+    }
+}
+
+fn find_card(world: &World, id: Id<Creature>, name: &str) -> Option<(Id<Part>, Id<Card>)> {
+    let creature = world.creatures().get(id)?;
+    for (&part_id, part) in creature.parts() {
+        for (&card_id, card) in &part.cards {
+            if card.name == name {
+                return Some((part_id, card_id));
+            }
+        }
+    }
+    return None;
 }
