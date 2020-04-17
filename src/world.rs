@@ -13,6 +13,7 @@ use crate::{
     event::{Action, Event, Mod, ModId, Trigger, TriggerId},
     id_map::{Id, IdMap},
     map::{Tile, Map, Space},
+    npc::{self, Motion},
 };
 
 #[derive(Debug, Clone)]
@@ -139,6 +140,23 @@ impl World {
         events.extend(self.refill(player_id));
         
         // Move NPCs
+        let mut npc_plays = vec![];
+        for (&id, creature) in &self.creatures {
+            if let Some(npc) = creature.npc() {
+                npc_plays.push((id, npc.next_motion().clone(), npc.next_action().clone()));
+            }
+        }
+        
+        for (id, motion, action) in npc_plays {
+            match motion {
+                Motion::ToMelee => match self.move_to_melee(id) {
+                    Ok(es) => events.extend(es),
+                    Err(_) => (),  // TODO: log?
+                }
+            }
+            // TODO: action
+        }
+        /*
         let player_hex = self.map.creatures().get(&self.player_id).unwrap();
         let mut moves = vec![];
         for &id in self.creatures.keys() {
@@ -163,6 +181,7 @@ impl World {
         for (id, to) in moves {
             events.extend(self.execute(&Action::MoveCreature { id, to }));
         }
+        */
 
         // Refill NPC ap/mp
         let refills: Vec<Id<Creature>> = self.creatures.keys().cloned()
@@ -268,6 +287,19 @@ impl World {
             }));
         }
         events
+    }
+
+    fn move_to_melee(&mut self, id: Id<Creature>) -> Result<Vec<Event>> {
+        let player_hex = self.map.creatures().get(&self.player_id)
+            .ok_or(Error::Obstructed)?;
+        let from = self.map.creatures().get(&id)
+            .ok_or(Error::Obstructed)?;
+        let mut near: Vec<_> = player_hex.neighbors()
+            .filter(|h| self.map.tiles().get(h).map_or(false, |t| t.is_open()))
+            .collect();
+        if near.is_empty() { return Err(Error::Obstructed); }
+        near.sort_by(|a, b| from.distance_to(*a).cmp(&from.distance_to(*b)));
+        Ok(self.move_creature(id, near[0]))
     }
 }
 

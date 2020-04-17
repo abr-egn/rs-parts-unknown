@@ -65,7 +65,7 @@ impl Map {
 
     pub fn path_to(&self, from: Hex, to: Hex) -> Result<Vec<Hex>> {
         let to_tile = self.tiles.get(&to).ok_or(Error::OutOfBounds)?;
-        if to_tile.space != Space::Empty || to_tile.creature.is_some() {
+        if !to_tile.is_open() {
             return Err(Error::Obstructed);
         }
         let tiles = &self.tiles;
@@ -73,7 +73,7 @@ impl Map {
             let mut out = vec![];
             for neighbor in hex.neighbors() {
                 match tiles.get(&neighbor) {
-                    Some(t) if is_open(t) => (),
+                    Some(t) if t.is_open() => (),
                     _ => continue,
                 }
                 out.push(neighbor)
@@ -86,7 +86,7 @@ impl Map {
         };
         for coord in path.iter().skip(1) {
             let tile = self.tiles.get(coord).ok_or(Error::OutOfBounds)?;
-            if !is_open(tile) {
+            if !tile.is_open() {
                 return Err(Error::Obstructed);
             }
         }
@@ -110,13 +110,6 @@ impl Map {
         self.tiles.get_mut(from).unwrap().creature = None;
         self.creatures.insert(creature_id, to);
         Ok(())
-    }
-}
-
-fn is_open(tile: &Tile) -> bool {
-    match tile {
-        Tile { space: Space::Empty, creature: None } => true,
-        _ => false,
     }
 }
 
@@ -190,6 +183,15 @@ fn vacant_or<K, V, E>(e: Entry<K, V>, err: E) -> std::result::Result<VacantEntry
 pub struct Tile {
     pub space: Space,
     pub creature: Option<Id<Creature>>,
+}
+
+impl Tile {
+    pub fn is_open(&self) -> bool {
+        match self {
+            Tile { space: Space::Empty, creature: None } => true,
+            _ => false,
+        }
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Serialize, TsData)]

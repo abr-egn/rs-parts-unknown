@@ -6,15 +6,17 @@ use crate::{
     card::Card,
     error::{Error, Result},
     id_map::{Id, IdMap},
+    npc::Npc,
     serde_empty,
 };
 
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub struct Creature {
     parts: IdMap<Part>,
     cur_ap: i32,
     cur_mp: i32,
     dead: bool,
+    npc: Option<Npc>,
 }
 
 impl Creature {
@@ -23,7 +25,7 @@ impl Creature {
         for part in parts {
             pids.add(part.clone());
         }
-        let mut out = Creature { parts: pids, cur_ap: 0, cur_mp: 0, dead: false };
+        let mut out = Creature { parts: pids, cur_ap: 0, cur_mp: 0, dead: false, npc: None };
         out.cur_ap = out.max_ap();
         out.cur_mp = out.max_mp();
         out
@@ -35,6 +37,7 @@ impl Creature {
     pub fn cur_ap(&self) -> i32 { self.cur_ap }
     pub fn cur_mp(&self) -> i32 { self.cur_mp }
     pub fn dead(&self) -> bool { self.dead }
+    pub fn npc(&self) -> Option<&Npc> { self.npc.as_ref() }
 
     pub fn cards(&self) -> impl Iterator<Item=(Id<Part>, Id<Card>, &Card)> {
         self.parts.iter()
@@ -128,7 +131,7 @@ pub enum CreatureEvent {
 }
 
 // TODO: read-only
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone)]
 pub struct Part {
     pub name: String,
     pub cards: IdMap<Card>,
