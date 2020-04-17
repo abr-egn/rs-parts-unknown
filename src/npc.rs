@@ -32,14 +32,15 @@ pub enum Motion {
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Action {
-    kind: ActionKind,
-    part: Id<Part>,
-    card: Id<Card>,
+    pub kind: ActionKind,
+    // TODO: allow redundancy
+    pub part: Id<Part>,
+    pub card: Id<Card>,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ActionKind {
-    Attack,
+    Attack,  // TODO: which part?
 }
 
 trait Behavior: BehaviorClone + std::fmt::Debug + Send {

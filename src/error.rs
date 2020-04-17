@@ -10,6 +10,8 @@ pub enum Error {
     NoSuchCreature,
     #[error("no such part")]
     NoSuchPart,
+    #[error("no such card")]
+    NoSuchCard,
     #[error("dead creature")]
     DeadCreature,
     #[error("dead part")]

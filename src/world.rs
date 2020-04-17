@@ -3,6 +3,7 @@ use std::{
     iter::FromIterator,
 };
 use hex::{self, Hex};
+use log::warn;
 use serde::Serialize;
 use ts_data_derive::TsData;
 use wasm_bindgen::prelude::wasm_bindgen;
@@ -12,7 +13,7 @@ use crate::{
     error::{Error, Result},
     event::{Action, Event, Mod, ModId, Trigger, TriggerId},
     id_map::{Id, IdMap},
-    map::{Tile, Map, Space},
+    map::{Map},
     npc::{self, Motion},
 };
 
@@ -146,42 +147,19 @@ impl World {
                 npc_plays.push((id, npc.next_motion().clone(), npc.next_action().clone()));
             }
         }
-        
+
         for (id, motion, action) in npc_plays {
             match motion {
                 Motion::ToMelee => match self.move_to_melee(id) {
                     Ok(es) => events.extend(es),
-                    Err(_) => (),  // TODO: log?
+                    Err(e) => warn!("NPC movement failed: {}", e),
                 }
             }
-            // TODO: action
-        }
-        /*
-        let player_hex = self.map.creatures().get(&self.player_id).unwrap();
-        let mut moves = vec![];
-        for &id in self.creatures.keys() {
-            if id == self.player_id { continue }
-            let hex = match self.map.creatures().get(&id) {
-                Some(v) => v,
-                None => continue,
-            };
-            let mut neighbors: Vec<_> = hex.neighbors()
-                .filter(|n| match self.map.tiles().get(n) {
-                    Some(Tile { space: Space::Empty, creature: None }) => true,
-                    _ => false,
-                })
-                .collect();
-            neighbors.sort_by(|a, b|
-                player_hex.distance_to(*a).cmp(&player_hex.distance_to(*b))
-            );
-            if let Some(&to) = neighbors.get(0) {
-                moves.push((id, to));
+            match self.act_npc(id, action) {
+                Ok(es) => events.extend(es),
+                Err(e) => warn!("NPC action failed: {}", e),
             }
         }
-        for (id, to) in moves {
-            events.extend(self.execute(&Action::MoveCreature { id, to }));
-        }
-        */
 
         // Refill NPC ap/mp
         let refills: Vec<Id<Creature>> = self.creatures.keys().cloned()
@@ -300,6 +278,26 @@ impl World {
         if near.is_empty() { return Err(Error::Obstructed); }
         near.sort_by(|a, b| from.distance_to(*a).cmp(&from.distance_to(*b)));
         Ok(self.move_creature(id, near[0]))
+    }
+
+    fn act_npc(&mut self, id: Id<Creature>, action: npc::Action) -> Result<Vec<Event>> {
+        let mut events = vec![];
+
+        let creature = self.creatures.get(id).ok_or(Error::NoSuchCreature)?;
+        let part = creature.parts().get(action.part).ok_or(Error::NoSuchPart)?;
+        let card = part.cards.get(action.card).ok_or(Error::NoSuchCard)?;
+        let card_behavior = (card.start_play)(&self, &id);
+        match action.kind {
+            npc::ActionKind::Attack => {
+                let &player_hex = self.map.creatures().get(&self.player_id).ok_or(Error::NoSuchCreature)?;
+                if !card_behavior.target_valid(&self, player_hex) {
+                    return Err(Error::InvalidAction);
+                }
+                events.extend(card_behavior.apply(self, player_hex));
+            }
+        }
+
+        Ok(events)
     }
 }
 
