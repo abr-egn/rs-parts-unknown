@@ -14,7 +14,7 @@ use crate::{
     event::{Action, Event, Mod, ModId, Trigger, TriggerId},
     id_map::{Id, IdMap},
     map::{Map},
-    npc::{Motion},
+    npc::{Motion, Monopod},
 };
 
 #[derive(Debug, Clone)]
@@ -44,14 +44,16 @@ impl World {
         map.place_at(enemy_id, Hex { x: -4, y: 1 }).unwrap();
         let enemy2_id = creatures.add(make_npc());
         map.place_at(enemy2_id, Hex { x: 4, y: -1 }).unwrap();
-        World {
+        let mut out = World {
             map: map,
             player_id: pc_id,
             creatures: creatures,
             mods: IdMap::new(),
             triggers: IdMap::new(),
             tracer: None,
-        }
+        };
+        out.update_npc_plans();
+        out
     }
 
     // Accessors
@@ -140,7 +142,7 @@ impl World {
         let player_id = self.player_id;
         events.extend(self.refill(player_id));
         
-        // Move NPCs
+        // NPC turns
         let mut npc_plays = vec![];
         for (&id, creature) in &self.creatures {
             if let Some(npc) = creature.npc() {
@@ -166,6 +168,8 @@ impl World {
                 }
             }
         }
+
+        self.update_npc_plans();
 
         // Refill NPC ap/mp
         let refills: Vec<Id<Creature>> = self.creatures.keys().cloned()
@@ -287,27 +291,21 @@ impl World {
         Ok(self.move_creature(id, near[0]))
     }
 
-    /*
-    fn act_npc(&mut self, id: Id<Creature>, action: npc::Action) -> Result<Vec<Event>> {
-        let mut events = vec![];
-
-        let creature = self.creatures.get(id).ok_or(Error::NoSuchCreature)?;
-        let part = creature.parts().get(action.part).ok_or(Error::NoSuchPart)?;
-        let card = part.cards.get(action.card).ok_or(Error::NoSuchCard)?;
-        let card_behavior = (card.start_play)(&self, &id);
-        match action.kind {
-            npc::ActionKind::Attack => {
-                let &player_hex = self.map.creatures().get(&self.player_id).ok_or(Error::NoSuchCreature)?;
-                if !card_behavior.target_valid(&self, player_hex) {
-                    return Err(Error::InvalidAction);
+    fn update_npc_plans(&mut self) {
+        let ids: Vec<Id<Creature>> = self.creatures.keys().cloned().collect();
+        for id in ids {
+            let mut npc = {
+                let creature = self.creatures.get(id).unwrap();
+                match creature.npc() {
+                    Some(n) => n.clone(),
+                    None => continue,
                 }
-                events.extend(card_behavior.apply(self, player_hex));
-            }
+            };
+            npc.update(self, id);
+            let creature = self.creatures.get_mut(&id).unwrap();
+            *creature.npc_mut().unwrap() = npc;
         }
-
-        Ok(events)
     }
-    */
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, TsData)]
@@ -370,7 +368,7 @@ fn make_player() -> Creature {
         dead: false,
     };
     let leg_r = leg_l.clone();
-    Creature::new(&[head, torso, arm_l, arm_r, leg_l, leg_r])
+    Creature::new(&[head, torso, arm_l, arm_r, leg_l, leg_r], None)
 }
 
 fn make_npc() -> Creature {
@@ -390,5 +388,5 @@ fn make_npc() -> Creature {
         vital: false,
         dead: false,
     };
-    Creature::new(&[head, foot])
+    Creature::new(&[head, foot], Some(Monopod::npc()))
 }

@@ -6,7 +6,7 @@ use crate::{
     card::Card,
     error::{Error, Result},
     id_map::{Id, IdMap},
-    npc::Npc,
+    npc::NPC,
     serde_empty,
 };
 
@@ -16,16 +16,16 @@ pub struct Creature {
     cur_ap: i32,
     cur_mp: i32,
     dead: bool,
-    npc: Option<Npc>,
+    npc: Option<NPC>,
 }
 
 impl Creature {
-    pub fn new(parts: &[Part]) -> Self {
+    pub fn new(parts: &[Part], npc: Option<NPC>) -> Self {
         let mut pids = IdMap::new();
         for part in parts {
             pids.add(part.clone());
         }
-        let mut out = Creature { parts: pids, cur_ap: 0, cur_mp: 0, dead: false, npc: None };
+        let mut out = Creature { parts: pids, cur_ap: 0, cur_mp: 0, dead: false, npc };
         out.cur_ap = out.max_ap();
         out.cur_mp = out.max_mp();
         out
@@ -37,7 +37,7 @@ impl Creature {
     pub fn cur_ap(&self) -> i32 { self.cur_ap }
     pub fn cur_mp(&self) -> i32 { self.cur_mp }
     pub fn dead(&self) -> bool { self.dead }
-    pub fn npc(&self) -> Option<&Npc> { self.npc.as_ref() }
+    pub fn npc(&self) -> Option<&NPC> { self.npc.as_ref() }
 
     pub fn cards(&self) -> impl Iterator<Item=(Id<Part>, Id<Card>, &Card)> {
         self.parts.iter()
@@ -110,6 +110,8 @@ impl Creature {
             }
         }
     }
+
+    pub fn npc_mut(&mut self) -> Option<&mut NPC> { self.npc.as_mut() }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, TsData)]

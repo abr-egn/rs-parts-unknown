@@ -1,19 +1,19 @@
 use crate::{
     creature::{Creature},
     error::{Error, Result},
-    event::Event,
+    event::{self, Event},
     id_map::Id,
     world::World,
 };
 
 #[derive(Debug, Clone)]
-pub struct Npc {
+pub struct NPC {
     next_motion: Option<Motion>,
     next_action: Option<Action>,
     behavior: Box<dyn Behavior>,
 }
 
-impl Npc {
+impl NPC {
     pub fn next_motion(&self) -> Option<&Motion> { self.next_motion.as_ref() }
     pub fn next_action(&self) -> Option<&Action> { self.next_action.as_ref() }
 
@@ -85,9 +85,22 @@ impl Behavior for Monopod {
 }
 
 impl Monopod {
+    pub fn npc() -> NPC {
+        NPC {
+            next_motion: None,
+            next_action: None,
+            behavior: Box::new(Monopod {}),
+        }
+    }
+
     fn kick(world: &mut World, id: Id<Creature>) -> Result<Vec<Event>> {
         check_run(world, id, "Fut", Range::Melee, 1)?;
-        unimplemented!()
+        let player = world.creatures().get(world.player_id()).unwrap();
+        let hit = player.hit_action(1);
+        Ok(world.execute(&event::Action::ToCreature {
+            id: world.player_id(),
+            action: hit,
+        }))
     }
 }
 
