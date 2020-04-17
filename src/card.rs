@@ -21,6 +21,7 @@ impl std::fmt::Debug for Card {
         f.debug_struct("Card")
             .field("name", &self.name)
             .field("ap_cost", &self.ap_cost)
+            .field("start_play", &(self.start_play as usize))
             .finish()
     }
 }

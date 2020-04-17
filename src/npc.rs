@@ -1,6 +1,7 @@
 use crate::{
-    card::Card,
-    creature::{Creature, Part},
+    creature::{Creature},
+    error::{Error, Result},
+    event::Event,
     id_map::Id,
     world::World,
 };
@@ -30,17 +31,24 @@ pub enum Motion {
     // TODO: ToCover,
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Clone)]
 pub struct Action {
     pub kind: ActionKind,
-    // TODO: allow redundancy
-    pub part: Id<Part>,
-    pub card: Id<Card>,
+    pub run: fn(&mut World, Id<Creature>) -> Result<Vec<Event>>,
+}
+
+impl std::fmt::Debug for Action {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Action")
+            .field("kind", &self.kind)
+            .field("run", &(self.run as usize))
+            .finish()
+    }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum ActionKind {
-    Attack,  // TODO: which part?
+    Attack,
 }
 
 trait Behavior: BehaviorClone + std::fmt::Debug + Send {
@@ -67,24 +75,41 @@ impl Clone for Box<dyn Behavior> {
 pub struct Monopod {}
 
 impl Behavior for Monopod {
-    fn next(&mut self, world: &World, id: Id<Creature>) -> (Option<Motion>, Option<Action>) {
-        let action = find_card(world, id, "Kick")
-            .map(|(part, card)| Action {
-                kind: ActionKind::Attack,
-                part, card,
-            });
-        (Some(Motion::ToMelee), action)
+    fn next(&mut self, _world: &World, _id: Id<Creature>) -> (Option<Motion>, Option<Action>) {
+        let action = Action {
+            kind: ActionKind::Attack,
+            run: Monopod::kick,
+        };
+        (Some(Motion::ToMelee), Some(action))
     }
 }
 
-fn find_card(world: &World, id: Id<Creature>, name: &str) -> Option<(Id<Part>, Id<Card>)> {
-    let creature = world.creatures().get(id)?;
-    for (&part_id, part) in creature.parts() {
-        for (&card_id, card) in &part.cards {
-            if card.name == name {
-                return Some((part_id, card_id));
-            }
-        }
+impl Monopod {
+    fn kick(world: &mut World, id: Id<Creature>) -> Result<Vec<Event>> {
+        check_run(world, id, "Fut", Range::Melee, 1)?;
+        unimplemented!()
     }
-    return None;
+}
+
+fn check_run(world: &World, id: Id<Creature>, part: &str, range: Range, cost: i32) -> Result<()> {
+    let creature = world.creatures().get(id).ok_or(Error::NoSuchCreature)?;
+    if creature.cur_ap() < cost {
+        return Err(Error::NotEnough);
+    }
+    if !creature.parts().values().any(|p| p.name == part && !p.dead) {
+        return Err(Error::NoSuchPart);
+    }
+    let creature_pos = world.map().creatures().get(&id).ok_or(Error::OutOfBounds)?;
+    let player_pos = world.map().creatures().get(&world.player_id()).ok_or(Error::OutOfBounds)?;
+    let dist = creature_pos.distance_to(*player_pos);
+    match range {
+        Range::Melee => if dist != 1 { return Err(Error::Obstructed); }
+    }
+
+    Ok(())
+}
+
+enum Range {
+    Melee,
+    //Ranged { min: i32, max: i32 }
 }

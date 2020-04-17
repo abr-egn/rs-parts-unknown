@@ -14,7 +14,7 @@ use crate::{
     event::{Action, Event, Mod, ModId, Trigger, TriggerId},
     id_map::{Id, IdMap},
     map::{Map},
-    npc::{self, Motion},
+    npc::{Motion},
 };
 
 #[derive(Debug, Clone)]
@@ -150,16 +150,17 @@ impl World {
 
         for (id, motion, action) in npc_plays {
             if let Some(m) = motion {
-                match m {
-                    Motion::ToMelee => match self.move_to_melee(id) {
-                        Ok(es) => events.extend(es),
-                        Err(e) => warn!("NPC movement failed: {}", e),
-                    }
+                let r = match m {
+                    Motion::ToMelee => self.move_to_melee(id),
+                };
+                match r {
+                    Ok(es) => events.extend(es),
+                    Err(e) => warn!("NPC movement failed: {}", e),
                 }
             }
 
             if let Some(a) = action {
-                match self.act_npc(id, a) {
+                match (a.run)(self, id) {
                     Ok(es) => events.extend(es),
                     Err(e) => warn!("NPC action failed: {}", e),
                 }
@@ -277,6 +278,7 @@ impl World {
             .ok_or(Error::Obstructed)?;
         let from = self.map.creatures().get(&id)
             .ok_or(Error::Obstructed)?;
+        if from.distance_to(*player_hex) <= 1 { return Ok(vec![]); }
         let mut near: Vec<_> = player_hex.neighbors()
             .filter(|h| self.map.tiles().get(h).map_or(false, |t| t.is_open()))
             .collect();
@@ -285,6 +287,7 @@ impl World {
         Ok(self.move_creature(id, near[0]))
     }
 
+    /*
     fn act_npc(&mut self, id: Id<Creature>, action: npc::Action) -> Result<Vec<Event>> {
         let mut events = vec![];
 
@@ -304,6 +307,7 @@ impl World {
 
         Ok(events)
     }
+    */
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, TsData)]
