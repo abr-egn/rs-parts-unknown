@@ -54,7 +54,7 @@ impl Map {
             if remaining_range > 0 {
                 for hex in current.neighbors() {
                     if out.contains(&hex) { continue }
-                    if let Some(Tile { space: Space::Empty, .. }) = self.tiles.get(&hex) {
+                    if self.tiles.get(&hex).map_or(false, |t| t.is_open()) {
                         pending.push_back((hex, remaining_range-1));
                     }
                 }
