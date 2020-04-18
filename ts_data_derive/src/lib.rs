@@ -166,6 +166,7 @@ impl VisitMut for TypeMapper {
         match &name as &str {
             // Pass through
             "Action" => (),
+            "ActionKind" => (),
             "Box" => (),
             "Card" => (),
             "Creature" => (),
@@ -175,6 +176,8 @@ impl VisitMut for TypeMapper {
             "Event" => (),
             "Hex" => (),
             "Id" => (),
+            "MotionKind" => (),
+            "NPC" => (),
             "Option" => (),
             "Part" => (),
             "PartAction" => (),

@@ -1,3 +1,7 @@
+use serde::{Serialize};
+use ts_data_derive::TsData;
+use wasm_bindgen::prelude::*;
+
 use crate::{
     creature::{Creature},
     error::{Error, Result},
@@ -8,15 +12,12 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct NPC {
-    next_motion: Option<Motion>,
-    next_action: Option<Action>,
+    pub next_motion: Option<Motion>,
+    pub next_action: Option<Action>,
     behavior: Box<dyn Behavior>,
 }
 
 impl NPC {
-    pub fn next_motion(&self) -> Option<&Motion> { self.next_motion.as_ref() }
-    pub fn next_action(&self) -> Option<&Action> { self.next_action.as_ref() }
-
     pub fn update(&mut self, world: &World, id: Id<Creature>) {
         let (motion, action) = self.behavior.next(world, id);
         self.next_motion = motion;
@@ -46,7 +47,7 @@ impl std::fmt::Debug for Action {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TsData)]
 pub enum ActionKind {
     Attack,
 }
@@ -106,10 +107,10 @@ impl Monopod {
 
 fn check_run(world: &World, id: Id<Creature>, part: &str, range: Range, cost: i32) -> Result<()> {
     let creature = world.creatures().get(id).ok_or(Error::NoSuchCreature)?;
-    if creature.cur_ap() < cost {
+    if creature.cur_ap < cost {
         return Err(Error::NotEnough);
     }
-    if !creature.parts().values().any(|p| p.name == part && !p.dead) {
+    if !creature.parts.values().any(|p| p.name == part && !p.dead) {
         return Err(Error::NoSuchPart);
     }
     let creature_pos = world.map().creatures().get(&id).ok_or(Error::OutOfBounds)?;

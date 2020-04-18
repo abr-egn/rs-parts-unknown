@@ -78,12 +78,12 @@ impl World {
 
     pub fn state(&self) -> GameState {
         let player = self.creatures.get(self.player_id).unwrap();
-        if player.dead() {
+        if player.dead {
             return GameState::Lost;
         }
         if self.creatures.iter()
             .filter(|(&id, _)| id != self.player_id)
-            .all(|(_, c)| c.dead()) {
+            .all(|(_, c)| c.dead) {
             return GameState::Won;
         }
         GameState::Play
@@ -145,8 +145,8 @@ impl World {
         // NPC turns
         let mut npc_plays = vec![];
         for (&id, creature) in &self.creatures {
-            if let Some(npc) = creature.npc() {
-                npc_plays.push((id, npc.next_motion().cloned(), npc.next_action().cloned()));
+            if let Some(npc) = &creature.npc {
+                npc_plays.push((id, npc.next_motion.clone(), npc.next_action.clone()));
             }
         }
 
@@ -262,7 +262,7 @@ impl World {
                 Some(c) => c,
                 None => return vec![],
             };
-            (creature.max_ap() - creature.cur_ap(), creature.max_mp() - creature.cur_mp())
+            (creature.max_ap() - creature.cur_ap, creature.max_mp() - creature.cur_mp)
         };
         if fill_ap > 0 {
             events.extend(self.execute(&Action::ToCreature {
@@ -296,7 +296,7 @@ impl World {
         for id in ids {
             let mut npc = {
                 let creature = self.creatures.get(id).unwrap();
-                match creature.npc() {
+                match &creature.npc {
                     Some(n) => n.clone(),
                     None => continue,
                 }

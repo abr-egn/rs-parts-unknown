@@ -12,11 +12,11 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct Creature {
-    parts: IdMap<Part>,
-    cur_ap: i32,
-    cur_mp: i32,
-    dead: bool,
-    npc: Option<NPC>,
+    pub parts: IdMap<Part>,
+    pub cur_ap: i32,
+    pub cur_mp: i32,
+    pub dead: bool,
+    pub npc: Option<NPC>,
 }
 
 impl Creature {
@@ -32,12 +32,6 @@ impl Creature {
     }
 
     // Accessors
-
-    pub fn parts(&self) -> &IdMap<Part> { &self.parts }
-    pub fn cur_ap(&self) -> i32 { self.cur_ap }
-    pub fn cur_mp(&self) -> i32 { self.cur_mp }
-    pub fn dead(&self) -> bool { self.dead }
-    pub fn npc(&self) -> Option<&NPC> { self.npc.as_ref() }
 
     pub fn cards(&self) -> impl Iterator<Item=(Id<Part>, Id<Card>, &Card)> {
         self.parts.iter()
@@ -132,7 +126,6 @@ pub enum CreatureEvent {
     Died,
 }
 
-// TODO: read-only
 #[derive(Debug, Clone)]
 pub struct Part {
     pub name: String,

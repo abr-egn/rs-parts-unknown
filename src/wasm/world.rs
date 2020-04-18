@@ -92,7 +92,7 @@ impl World {
     pub fn getCreatureRange(&self, id: JsValue) -> Array /* Hex[] */ {
         let id: Id<creature::Creature> = from_js_value(id);
         let range = match self.wrapped.creatures().get(id) {
-            Some(c) => c.cur_mp(),
+            Some(c) => c.cur_mp,
             None => return Array::new(),
         };
         let start = match self.wrapped.map().creatures().get(&id) {
@@ -108,7 +108,7 @@ impl World {
     pub fn checkSpendAP(&self, creature_id: JsValue, ap: i32) -> bool {
         let id: Id<creature::Creature> = from_js_value(creature_id);
         match self.wrapped.creatures().get(id) {
-            Some(c) => c.cur_ap() >= ap,
+            Some(c) => c.cur_ap >= ap,
             None => false,
         }
     }
@@ -117,7 +117,7 @@ impl World {
     pub fn startPlay(&self, card: JsValue) -> Option<Behavior> {
         let card: Card = from_js_value(card);
         let creature = self.wrapped.creatures().get(card.creatureId)?;
-        let part = creature.parts().get(card.partId)?;
+        let part = creature.parts.get(card.partId)?;
         let real_card = part.cards.get(card.id)?;
         Some(Behavior::new((real_card.start_play)(&self.wrapped, &card.creatureId)))
     }
