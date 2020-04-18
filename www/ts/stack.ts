@@ -4,13 +4,6 @@ import {Hex} from "../wasm";
 
 import {GameBoard} from "./game_board";
 
-export class Active {
-    constructor(public state: State) {}
-    is(c: new (...args: any[]) => any): boolean {
-        return this.state.constructor == c;
-    }
-}
-
 const LOGGING = false;
 
 export class State {
@@ -66,7 +59,7 @@ export class Stack {
     private _data: Stack.Data = new Stack.Data();
     private _oldData: Stack.Data[] = [];
     constructor(
-        private _onUpdate: ((data: Stack.DataView) => void),
+        private _onUpdate: (() => void),
     ) {
         this._updater = this._updater.bind(this);
     }
@@ -87,7 +80,7 @@ export class Stack {
             console.log("POP: %s --> %s", top.constructor.name,
                 this._stack[this._stack.length - 2].constructor.name);
             this._popImpl();
-            this._onUpdate(this._data);
+            this._onUpdate();
             this._top()!._onActivated();
         });
     }
@@ -101,7 +94,7 @@ export class Stack {
                 state.constructor.name);
             this._popImpl();
             this._pushImpl(state);
-            this._onUpdate(this._data);
+            this._onUpdate();
         });
     }
     data(): Stack.DataView { return this._data; }
@@ -138,12 +131,14 @@ export class Stack {
     }
     private _updater(update: (draft: Stack.Data) => void) {
         this._data = produce(this._data, update);
-        this._onUpdate(this._data);
+        this._onUpdate();
     }
 }
 
 export namespace Stack {
-    type Constructor = new (...args: any[]) => any;
+    export const Datum = Symbol();
+    
+    type Constructor = new (...args: any[]) => {[Stack.Datum]: boolean};
 
     export interface DataView {
         get<C extends Constructor>(key: C): Readonly<InstanceType<C>> | undefined;
@@ -165,11 +160,20 @@ export namespace Stack {
             }
             chunk = new key(...args);
             this._chunks.set(key, chunk);
-            return chunk;
+            return chunk as InstanceType<C>;
         }
 
         set<C extends Constructor>(key: C, ...args: ConstructorParameters<C>) {
             this._chunks.set(key, new key(...args));
         }
+    }
+}
+
+export class Active {
+    [Stack.Datum] = true;
+
+    constructor(public state: State) {}
+    is(c: new (...args: any[]) => any): boolean {
+        return this.state.constructor == c;
     }
 }

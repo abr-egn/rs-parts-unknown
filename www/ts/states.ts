@@ -4,7 +4,7 @@ import {
 } from "../wasm";
 
 import {Highlight, Preview} from "./highlight";
-import {State} from "./stack";
+import {Stack, State} from "./stack";
 
 // TODO: selected doesn't get updated on action/turn end
 export class Base extends State {
@@ -36,6 +36,7 @@ export class Base extends State {
 }
 export namespace Base {
     export class UI {
+        [Stack.Datum] = true;
         selected: Map<Id<Creature>, Boundary[]> = new Map();
     }
 }
@@ -106,6 +107,7 @@ export class PlayCard extends State {
 }
 export namespace PlayCard {
     export class UI {
+        [Stack.Datum] = true;
         constructor (public card: Card) {}
     }
 }
@@ -193,6 +195,7 @@ export class GameOver extends State {
 }
 export namespace GameOver {
     export class UI {
+        [Stack.Datum] = true;
         constructor(public state: GameState) { }
     }
 }

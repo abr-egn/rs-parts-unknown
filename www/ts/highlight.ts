@@ -1,7 +1,10 @@
 import {Action, Boundary, Creature, Hex, Id} from "../wasm";
 import {FloatText} from "./draw";
+import {Stack} from "./stack";
 
 export class Highlight {
+    [Stack.Datum] = true;
+
     hexes: Hex[] = [];
     range: Boundary[] = [];
 

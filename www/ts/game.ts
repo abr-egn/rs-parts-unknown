@@ -29,15 +29,12 @@ export class Game {
     private _board: GameBoard;
     private _keys: Map<string, boolean> = new Map();
     constructor() {
+        this._onUpdate = this._onUpdate.bind(this);
+
         this._world = new wasm.World();
         this._world.setTracer(new ConsoleTracer());
 
-        this._stack = new stack.Stack((data) => {
-            renderIndex(this._world, data);
-        });
-
-        // Initial render to populate the elements, i.e. canvas.
-        renderIndex(this._world, this._stack.data());
+        this._stack = new stack.Stack(this._onUpdate);
 
         const canvas = document.getElementById("mainCanvas") as HTMLCanvasElement;
         const boardData: GameBoard.DataQuery = {
@@ -53,9 +50,8 @@ export class Game {
             this._keys.set(e.code, false);
         });
 
-        // Second render to pick up game board state.
-        //this._updateIntent();
-        renderIndex(this._world, this._stack.data());
+        // Force a render to ensure everything's populated.
+        this._onUpdate();
 
         window.game = this;
     }
@@ -85,10 +81,14 @@ export class Game {
         this._world = world;
         this._board.updateWorld(this._world);
 
-        renderIndex(this._world, this._stack.data());
+        this._onUpdate();
     }
 
     // Private
+
+    private _onUpdate() {
+        renderIndex(this._world, this._stack.data());
+    }
 
     /*
     private _updateIntent() {

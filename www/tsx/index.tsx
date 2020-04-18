@@ -40,7 +40,6 @@ function Index(props: {
     let intents = props.data.get(Intent)?.npcs.map(([npc, point]) => <CreatureIntent npc={npc} coords={point}></CreatureIntent>);
     return (
         <div>
-            <canvas id="mainCanvas" tabIndex={1}></canvas>
             <div className="topleft">
                 <PlayerControls
                     player={world.getCreature(world.playerId)!}
