@@ -1,39 +1,23 @@
-use std::collections::{HashMap, HashSet};
 use hex::Hex;
 use js_sys::Array;
-use serde::{Serialize, Deserialize, de::DeserializeOwned};
-use serde_wasm_bindgen::{from_value, to_value};
-use ts_data_derive::TsData;
 use wasm_bindgen::{
     prelude::*,
     JsCast,
 };
+
 use crate::{
-    card,
     creature::{self, CreatureAction},
     event::{Action, Event},
     id_map::Id,
     map::Tile,
-    wasm_behavior::Behavior,
+    wasm::{
+        behavior::Behavior,
+        card::Card,
+        creature::Creature,
+        from_js_value, to_js_value,
+    },
     world,
 };
-
-#[wasm_bindgen(typescript_custom_section)]
-const EXTERN_TS: &'static str = r#"
-export interface Hex {
-    x: number,
-    y: number,
-}
-
-export type Direction = "XY" | "XZ" | "YZ" | "YX" | "ZX" | "ZY";
-
-export type Id<_> = number;
-"#;
-
-pub fn to_js_value<T: Serialize>(t: &T) -> JsValue { to_value(t).unwrap() }
-pub fn from_js_value<T: DeserializeOwned>(js: JsValue) -> T { 
-    from_value(js).unwrap()
-}
 
 #[wasm_bindgen]
 #[derive(Debug)]
@@ -254,127 +238,6 @@ fn world_update(new: world::World, events: &[Event]) -> Array {
     out.push(&JsValue::from(events.iter().map(to_js_value).collect::<Array>()));
     out
 }
-
-#[derive(Serialize, TsData)]
-#[allow(non_snake_case)]
-pub struct Creature {
-    id: Id<creature::Creature>,
-    parts: HashMap<Id<creature::Part>, Part>,
-    curAp: i32,
-    curMp: i32,
-    dead: bool,
-}
-
-impl Creature {
-    fn new(id: Id<creature::Creature>, source: &creature::Creature) -> Creature {
-        let parts = source.parts().iter()
-            .map(|(part_id, part)| (*part_id, Part::new(*part_id, id, part)))
-            .collect();
-        Creature {
-            id,
-            parts,
-            curAp: source.cur_ap(),
-            curMp: source.cur_mp(),
-            dead: source.dead(),
-        }
-    }
-    fn js(&self) -> JsValue { to_js_value(&self) }
-}
-
-#[derive(Serialize, TsData)]
-#[allow(non_snake_case)]
-pub struct Part {
-    id: Id<creature::Part>,
-    creatureId: Id<creature::Creature>,
-    name: String,
-    cards: HashMap<Id<card::Card>, Card>,
-    ap: i32,
-    maxHp: i32,
-    curHp: i32,
-    dead: bool,
-}
-
-#[allow(non_snake_case)]
-impl Part {
-    fn new(
-        id: Id<creature::Part>,
-        creatureId: Id<creature::Creature>,
-        source: &creature::Part,
-    ) -> Self {
-        let cards = source.cards.iter()
-            .map(|(&card_id, card)| (card_id, Card::new(card_id, id, creatureId, card)))
-            .collect();
-        Part {
-            id, creatureId, cards,
-            name: source.name.clone(),
-            ap: source.ap,
-            maxHp: source.max_hp,
-            curHp: source.cur_hp,
-            dead: source.dead,
-        }
-    }
-}
-
-#[derive(Serialize, Deserialize, TsData)]
-#[allow(non_snake_case)]
-pub struct Card {
-    id: Id<card::Card>,
-    partId: Id<creature::Part>,
-    creatureId: Id<creature::Creature>,
-    name: String,
-    apCost: i32,
-}
-
-#[allow(non_snake_case)]
-impl Card {
-    fn new(
-        id: Id<card::Card>,
-        partId: Id<creature::Part>,
-        creatureId: Id<creature::Creature>,
-        source: &card::Card,
-    ) -> Self {
-        Card {
-            id, partId, creatureId,
-            name: source.name.clone(),
-            apCost: source.ap_cost,
-        }
-    }
-}
-
-#[derive(Debug, Clone, Serialize, TsData)]
-pub struct Boundary {
-    pub hex: Hex,
-    pub sides: Vec<hex::Direction>,
-}
-
-fn find_boundary(shape: &[Hex]) -> Vec<Boundary> {
-    let shape: HashSet<Hex> = shape.into_iter().cloned().collect();
-    let mut out = vec![];
-    for &hex in &shape {
-        let mut bound = Boundary { hex, sides: vec![] };
-        for dir in hex::Direction::all() {
-            if !shape.contains(&(hex + dir.delta())) {
-                bound.sides.push(*dir);
-            }
-        }
-        if !bound.sides.is_empty() {
-            out.push(bound);
-        }
-    }
-    out
-}
-
-#[allow(unused)]
-#[wasm_bindgen(skip_typescript, js_name="findBoundary")]
-pub fn js_find_boundary(shape: &Array /* Hex[] */) -> Array /* Boundary[] */ {
-    let shape: Vec<Hex> = shape.iter().map(from_js_value).collect();
-    find_boundary(&shape).iter().map(to_js_value).collect()
-}
-
-#[wasm_bindgen(typescript_custom_section)]
-const FIND_BOUNDARY_TS: &'static str = r#"
-export function findBoundary(shape: Hex[]): Boundary[];
-"#;
 
 #[wasm_bindgen]
 extern "C" {

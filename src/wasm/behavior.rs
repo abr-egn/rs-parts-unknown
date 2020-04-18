@@ -4,7 +4,7 @@ use wasm_bindgen::prelude::*;
 use crate::{
     card,
     wasm::{
-        World,
+        world::World,
         from_js_value, to_js_value,
     },
 };

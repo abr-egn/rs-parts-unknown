@@ -1,5 +1,4 @@
 mod card;
-//mod cell;
 mod creature;
 mod error;
 mod event;
@@ -8,7 +7,6 @@ mod map;
 mod npc;
 mod serde_empty;
 mod wasm;
-mod wasm_behavior;
 mod world;
 
 use log::{Level, info};
