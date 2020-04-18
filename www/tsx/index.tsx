@@ -32,7 +32,10 @@ export function Index(props: {
     if (gameOverState) {
         gameOver = <GameOver state={gameOverState}/>;
     }
-    let intents = props.intents.map(([npc, point]) => <CreatureIntent npc={npc} coords={point}></CreatureIntent>);
+    let intents: JSX.Element[] = [];
+    if (props.data.get(Stack.Active)?.is(states.Base)) {
+        intents = props.intents.map(([npc, point]) => <CreatureIntent npc={npc} coords={point}></CreatureIntent>);
+    }
     return (
         <div>
             <div className="topleft">
