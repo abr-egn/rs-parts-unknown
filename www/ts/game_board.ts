@@ -22,7 +22,7 @@ export class GameBoard {
             canvas: HTMLCanvasElement,
             world: World,
             private readonly _listener: GameBoard.Listener,
-            private readonly _data: GameBoard.DataQuery) {
+            private readonly _data: Stack.DataView) {
         canvas.width = window.innerWidth;
         canvas.height = window.innerHeight;
         window.onresize = () => {

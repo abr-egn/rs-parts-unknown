@@ -36,10 +36,7 @@ export class Game {
         this._stack = new stack.Stack(this._onUpdate);
 
         const canvas = document.getElementById("mainCanvas") as HTMLCanvasElement;
-        const boardData: GameBoard.DataQuery = {
-            get: (key) => { return this._stack.data().get(key); },
-        };
-        this._board = new GameBoard(canvas, this._world, this._stack.boardListener(), boardData);
+        this._board = new GameBoard(canvas, this._world, this._stack.boardListener(), this._stack.data());
 
         canvas.focus();
         canvas.addEventListener('keydown', (e) => {

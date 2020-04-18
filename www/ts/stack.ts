@@ -58,10 +58,15 @@ export class Stack {
     private _stack: State[] = [];
     private _data: Stack.Data = new Stack.Data();
     private _oldData: Stack.Data[] = [];
+    private _view: Stack.DataView;
     constructor(
         private _onUpdate: (() => void),
     ) {
         this._updater = this._updater.bind(this);
+        // Constant instance that always refers to the *current* data object.
+        this._view = {
+            get: (key) => { return this._data.get(key); }
+        };
     }
 
     push(state: State) {
@@ -97,7 +102,7 @@ export class Stack {
             this._onUpdate();
         });
     }
-    data(): Stack.DataView { return this._data; }
+    data(): Stack.DataView { return this._view; }
 
     boardListener(): GameBoard.Listener {
         return {
