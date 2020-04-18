@@ -41,9 +41,12 @@ export function CreatureIntent(props: {
     npc: wasm.NPC,
     coords: DOMPointReadOnly,
 }): JSX.Element {
+    const height = window.innerHeight;
     const style = {
         left: props.coords.x,
-        top: props.coords.y,
+        bottom: height - props.coords.y,
     };
-    return <div className="intent" style={style}>Intent!</div>;
+    return (<div className="intent" style={style}>
+        {props.npc.motion}<br/>{props.npc.action}
+    </div>);
 }

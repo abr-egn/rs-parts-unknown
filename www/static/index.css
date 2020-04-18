@@ -44,9 +44,10 @@ div.topright {
 
 .intent {
     position: absolute;
-    transform: translate(-50%, -150%);
+    transform: translate(-50%, -15px);
     border: 1px solid white;
     background-color: rgba(0, 0, 0, 0.5);
     margin: 0px;
     padding: 5px;
+    text-align: center;
 }
