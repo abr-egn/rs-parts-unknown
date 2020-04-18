@@ -1,13 +1,13 @@
 import produce from "immer";
 
 import * as wasm from "../wasm";
-import {Id} from "../wasm";
 
 import {GameBoard} from "./game_board";
+import {Intent} from "./intent";
 import * as stack from "./stack";
-import {UiData} from "./ui_data";
 
 import {renderIndex} from "../tsx/index";
+import { render } from "react-dom";
 
 declare global {
     interface Window {
@@ -26,40 +26,24 @@ manually threading it through to all places.
 export class Game {
     private _world: wasm.World;
     private _stack: stack.Stack;
-    private _data: UiData;
-    private _oldData: UiData[] = [];
     private _board: GameBoard;
     private _keys: Map<string, boolean> = new Map();
     constructor() {
         this._world = new wasm.World();
         this._world.setTracer(new ConsoleTracer());
 
-        this._data = new UiData();
+        this._stack = new stack.Stack((data) => {
+            renderIndex(this._world, data);
+        });
 
-        const stackData: stack.DataUpdate = {
-            update: (update) => {
-                this._data = produce(this._data, update);
-                renderIndex(this._world, this._data);
-            },
-        };
-        const stackListener: stack.Listener = {
-            prePush: () => {
-                this._oldData.push(this._data);
-            },
-            postPop: () => {
-                this._data = this._oldData.pop()!;
-                renderIndex(this._world, this._data);
-            },
-        };
-        this._stack = new stack.Stack(stackData, stackListener);
-
-        renderIndex(this._world, this._data);
+        // Initial render to populate the elements, i.e. canvas.
+        renderIndex(this._world, this._stack.data());
 
         const canvas = document.getElementById("mainCanvas") as HTMLCanvasElement;
         const boardData: GameBoard.DataQuery = {
-            get: (key) => { return this._data.get(key); },
+            get: (key) => { return this._stack.data().get(key); },
         };
-        this._board = new GameBoard(canvas, this._world, this._stack, boardData);
+        this._board = new GameBoard(canvas, this._world, this._stack.boardListener(), boardData);
 
         canvas.focus();
         canvas.addEventListener('keydown', (e) => {
@@ -68,6 +52,10 @@ export class Game {
         canvas.addEventListener('keyup', (e) => {
             this._keys.set(e.code, false);
         });
+
+        // Second render to pick up game board state.
+        //this._updateIntent();
+        renderIndex(this._world, this._stack.data());
 
         window.game = this;
     }
@@ -86,10 +74,6 @@ export class Game {
         return this._keys.get(name) || false;
     }
 
-    creatureCoords(id: Id<wasm.Creature>): DOMPointReadOnly | undefined {
-        return this._board.creatureCoords(id);
-    }
-
     // Mutators
 
     async animateEvents(events: wasm.Event[]) {
@@ -101,8 +85,25 @@ export class Game {
         this._world = world;
         this._board.updateWorld(this._world);
 
-        renderIndex(this._world, this._data);
+        renderIndex(this._world, this._stack.data());
     }
+
+    // Private
+
+    /*
+    private _updateIntent() {
+        const intents: [wasm.NPC, DOMPointReadOnly][] = [];
+        for (let id of this._world.getCreatureIds()) {
+            let point = this._board.creatureCoords(id);
+            if (!point) { continue; }
+            let intent = this._world.getCreature(id)?.npc;
+            if (!intent) { continue; }
+            console.log(intent, point);
+            intents.push([intent, point]);
+        }
+        this._data = produce(this._data, (data) => { data.set(Intent, intents); })
+    }
+    */
 }
 
 export class ConsoleTracer implements wasm.Tracer {

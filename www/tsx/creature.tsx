@@ -39,6 +39,11 @@ export function CreatureStats(props: {
 
 export function CreatureIntent(props: {
     npc: wasm.NPC,
+    coords: DOMPointReadOnly,
 }): JSX.Element {
-    return <div></div>;
+    const style = {
+        left: props.coords.x,
+        top: props.coords.y,
+    };
+    return <div className="uibox intent" style={style}>Intent!</div>;
 }

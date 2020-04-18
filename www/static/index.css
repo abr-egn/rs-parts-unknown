@@ -41,3 +41,8 @@ div.topright {
     z-index: 2;
     background-color: rgba(0, 0, 0, 0.5);
 }
+
+.intent {
+    position: absolute;
+    transform: translate(-50%, -50%);
+}

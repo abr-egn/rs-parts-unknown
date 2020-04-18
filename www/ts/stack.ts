@@ -1,5 +1,8 @@
+import produce, {immerable} from "immer";
+
 import {Hex} from "../wasm";
-import {UiData} from "./ui_data";
+
+import {GameBoard} from "./game_board";
 
 export class Active {
     constructor(public state: State) {}
@@ -11,7 +14,7 @@ export class Active {
 const LOGGING = false;
 
 export class State {
-    private _data?: DataUpdate;
+    private _updater?: (update: (draft: Stack.Data) => void) => void;
 
     onPushed() {}
     onPopped() {}
@@ -21,15 +24,15 @@ export class State {
     onTileEntered(hex: Hex) {}
     onTileExited(hex: Hex) {}
 
-    update(update: (draft: UiData) => void) {
-        this._data!.update(update);
+    update(update: (draft: Stack.Data) => void) {
+        this._updater!(update);
     }
 
-    _onPushed(data: DataUpdate) {
+    _onPushed(updater: (update: (draft: Stack.Data) => void) => void) {
         if (LOGGING) {
             console.log("  PUSHED:", this.constructor.name);
         }
-        this._data = data;
+        this._updater = updater;
         this.onPushed();
     }
 
@@ -58,25 +61,20 @@ export class State {
     }
 }
 
-export interface DataUpdate {
-    update(update: (draft: UiData) => void): void;
-}
-
 export class Stack {
     private _stack: State[] = [];
+    private _data: Stack.Data = new Stack.Data();
+    private _oldData: Stack.Data[] = [];
     constructor(
-        private _data: DataUpdate,
-        private _listener: Listener,
-    ) { }
+        private _onUpdate: ((data: Stack.DataView) => void),
+    ) {
+        this._updater = this._updater.bind(this);
+    }
 
     push(state: State) {
         setTimeout(() => {
             console.log("PUSH: %s", state.constructor.name);
-            this._listener.prePush();
-            this._top()?._onDeactivated();
-            this._stack.push(state);
-            state._onPushed(this._data);
-            state._onActivated();
+            this._pushImpl(state);
         });
     }
     pop() {
@@ -88,10 +86,8 @@ export class Stack {
             const top = this._top()!;
             console.log("POP: %s --> %s", top.constructor.name,
                 this._stack[this._stack.length - 2].constructor.name);
-            top._onDeactivated();
-            top._onPopped();
-            this._stack.pop();
-            this._listener.postPop();
+            this._popImpl();
+            this._onUpdate(this._data);
             this._top()!._onActivated();
         });
     }
@@ -103,31 +99,77 @@ export class Stack {
             const top = this._top()!;
             console.log("SWAP: %s --> %s", top.constructor.name,
                 state.constructor.name);
-            top._onDeactivated();
-            top._onPopped();
-            this._stack.pop();
-            this._listener.postPop();
-            this._listener.prePush();
-            this._stack.push(state);
-            state._onPushed(this._data);
-            state._onActivated();
+            this._popImpl();
+            this._pushImpl(state);
+            this._onUpdate(this._data);
         });
     }
-    onTileClicked(hex: Hex) {
-        this._top()?.onTileClicked(hex);
+    data(): Stack.DataView { return this._data; }
+
+    boardListener(): GameBoard.Listener {
+        return {
+            onTileClicked: (hex: Hex) => {
+                this._top()?.onTileClicked(hex);
+            },
+            onTileEntered: (hex: Hex) => {
+                this._top()?.onTileEntered(hex);
+            },
+            onTileExited: (hex: Hex) => {
+                this._top()?.onTileExited(hex);
+            },
+        };
     }
-    onTileEntered(hex: Hex) {
-        this._top()?.onTileEntered(hex);
-    }
-    onTileExited(hex: Hex) {
-        this._top()?.onTileExited(hex);
-    }
+
     private _top(): State | undefined {
         return this._stack[this._stack.length - 1];
     }
+    private _pushImpl(state: State) {
+        this._top()?._onDeactivated();
+        this._oldData.push(this._data);
+        this._stack.push(state);
+        state._onPushed(this._updater);
+        state._onActivated();
+    }
+    private _popImpl() {
+        this._top()!._onDeactivated();
+        this._top()!._onPopped();
+        this._stack.pop();
+        this._data = this._oldData.pop()!;
+    }
+    private _updater(update: (draft: Stack.Data) => void) {
+        this._data = produce(this._data, update);
+        this._onUpdate(this._data);
+    }
 }
 
-export interface Listener {
-    prePush(): void;
-    postPop(): void;
+export namespace Stack {
+    type Constructor = new (...args: any[]) => any;
+
+    export interface DataView {
+        get<C extends Constructor>(key: C): Readonly<InstanceType<C>> | undefined;
+    }
+
+    export class Data implements DataView {
+        [immerable] = true;
+
+        private _chunks: Map<any, any> = new Map();
+
+        get<C extends Constructor>(key: C): Readonly<InstanceType<C>> | undefined {
+            return this._chunks.get(key);
+        }
+
+        build<C extends Constructor>(key: C, ...args: ConstructorParameters<C>): InstanceType<C> {
+            let chunk;
+            if (chunk = this._chunks.get(key)) {
+                return chunk;
+            }
+            chunk = new key(...args);
+            this._chunks.set(key, chunk);
+            return chunk;
+        }
+
+        set<C extends Constructor>(key: C, ...args: ConstructorParameters<C>) {
+            this._chunks.set(key, new key(...args));
+        }
+    }
 }

@@ -28,12 +28,17 @@ export class GameBoard {
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
         };
-        this.updateWorld(world);
+
         this._tsMillis = performance.now();
         this._draw = new Draw(canvas.getContext('2d')!);
+
         canvas.addEventListener("mousedown", (event) => this._onMouseDown(event));
         canvas.addEventListener("mousemove", (event) => this._onMouseMove(event));
         window.requestAnimationFrame((ts) => this._frame(ts));
+
+        this.updateWorld(world);
+        // Render an initial frame to set up things like transform matrix.
+        this._frame(performance.now());
     }
 
     updateWorld(world: World) {

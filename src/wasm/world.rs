@@ -70,6 +70,13 @@ impl World {
     }
 
     #[wasm_bindgen(skip_typescript)]
+    pub fn getCreatureIds(&self) -> Array {
+        self.wrapped.creatures().keys()
+            .map(to_js_value)
+            .collect()
+    }
+
+    #[wasm_bindgen(skip_typescript)]
     pub fn getCreatureMap(&self) -> Array /* [Id<Creature>, Hex][] */ {
         self.wrapped.map().creatures().iter()
             .map(|(id, hex)| {
@@ -211,6 +218,7 @@ interface World {
     getTile(hex: Hex): Tile | undefined;
     getTiles(): Array<[Hex, Tile]>;
     getCreature(id: Id<Creature>): Creature | undefined;
+    getCreatureIds(): Id<Creature>[];
     getCreatureMap(): [Id<Creature>, Hex][];
     getCreatureHex(id: Id<Creature>): Hex | undefined;
     getCreatureRange(id: Id<Creature>): Hex[];

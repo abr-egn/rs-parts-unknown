@@ -4,21 +4,21 @@ import * as ReactDOM from "react-dom";
 import * as wasm from "../wasm";
 
 import {Highlight} from "../ts/highlight";
-import {Active} from "../ts/stack";
+import {Intent} from "../ts/intent";
+import {Active, Stack} from "../ts/stack";
 import * as states from "../ts/states";
-import {UiData} from "../ts/ui_data";
 
-import {CreatureStats} from "./creature";
+import {CreatureStats, CreatureIntent} from "./creature";
 import {PlayerControls} from "./player";
 
-export function renderIndex(world: wasm.World, data: UiData) {
+export function renderIndex(world: wasm.World, data: Stack.DataView) {
     let content = <Index world={world} data={data}/>;
     ReactDOM.render(content, document.getElementById("root"));
 }
 
 function Index(props: {
     world: wasm.World,
-    data: UiData,
+    data: Stack.DataView,
 }): JSX.Element {
     const world = props.world;
     const base = props.data.get(states.Base.UI);
@@ -37,6 +37,7 @@ function Index(props: {
     if (gameOverState) {
         gameOver = <GameOver state={gameOverState}/>;
     }
+    let intents = props.data.get(Intent)?.npcs.map(([npc, point]) => <CreatureIntent npc={npc} coords={point}></CreatureIntent>);
     return (
         <div>
             <canvas id="mainCanvas" tabIndex={1}></canvas>
@@ -51,6 +52,7 @@ function Index(props: {
             <div className="topright">
                 {creatures}
             </div>
+            {intents}
             {gameOver}
         </div>
     );
