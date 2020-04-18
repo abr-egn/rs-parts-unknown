@@ -45,5 +45,5 @@ export function CreatureIntent(props: {
         left: props.coords.x,
         top: props.coords.y,
     };
-    return <div className="uibox intent" style={style}>Intent!</div>;
+    return <div className="intent" style={style}>Intent!</div>;
 }

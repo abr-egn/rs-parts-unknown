@@ -1,13 +1,12 @@
-import produce from "immer";
+import * as ReactDOM from "react-dom";
+import * as React from "react";
 
 import * as wasm from "../wasm";
 
 import {GameBoard} from "./game_board";
-import {Intent} from "./intent";
 import * as stack from "./stack";
 
-import {renderIndex} from "../tsx/index";
-import { render } from "react-dom";
+import {Index} from "../tsx/index";
 
 declare global {
     interface Window {
@@ -87,11 +86,15 @@ export class Game {
     // Private
 
     private _onUpdate() {
-        renderIndex(this._world, this._stack.data());
+        let element = React.createElement(Index, {
+            world: this._world,
+            data: this._stack.data(),
+            intents: this._getIntents(),
+        }, null);
+        ReactDOM.render(element, document.getElementById("root"));
     }
 
-    /*
-    private _updateIntent() {
+    private _getIntents(): [wasm.NPC, DOMPointReadOnly][] {
         const intents: [wasm.NPC, DOMPointReadOnly][] = [];
         for (let id of this._world.getCreatureIds()) {
             let point = this._board.creatureCoords(id);
@@ -101,9 +104,8 @@ export class Game {
             console.log(intent, point);
             intents.push([intent, point]);
         }
-        this._data = produce(this._data, (data) => { data.set(Intent, intents); })
+        return intents;
     }
-    */
 }
 
 export class ConsoleTracer implements wasm.Tracer {

@@ -1,24 +1,19 @@
 import * as React from "react";
-import * as ReactDOM from "react-dom";
+
 
 import * as wasm from "../wasm";
 
 import {Highlight} from "../ts/highlight";
-import {Intent} from "../ts/intent";
 import {Active, Stack} from "../ts/stack";
 import * as states from "../ts/states";
 
 import {CreatureStats, CreatureIntent} from "./creature";
 import {PlayerControls} from "./player";
 
-export function renderIndex(world: wasm.World, data: Stack.DataView) {
-    let content = <Index world={world} data={data}/>;
-    ReactDOM.render(content, document.getElementById("root"));
-}
-
-function Index(props: {
+export function Index(props: {
     world: wasm.World,
     data: Stack.DataView,
+    intents: [wasm.NPC, DOMPointReadOnly][],
 }): JSX.Element {
     const world = props.world;
     const base = props.data.get(states.Base.UI);
@@ -37,7 +32,7 @@ function Index(props: {
     if (gameOverState) {
         gameOver = <GameOver state={gameOverState}/>;
     }
-    let intents = props.data.get(Intent)?.npcs.map(([npc, point]) => <CreatureIntent npc={npc} coords={point}></CreatureIntent>);
+    let intents = props.intents.map(([npc, point]) => <CreatureIntent npc={npc} coords={point}></CreatureIntent>);
     return (
         <div>
             <div className="topleft">
