@@ -6,8 +6,8 @@ import {Base} from "./states";
 enableAllPlugins();
 
 function main() {
-  const game = new Game();
-  game.stack.push(new Base());
+    const game = new Game();
+    game.stack.push(new Base());
 }
 
 main();
