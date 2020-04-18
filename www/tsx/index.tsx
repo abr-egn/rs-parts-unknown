@@ -4,7 +4,7 @@ import * as React from "react";
 import * as wasm from "../wasm";
 
 import {Highlight} from "../ts/highlight";
-import {Active, Stack} from "../ts/stack";
+import {Stack} from "../ts/stack";
 import * as states from "../ts/states";
 
 import {CreatureStats, CreatureIntent} from "./creature";
@@ -38,7 +38,7 @@ export function Index(props: {
             <div className="topleft">
                 <PlayerControls
                     player={world.getCreature(world.playerId)!}
-                    active={props.data.get(Active)}
+                    active={props.data.get(Stack.Active)}
                     play={props.data.get(states.PlayCard.UI)}
                     stats={stats?.get(world.playerId)}
                 />

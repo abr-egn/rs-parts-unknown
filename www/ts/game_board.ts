@@ -7,6 +7,7 @@ import {
     hexToPixel, pixelToHex,
 } from "./draw";
 import {Highlight} from "./highlight";
+import {Stack} from "./stack";
 import * as states from "./states";
 
 export class GameBoard {
@@ -128,14 +129,16 @@ export class GameBoard {
             this._draw.creature(text, pos);
         }
 
-        const selected = this._data.get(states.Base.UI)?.selected || [];
-        for (let [id, bounds] of selected) {
-            for (let bound of bounds) {
-                this._draw.boundary(bound);
-            }
-            const hex = this._cache.creatureHex.get(id);
-            if (hex) {
-                this._draw.focusedHex(hex);
+        if (this._data.get(Stack.Active)?.is(states.Base)) {
+            const selected = this._data.get(states.Base.UI)?.selected || [];
+            for (let [id, bounds] of selected) {
+                for (let bound of bounds) {
+                    this._draw.boundary(bound);
+                }
+                const hex = this._cache.creatureHex.get(id);
+                if (hex) {
+                    this._draw.focusedHex(hex);
+                }
             }
         }
 

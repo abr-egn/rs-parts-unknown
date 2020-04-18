@@ -41,7 +41,7 @@ export class State {
             console.log("  ACTIVATED:", this.constructor.name);
         }
         this.update((draft) => {
-            draft.set(Active, this);
+            draft.set(Stack.Active, this);
         });
         this.onActivated();
     }
@@ -167,13 +167,13 @@ export namespace Stack {
             this._chunks.set(key, new key(...args));
         }
     }
-}
 
-export class Active {
-    [Stack.Datum] = true;
-
-    constructor(public state: State) {}
-    is(c: new (...args: any[]) => any): boolean {
-        return this.state.constructor == c;
-    }
+    export class Active {
+        [Stack.Datum] = true;
+    
+        constructor(public state: State) {}
+        is(c: new (...args: any[]) => any): boolean {
+            return this.state.constructor == c;
+        }
+    }   
 }

@@ -3,7 +3,7 @@ import * as React from "react";
 import * as wasm from "../wasm";
 
 import {Stat} from "../ts/highlight";
-import {Active} from "../ts/stack";
+import {Stack} from "../ts/stack";
 import * as states from "../ts/states";
 
 import {CardList} from "./card";
@@ -11,7 +11,7 @@ import {CreatureStats} from "./creature";
 
 export function PlayerControls(props: {
     player: wasm.Creature,
-    active?: Active,
+    active?: Stack.Active,
     play?: states.PlayCard.UI,
     stats?: Map<Stat, number>,
 }): JSX.Element {

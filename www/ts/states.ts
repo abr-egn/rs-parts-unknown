@@ -8,6 +8,17 @@ import {Stack, State} from "./stack";
 
 // TODO: selected doesn't get updated on action/turn end
 export class Base extends State {
+    onActivated() {
+        this.update((draft) => {
+            let ui = draft.get(Base.UI);
+            if (!ui) { return; }
+            for (let id of ui.selected.keys()) {
+                let range = window.game.world.getCreatureRange(id);
+                let bounds = findBoundary(range);
+                ui.selected.set(id, bounds);
+            }
+        });
+    }
     onTileClicked(hex: Hex) {
         const world = window.game.world;
         let tile = world.getTile(hex);
