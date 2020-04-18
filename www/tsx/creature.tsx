@@ -36,3 +36,9 @@ export function CreatureStats(props: {
         <ul>{parts}</ul>
     </div>);
 }
+
+export function CreatureIntent(props: {
+    npc: wasm.NPC,
+}): JSX.Element {
+    return <div></div>;
+}

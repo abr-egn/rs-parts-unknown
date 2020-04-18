@@ -129,6 +129,14 @@ export class Draw {
         return screenPoint.matrixTransform(this._ctx.getTransform().inverse());
     }
 
+    elementCoords(point: DOMPointReadOnly): DOMPointReadOnly {
+        return point.matrixTransform(this._ctx.getTransform());
+        /*
+        const rect = this._ctx.canvas.getBoundingClientRect();
+        return new DOMPointReadOnly(elementPoint.x + rect.left, elementPoint.y + rect.top);
+        */
+    }
+
     private _pathHex(hex: Hex, size: number) {
         let point = hexToPixel(hex);
         this._ctx.translate(point.x, point.y);

@@ -78,6 +78,12 @@ export class GameBoard {
         }
     }
 
+    creatureCoords(id: Id<Creature>): DOMPointReadOnly | undefined {
+        const pos = this._creaturePos.get(id);
+        if (!pos) { return undefined; }
+        return this._draw.elementCoords(pos);
+    }
+
     private _nextFrame(): Promise<DOMHighResTimeStamp> {
         return new Promise((resolve) => this._frameWaits.push(resolve));
     }
