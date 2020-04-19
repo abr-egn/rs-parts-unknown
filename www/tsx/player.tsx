@@ -15,13 +15,6 @@ export function PlayerControls(props: {
     play?: states.PlayCard.UI,
     stats?: Map<Stat, number>,
 }): JSX.Element {
-    const cards: wasm.Card[] = [];
-    if (props.player) {
-        for (let part of props.player.parts.values()) {
-            cards.push(...part.cards.values());
-        }
-    }
-
     const cancelPlay = () => window.game.stack.pop();
     const movePlayer = () => window.game.stack.push(new states.MovePlayer());
 
@@ -34,7 +27,7 @@ export function PlayerControls(props: {
         <CreatureStats creature={props.player} stats={props.stats}/>
         <CardList
             active={canPlay}
-            cards={cards}
+            cards={props.player.hand}
         />
         {inPlay && <div>Playing: {props.play?.card.name}</div>}
         <EndTurnButton active={canPlay}/>
