@@ -142,6 +142,13 @@ impl Creature {
 
                 Ok(out)
             }
+            Discard { part, card } => {
+                let mut out = vec![];
+                let ix = self.hand.iter().position(|&c| c == (part, card)).ok_or(Error::NoSuchCard)?;
+                self.discard.push(self.hand.remove(ix));
+                out.push(CreatureEvent::Discarded { part, card });
+                Ok(out)
+            }
         }
     }
 
@@ -168,6 +175,7 @@ pub enum CreatureAction {
     ToPart { id: Id<Part>, action: PartAction },
     #[serde(with = "serde_empty")]
     NewHand,
+    Discard { part: Id<Part>, card: Id<Card> }
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, TsData)]

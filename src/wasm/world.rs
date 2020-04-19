@@ -172,10 +172,17 @@ impl World {
         let card: Card = from_js_value(card);
         let target: Hex = from_js_value(target);
         let mut newWorld = self.wrapped.clone();
-        let mut events: Vec<Event> = newWorld.execute(&Action::ToCreature {
+        let mut events = vec![];
+        events.extend(newWorld.execute(
+            &Action::ToCreature {
+                id: card.creatureId,
+                action: CreatureAction::Discard { part: card.partId, card: card.id },
+            }
+        ));
+        events.extend(newWorld.execute(&Action::ToCreature {
             id: card.creatureId,
             action: CreatureAction::SpendAP { ap: card.apCost },
-        });
+        }));
         if !Event::is_failure(&events) {
             events.extend(behavior.wrapped.apply(&mut newWorld, target));
         }
