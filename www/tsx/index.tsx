@@ -1,7 +1,7 @@
 import * as React from "react";
 
-
 import * as wasm from "../wasm";
+import {Id} from "../wasm";
 
 import {Highlight} from "../ts/highlight";
 import {Stack} from "../ts/stack";
@@ -13,7 +13,7 @@ import {PlayerControls} from "./player";
 export function Index(props: {
     world: wasm.World,
     data: Stack.DataView,
-    intents: [wasm.NPC, DOMPointReadOnly][],
+    intents: [Id<wasm.Creature>, wasm.NPC, DOMPointReadOnly][],
 }): JSX.Element {
     const world = props.world;
     const base = props.data.get(states.Base.UI);
@@ -34,7 +34,8 @@ export function Index(props: {
     }
     let intents: JSX.Element[] = [];
     if (!props.data.get(Stack.Active)?.is(states.Update)) {
-        intents = props.intents.map(([npc, point]) => <CreatureIntent npc={npc} coords={point}></CreatureIntent>);
+        intents = props.intents.map(([id, npc, point]) =>
+            <CreatureIntent key={id} npc={npc} coords={point}></CreatureIntent>);
     }
     return (
         <div>

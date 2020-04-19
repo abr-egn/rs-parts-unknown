@@ -2,6 +2,7 @@ import * as ReactDOM from "react-dom";
 import * as React from "react";
 
 import * as wasm from "../wasm";
+import {Id} from "../wasm";
 
 import {GameBoard} from "./game_board";
 import * as stack from "./stack";
@@ -91,8 +92,8 @@ export class Game {
         ReactDOM.render(element, document.getElementById("root"));
     }
 
-    private _getIntents(): [wasm.NPC, DOMPointReadOnly][] {
-        const intents: [wasm.NPC, DOMPointReadOnly][] = [];
+    private _getIntents(): [Id<wasm.Creature>, wasm.NPC, DOMPointReadOnly][] {
+        const intents: [Id<wasm.Creature>, wasm.NPC, DOMPointReadOnly][] = [];
         for (let id of this._world.getCreatureIds()) {
             const point = this._board.creatureCoords(id);
             if (!point) { continue; }
@@ -101,7 +102,7 @@ export class Game {
             if (creature.dead) { continue; }
             let intent = creature.npc;
             if (!intent) { continue; }
-            intents.push([intent, point]);
+            intents.push([id, intent, point]);
         }
         return intents;
     }
