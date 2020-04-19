@@ -49,9 +49,9 @@ pub struct Part {
     creatureId: Id<creature::Creature>,
     name: String,
     cards: HashMap<Id<card::Card>, Card>,
-    ap: i32,
     maxHp: i32,
     curHp: i32,
+    thought: i32,
     broken: bool,
 }
 
@@ -68,7 +68,7 @@ impl Part {
         Part {
             id, creatureId, cards,
             name: source.name.clone(),
-            ap: source.ap,
+            thought: source.thought,
             maxHp: source.max_hp,
             curHp: source.cur_hp,
             broken: source.broken,

@@ -336,7 +336,8 @@ impl Clone for Box<dyn Tracer> {
 fn make_player() -> Creature {
     let head = Part {
         name: "Head".into(),
-        ap: 3, max_hp: 2,
+        max_hp: 2,
+        thought: 3,
         vital: true,
         ..Part::default()
     };
@@ -356,7 +357,8 @@ fn make_player() -> Creature {
     let leg_l = Part {
         name: "Leg".into(),
         cards: IdMap::from_iter(vec![library::card::Walk::card()]),
-        mp: 1, max_hp: 3,
+        max_hp: 3,
+        mp: 1,
         ..Part::default()
     };
     let leg_r = leg_l.clone();

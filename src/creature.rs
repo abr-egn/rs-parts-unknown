@@ -57,7 +57,13 @@ impl Creature {
 
     pub fn max_ap(&self) -> i32 {
         self.parts.values()
-            .map(|part| part.ap)
+            .map(|part| part.thought)
+            .sum()
+    }
+
+    pub fn hand_size(&self) -> i32 {
+        self.parts.values()
+            .map(|part| part.memory)
             .sum()
     }
 
@@ -153,12 +159,16 @@ pub enum CreatureEvent {
 
 #[derive(Debug, Clone)]
 pub struct Part {
+    // Structure
     pub name: String,
     pub cards: IdMap<Card>,
-    pub ap: i32,
-    pub mp: i32,
+    // Stats
     pub max_hp: i32,
     pub cur_hp: i32,
+    pub thought: i32, // action points
+    pub memory: i32,  // hand size
+    pub mp: i32,
+    // Flags
     pub vital: bool,
     pub broken: bool,
     /* TODO: remaining part attributes
@@ -193,7 +203,7 @@ impl Default for Part {
         Part {
             name: "[DEFAULT]".into(),
             cards: IdMap::new(),
-            ap: 0, mp: 0,
+            thought: 0, memory: 0, mp: 0,
             max_hp: 1, cur_hp: 1,
             vital: false, broken: false,
         }

@@ -29,15 +29,15 @@ impl Monopod {
     pub fn creature() -> Creature {
         let head = Part {
             name: "Hed".into(),
-            ap: 1,
             max_hp: 2,
+            thought: 1,
             vital: true,
             ..Part::default()
         };
         let foot = Part {
             name: "Fut".into(),
-            mp: 3,
             max_hp: 2,
+            mp: 3,
             ..Part::default()
         };
         Creature::new(&[head, foot], Some(Monopod::npc()))
