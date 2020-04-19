@@ -8,7 +8,7 @@ use serde::Serialize;
 use ts_data_derive::TsData;
 use wasm_bindgen::prelude::wasm_bindgen;
 use crate::{
-    creature::{self, Creature, CreatureAction},
+    creature::{Creature, CreatureAction, Part},
     error::{Error, Result},
     event::{Action, Event, Mod, ModId, Trigger, TriggerId},
     id_map::{Id, IdMap},
@@ -334,38 +334,30 @@ impl Clone for Box<dyn Tracer> {
 }
 
 fn make_player() -> Creature {
-    let head = creature::Part {
+    let head = Part {
         name: "Head".into(),
-        cards: IdMap::new(),
-        ap: 3, mp: 0,
-        max_hp: 2, cur_hp: 2,
+        ap: 3, max_hp: 2,
         vital: true,
-        dead: false,
+        ..Part::default()
     };
-    let torso = creature::Part {
+    let torso = Part {
         name: "Torso".into(),
-        cards: IdMap::new(),
-        ap: 0, mp: 0,
-        max_hp: 5, cur_hp: 5,
+        max_hp: 5,
         vital: true,
-        dead: false,
+        ..Part::default()
     };
-    let arm_l = creature::Part {
+    let arm_l = Part {
         name: "Arm".into(),
         cards: IdMap::from_iter(vec![library::card::Shoot::card()]),
-        ap: 0, mp: 0,
-        max_hp: 3, cur_hp: 3,
-        vital: false,
-        dead: false,
+        max_hp: 3,
+        ..Part::default()
     };
     let arm_r = arm_l.clone();
-    let leg_l = creature::Part {
+    let leg_l = Part {
         name: "Leg".into(),
         cards: IdMap::from_iter(vec![library::card::Walk::card()]),
-        ap: 0, mp: 1,
-        max_hp: 3, cur_hp: 3,
-        vital: false,
-        dead: false,
+        mp: 1, max_hp: 3,
+        ..Part::default()
     };
     let leg_r = leg_l.clone();
     Creature::new(&[head, torso, arm_l, arm_r, leg_l, leg_r], None)

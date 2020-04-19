@@ -28,7 +28,9 @@ impl Creature {
     pub fn new(parts: &[Part], npc: Option<NPC>) -> Self {
         let mut pids = IdMap::new();
         for part in parts {
-            pids.add(part.clone());
+            let mut tmp = part.clone();
+            tmp.cur_hp = tmp.max_hp;
+            pids.add(tmp);
         }
         let mut out = Creature {
             parts: pids,
@@ -158,7 +160,7 @@ pub struct Part {
     pub max_hp: i32,
     pub cur_hp: i32,
     pub vital: bool,
-    pub dead: bool,
+    pub broken: bool,
     /* TODO: remaining part attributes
     power: i32,
     capacity: i32,
@@ -169,7 +171,7 @@ pub struct Part {
 
 impl Part {
     pub fn resolve(&mut self, action: &PartAction) -> Result<Vec<PartEvent>> {
-        if self.dead { return Err(Error::DeadPart); }
+        if self.broken { return Err(Error::BrokenPart); }
         use PartAction::*;
         match *action {
             Hit { damage } => {
@@ -182,6 +184,18 @@ impl Part {
                 }
                 return Ok(out);
             }
+        }
+    }
+}
+
+impl Default for Part {
+    fn default() -> Self {
+        Part {
+            name: "[DEFAULT]".into(),
+            cards: IdMap::new(),
+            ap: 0, mp: 0,
+            max_hp: 1, cur_hp: 1,
+            vital: false, broken: false,
         }
     }
 }

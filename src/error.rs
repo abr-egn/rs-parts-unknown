@@ -14,8 +14,8 @@ pub enum Error {
     NoSuchCard,
     #[error("dead creature")]
     DeadCreature,
-    #[error("dead part")]
-    DeadPart,
+    #[error("broken part")]
+    BrokenPart,
     #[error("not enough")]
     NotEnough,
     #[error("invalid action")]

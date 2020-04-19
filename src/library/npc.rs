@@ -2,7 +2,7 @@ use crate::{
     creature::{Creature, CreatureAction, Part},
     error::{Error, Result},
     event::{Action, Event},
-    id_map::{Id, IdMap},
+    id_map::{Id},
     npc::{self, NPC},
     world::World,
 };
@@ -29,19 +29,16 @@ impl Monopod {
     pub fn creature() -> Creature {
         let head = Part {
             name: "Hed".into(),
-            cards: IdMap::new(),
-            ap: 1, mp: 0,
-            max_hp: 2, cur_hp: 2,
+            ap: 1,
+            max_hp: 2,
             vital: true,
-            dead: false,
+            ..Part::default()
         };
         let foot = Part {
             name: "Fut".into(),
-            cards: IdMap::new(),
-            ap: 0, mp: 3,
-            max_hp: 2, cur_hp: 2,
-            vital: false,
-            dead: false,
+            mp: 3,
+            max_hp: 2,
+            ..Part::default()
         };
         Creature::new(&[head, foot], Some(Monopod::npc()))
     }
@@ -89,7 +86,7 @@ impl<'a> CheckRun<'a> {
         }
         // Check part
         let part = self.part;
-        if !creature.parts.values().any(|p| p.name == part && !p.dead) {
+        if !creature.parts.values().any(|p| p.name == part && !p.broken) {
             return Err(Error::NoSuchPart);
         }
         // Check range

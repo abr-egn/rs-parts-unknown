@@ -52,7 +52,7 @@ pub struct Part {
     ap: i32,
     maxHp: i32,
     curHp: i32,
-    dead: bool,
+    broken: bool,
 }
 
 #[allow(non_snake_case)]
@@ -71,7 +71,7 @@ impl Part {
             ap: source.ap,
             maxHp: source.max_hp,
             curHp: source.cur_hp,
-            dead: source.dead,
+            broken: source.broken,
         }
     }
 }
