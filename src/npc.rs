@@ -28,8 +28,10 @@ impl NPC {
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Motion {
     ToMelee,
-    // TODO: ToRanged { min: i32, max: i32 },
-    // TODO: ToCover,
+    /* TODO: more npc motions
+    ToRanged,
+    ToCover,
+    */
 }
 
 #[derive(Clone)]

@@ -6,7 +6,6 @@ import {
 import {Highlight, Preview} from "./highlight";
 import {Stack, State} from "./stack";
 
-// TODO: selected doesn't get updated on action/turn end
 export class Base extends State {
     onActivated() {
         this.update((draft) => {
@@ -88,7 +87,7 @@ export class PlayCard extends State {
         let highlight: Hex[] = this._behavior!.highlight(world, hex);
         const preview: Preview[] = [];
         if (this._behavior!.targetValid(world, hex)) {
-            // TODO: select creature in hex
+            // TODO: highlight target hex
             preview.push(Preview.make({
                 ToCreature: {
                     id: world.playerId,

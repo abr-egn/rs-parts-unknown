@@ -46,15 +46,6 @@ pub trait Behavior: BehaviorClone {
     }
 }
 
-/* TODO
-#[derive(Debug, Clone)]
-pub struct Source {
-    creature: Id<Creature>,
-    part: Id<Part>,
-    location: Hex,
-}
-*/
-
 pub trait BehaviorClone {
     fn clone_box(&self) -> Box<dyn Behavior>;
 }

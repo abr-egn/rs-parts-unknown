@@ -136,7 +136,7 @@ pub struct Part {
     pub cur_hp: i32,
     pub vital: bool,
     pub dead: bool,
-    /* TODO
+    /* TODO: remaining part attributes
     power: i32,
     capacity: i32,
     tags: HashSet<PartTag>,

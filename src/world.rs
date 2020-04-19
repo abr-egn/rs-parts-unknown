@@ -24,7 +24,7 @@ pub struct World {
     creatures: IdMap<Creature>,
     mods: IdMap<Box<dyn Mod>>,
     triggers: IdMap<Box<dyn Trigger>>,
-    /* TODO
+    /* TODO: persistent stat changes
     Example: effect that changes the cost of cards.
         - It can't just be a mod because that wouldn't be reflected in the UI,
           and wouldn't work with a simple action test.
@@ -222,7 +222,7 @@ impl World {
     }
 
     fn trigger_order(&self) -> Vec<TriggerId> {
-        // TODO: non-arbitrary
+        // TODO: non-arbitrary order
         self.triggers.keys().cloned().collect()
     }
 
