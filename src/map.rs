@@ -69,7 +69,9 @@ impl Map {
         for (hex, tile) in &self.tiles {
             if *hex == start { continue; }
             if tile.space != Space::Empty { continue; }
-            if start.line_to(*hex).skip(1)
+            let mut between: Vec<_> = start.line_to(*hex).skip(1).collect();
+            between.pop();
+            if between.into_iter()
                 .filter_map(|coord| self.tiles.get(&coord))
                 .any(|line_tile| !line_tile.is_open()) {
                 continue;
