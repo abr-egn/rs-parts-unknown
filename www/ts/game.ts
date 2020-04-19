@@ -94,9 +94,12 @@ export class Game {
     private _getIntents(): [wasm.NPC, DOMPointReadOnly][] {
         const intents: [wasm.NPC, DOMPointReadOnly][] = [];
         for (let id of this._world.getCreatureIds()) {
-            let point = this._board.creatureCoords(id);
+            const point = this._board.creatureCoords(id);
             if (!point) { continue; }
-            let intent = this._world.getCreature(id)?.npc;
+            const creature = this._world.getCreature(id);
+            if (!creature) { continue; }
+            if (creature.dead) { continue; }
+            let intent = creature.npc;
             if (!intent) { continue; }
             console.log(intent, point);
             intents.push([intent, point]);
