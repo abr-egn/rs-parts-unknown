@@ -73,15 +73,20 @@ impl Clone for Box<dyn Behavior> {
 }
 
 #[derive(Debug, Clone)]
-pub struct Monopod {}
+pub struct Monopod {
+    kick_time: bool,
+}
 
 impl Behavior for Monopod {
     fn next(&mut self, _world: &World, _id: Id<Creature>) -> (Option<Motion>, Option<Action>) {
-        let action = Action {
-            kind: ActionKind::Attack,
-            run: Monopod::kick,
-        };
-        (Some(Motion::ToMelee), Some(action))
+        let action = if self.kick_time {
+            Some(Action {
+                kind: ActionKind::Attack,
+                run: Monopod::kick,
+            })
+        } else { None };
+        self.kick_time = !self.kick_time;
+        (Some(Motion::ToMelee), action)
     }
 }
 
@@ -90,7 +95,7 @@ impl Monopod {
         NPC {
             next_motion: None,
             next_action: None,
-            behavior: Box::new(Monopod {}),
+            behavior: Box::new(Monopod { kick_time: true }),
         }
     }
 
