@@ -51,3 +51,7 @@ div.topright {
     padding: 5px;
     text-align: center;
 }
+
+.partHighlight {
+    font-weight: bold;
+}

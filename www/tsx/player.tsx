@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import * as wasm from "../wasm";
+import {Id} from "../wasm";
 
 import {Stat} from "../ts/highlight";
 import {Stack} from "../ts/stack";
@@ -17,6 +18,9 @@ export function PlayerControls(props: {
 }): JSX.Element {
     const cancelPlay = () => window.game.stack.pop();
     const movePlayer = () => window.game.stack.push(new states.MovePlayer());
+    // Force the type checker to type it this way.
+    const defPartHi = (): Id<wasm.Part> | undefined => { return undefined; }
+    const [partHighlight, setPartHighlight] = React.useState(defPartHi());
 
     const canPlay = props.active?.is(states.Base) || false;
     const inPlay = props.active?.is(states.PlayCard) || false;
@@ -24,10 +28,17 @@ export function PlayerControls(props: {
 
     return (<div>
         Player:
-        <CreatureStats creature={props.player} stats={props.stats}/>
+        <CreatureStats
+            creature={props.player}
+            stats={props.stats}
+            partHighlight={partHighlight}
+            setPartHighlight={setPartHighlight}
+        />
         <CardList
             active={canPlay}
             cards={props.player.hand}
+            partHighlight={partHighlight}
+            setPartHighlight={setPartHighlight}
         />
         {inPlay && <div>Playing: {props.play?.card.name}</div>}
         <EndTurnButton active={canPlay}/>
