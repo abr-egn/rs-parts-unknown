@@ -174,6 +174,7 @@ export class GameBoard {
 
     private _onMouseDown(event: MouseEvent) {
         event.preventDefault();
+        this._draw.focus();
         const point = this._draw.mouseCoords(event);
         this._listener.onTileClicked(pixelToHex(point));
     }

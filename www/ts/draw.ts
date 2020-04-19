@@ -137,6 +137,10 @@ export class Draw {
         */
     }
 
+    focus() {
+        this._ctx.canvas.focus();
+    }
+
     private _pathHex(hex: Hex, size: number) {
         let point = hexToPixel(hex);
         this._ctx.translate(point.x, point.y);
