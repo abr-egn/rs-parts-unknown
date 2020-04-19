@@ -129,7 +129,7 @@ export class GameBoard {
             this._draw.creature(text, pos);
         }
 
-        if (this._data.get(Stack.Active)?.is(states.Base)) {
+        if (!this._data.get(Stack.Active)?.is(states.Update)) {
             const selected = this._data.get(states.Base.UI)?.selected || [];
             for (let [id, bounds] of selected) {
                 for (let bound of bounds) {

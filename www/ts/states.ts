@@ -123,7 +123,7 @@ export namespace PlayCard {
     }
 }
 
-class Update extends State {
+export class Update extends State {
     constructor(
         private _events: Event[],
         private _nextWorld: World,

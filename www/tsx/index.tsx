@@ -33,7 +33,7 @@ export function Index(props: {
         gameOver = <GameOver state={gameOverState}/>;
     }
     let intents: JSX.Element[] = [];
-    if (props.data.get(Stack.Active)?.is(states.Base)) {
+    if (!props.data.get(Stack.Active)?.is(states.Update)) {
         intents = props.intents.map(([npc, point]) => <CreatureIntent npc={npc} coords={point}></CreatureIntent>);
     }
     return (
