@@ -37,7 +37,6 @@ export function CardList(props: {
         return a.id - b.id;
     });
   
-    // TODO: highlight source part on mouseover
     const list = props.cards.map((card) =>
         <li key={cardKey(card)}
             onMouseEnter={(ev) => onCardEnter(card, ev)}
