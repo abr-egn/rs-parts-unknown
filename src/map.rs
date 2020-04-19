@@ -91,9 +91,8 @@ impl Map {
         let neighbors = |hex: Hex| -> Vec<Hex> {
             let mut out = vec![];
             for neighbor in hex.neighbors() {
-                match tiles.get(&neighbor) {
-                    Some(t) if t.is_open() => (),
-                    _ => continue,
+                if !tiles.get(&neighbor).map(|t| t.is_open()).unwrap_or(false) {
+                    continue;
                 }
                 out.push(neighbor)
             }

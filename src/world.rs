@@ -53,6 +53,12 @@ impl World {
             tracer: None,
         };
         out.update_npc_plans();
+        out.execute(
+            &Action::ToCreature {
+                id: pc_id,
+                action: CreatureAction::NewHand,
+            }
+        );
         out
     }
 
@@ -141,6 +147,14 @@ impl World {
         // Refill player ap/mp
         let player_id = self.player_id;
         events.extend(self.refill(player_id));
+
+        // Refresh player hand
+        events.extend(self.execute(
+            &Action::ToCreature {
+                id: player_id,
+                action: CreatureAction::NewHand,
+            }
+        ));
         
         // NPC turns
         let mut npc_plays = vec![];

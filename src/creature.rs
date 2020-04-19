@@ -1,13 +1,17 @@
+use std::convert::TryInto;
+
 use rand::prelude::*;
 use serde::{Deserialize, Serialize};
 use ts_data_derive::TsData;
 use wasm_bindgen::prelude::wasm_bindgen;
+
 use crate::{
     card::Card,
     error::{Error, Result},
     id_map::{Id, IdMap},
     npc::NPC,
     serde_empty,
+    some_or,
 };
 
 pub type CardId = (Id<Part>, Id<Card>);
@@ -19,7 +23,7 @@ pub struct Creature {
     pub cur_mp: i32,
     pub dead: bool,
     pub npc: Option<NPC>,
-    pub deck: Vec<CardId>,
+    pub deck: Vec<CardId>,  // end of vec -> top of deck
     pub hand: Vec<CardId>,
     pub discard: Vec<CardId>,
 }
@@ -47,14 +51,6 @@ impl Creature {
 
     // Accessors
 
-    pub fn part_cards(&self) -> impl Iterator<Item=(Id<Part>, Id<Card>, &Card)> {
-        self.parts.iter()
-            .flat_map(|(&id, part)|
-                part.cards.iter()
-                    .map(move |(&cid, card)| (id, cid, card))
-            )
-    }
-
     pub fn max_ap(&self) -> i32 {
         self.parts.values()
             .map(|part| part.thought)
@@ -73,6 +69,7 @@ impl Creature {
             .sum()
     }
 
+    // TODO: replace with tag-restricted choice
     pub fn hit_action(&self, damage: i32) -> CreatureAction {
         let mut rng = thread_rng();
         let part_id = self.parts.keys().choose(&mut rng).unwrap();
@@ -122,6 +119,29 @@ impl Creature {
                 if self_died { self.dead = true; }
                 out
             }
+            NewHand => {
+                let mut out = vec![];
+                for card in self.hand.drain(..) {
+                    out.push(CreatureEvent::Discarded {
+                        part: card.0, card: card.1,
+                    });
+                    self.discard.push(card);
+                }
+                let uhand: usize = self.hand_size().try_into().unwrap();
+                if self.deck.len() < uhand {
+                    out.push(CreatureEvent::DeckRecycled);
+                    self.deck.append(&mut self.discard);
+                    self.deck.shuffle(&mut rand::thread_rng());
+                }
+                let udraw = std::cmp::min(self.deck.len(), uhand);
+                for _ in 0..udraw {
+                    let card = some_or!(self.deck.pop(), break);
+                    out.push(CreatureEvent::Drew { part: card.0, card: card.1 });
+                    self.hand.push(card);
+                }
+
+                Ok(out)
+            }
         }
     }
 
@@ -145,7 +165,9 @@ pub enum CreatureAction {
     SpendAP { ap: i32 },
     GainMP { mp: i32 },
     SpendMP { mp: i32 },
-    ToPart { id: Id<Part>, action: PartAction }
+    ToPart { id: Id<Part>, action: PartAction },
+    #[serde(with = "serde_empty")]
+    NewHand,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, TsData)]
@@ -155,6 +177,10 @@ pub enum CreatureEvent {
     OnPart { id: Id<Part>, event: PartEvent },
     #[serde(with = "serde_empty")]
     Died,
+    Discarded { part: Id<Part>, card: Id<Card> },
+    Drew { part: Id<Part>, card: Id<Card> },
+    #[serde(with = "serde_empty")]
+    DeckRecycled,
 }
 
 #[derive(Debug, Clone)]
@@ -222,13 +248,20 @@ pub enum PartEvent {
     Died,
 }
 
-/*
+
+#[allow(unused)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum PartTag {
-    Head, Torso, Limb, Arm, Leg,
-    Flesh, Metal, Eldritch,
+    Vital,  // TODO: replace vital bool with this
+    // Universal: shape
+    Head, Torso, Limb,
+    // Universal: material
+    Flesh, Machine,
+    // Specialized: shape
+    Arm, Leg,
 }
 
+/*
 #[derive(Debug, Clone)]
 pub struct Joint {
     required: HashSet<PartTag>,
