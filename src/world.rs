@@ -8,13 +8,13 @@ use serde::Serialize;
 use ts_data_derive::TsData;
 use wasm_bindgen::prelude::wasm_bindgen;
 use crate::{
-    card::{Shoot, Walk},
     creature::{self, Creature, CreatureAction},
     error::{Error, Result},
     event::{Action, Event, Mod, ModId, Trigger, TriggerId},
     id_map::{Id, IdMap},
+    library,
     map::{Map},
-    npc::{Motion, Monopod},
+    npc::{Motion},
 };
 
 #[derive(Debug, Clone)]
@@ -40,9 +40,9 @@ impl World {
         let pc_id = creatures.add(make_player());
         let mut map = Map::new();
         map.place_at(pc_id, hex::ORIGIN).unwrap();
-        let enemy_id = creatures.add(make_npc());
+        let enemy_id = creatures.add(library::npc::Monopod::creature());
         map.place_at(enemy_id, Hex { x: -4, y: 1 }).unwrap();
-        let enemy2_id = creatures.add(make_npc());
+        let enemy2_id = creatures.add(library::npc::Monopod::creature());
         map.place_at(enemy2_id, Hex { x: 4, y: -1 }).unwrap();
         let mut out = World {
             map: map,
@@ -352,7 +352,7 @@ fn make_player() -> Creature {
     };
     let arm_l = creature::Part {
         name: "Arm".into(),
-        cards: IdMap::from_iter(vec![Shoot::card()]),
+        cards: IdMap::from_iter(vec![library::card::Shoot::card()]),
         ap: 0, mp: 0,
         max_hp: 3, cur_hp: 3,
         vital: false,
@@ -361,7 +361,7 @@ fn make_player() -> Creature {
     let arm_r = arm_l.clone();
     let leg_l = creature::Part {
         name: "Leg".into(),
-        cards: IdMap::from_iter(vec![Walk::card()]),
+        cards: IdMap::from_iter(vec![library::card::Walk::card()]),
         ap: 0, mp: 1,
         max_hp: 3, cur_hp: 3,
         vital: false,
@@ -369,24 +369,4 @@ fn make_player() -> Creature {
     };
     let leg_r = leg_l.clone();
     Creature::new(&[head, torso, arm_l, arm_r, leg_l, leg_r], None)
-}
-
-fn make_npc() -> Creature {
-    let head = creature::Part {
-        name: "Hed".into(),
-        cards: IdMap::new(),
-        ap: 1, mp: 0,
-        max_hp: 2, cur_hp: 2,
-        vital: true,
-        dead: false,
-    };
-    let foot = creature::Part {
-        name: "Fut".into(),
-        cards: IdMap::new(),
-        ap: 0, mp: 3,
-        max_hp: 2, cur_hp: 2,
-        vital: false,
-        dead: false,
-    };
-    Creature::new(&[head, foot], Some(Monopod::npc()))
 }

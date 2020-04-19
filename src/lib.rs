@@ -3,6 +3,7 @@ mod creature;
 mod error;
 mod event;
 mod id_map;
+mod library;
 mod map;
 mod npc;
 mod serde_empty;
@@ -24,6 +25,4 @@ pub fn wasm_start() {
 
     info!("Parts Unknown WASM initialized.");
     js_greet("User");
-
-    card::Walk::card();
 }
