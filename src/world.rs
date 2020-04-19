@@ -352,6 +352,7 @@ fn make_player() -> Creature {
         name: "Head".into(),
         max_hp: 2,
         thought: 3,
+        memory: 5,
         vital: true,
         ..Part::default()
     };

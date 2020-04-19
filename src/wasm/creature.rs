@@ -23,6 +23,7 @@ pub struct Creature {
     curMp: i32,
     dead: bool,
     npc: Option<NPC>,
+    hand: Vec<Card>,
 }
 
 impl Creature {
@@ -30,9 +31,16 @@ impl Creature {
         let parts = source.parts.iter()
             .map(|(part_id, part)| (*part_id, Part::new(*part_id, id, part)))
             .collect();
+        let hand = source.hand.iter()
+            .map(|&(part_id, card_id)| {
+                let card = source.parts.get(part_id).unwrap().cards.get(card_id).unwrap();
+                Card::new(card_id, part_id, id, card)
+            })
+            .collect();
         Creature {
             id,
             parts,
+            hand,
             curAp: source.cur_ap,
             curMp: source.cur_mp,
             dead: source.dead,
