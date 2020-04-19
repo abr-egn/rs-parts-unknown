@@ -101,7 +101,6 @@ export class Game {
             if (creature.dead) { continue; }
             let intent = creature.npc;
             if (!intent) { continue; }
-            console.log(intent, point);
             intents.push([intent, point]);
         }
         return intents;

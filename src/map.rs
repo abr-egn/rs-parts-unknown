@@ -63,6 +63,23 @@ impl Map {
         out
     }
 
+    pub fn los_from(&self, start: Hex) -> HashSet<Hex> {
+        let mut out = HashSet::new();
+        out.insert(start);
+        for (hex, tile) in &self.tiles {
+            if *hex == start { continue; }
+            if tile.space != Space::Empty { continue; }
+            if start.line_to(*hex).skip(1)
+                .filter_map(|coord| self.tiles.get(&coord))
+                .any(|line_tile| !line_tile.is_open()) {
+                continue;
+            }
+            out.insert(*hex);
+        }
+
+        out
+    }
+
     pub fn path_to(&self, from: Hex, to: Hex) -> Result<Vec<Hex>> {
         let to_tile = self.tiles.get(&to).ok_or(Error::OutOfBounds)?;
         if !to_tile.is_open() {

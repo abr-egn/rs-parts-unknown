@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use hex::Hex;
 
 use crate::{
@@ -48,29 +50,28 @@ impl Walk {
 #[derive(Debug, Clone)]
 pub struct Shoot {
     source: Id<Creature>,
-    source_pos: Hex,
-    range: i32,
+    los: HashSet<Hex>,
     damage: i32,
 }
 
 impl Shoot {
-    pub fn behavior(world: &World, source: &Id<Creature>, range: i32, damage: i32) -> Box<dyn card::Behavior> {
+    pub fn behavior(world: &World, source: &Id<Creature>, damage: i32) -> Box<dyn card::Behavior> {
         let pos = world.map().creatures().get(source).unwrap().clone();
-        Box::new(Shoot { source: *source, source_pos: pos, range, damage })
+        let los = world.map().los_from(pos);
+        Box::new(Shoot { source: *source, los, damage })
     }
     pub fn card() -> Card {
         Card {
             name: "Shoot".into(),
             ap_cost: 1,
-            start_play: |world, source| Shoot::behavior(world, source, 5, 1),
+            start_play: |world, source| Shoot::behavior(world, source, 1),
         }
     }
 }
 
 impl card::Behavior for Shoot {
-    fn range(&self, world: &World) -> Vec<Hex> {
-        // TODO: line of sight rather than movement range
-        world.map().range_from(self.source_pos, self.range).into_iter().collect()
+    fn range(&self, _world: &World) -> Vec<Hex> {
+        self.los.iter().cloned().collect()
     }
     fn highlight(&self, world: &World, _cursor: Hex) -> Vec<Hex> {
         self.range(world).into_iter()
@@ -78,7 +79,7 @@ impl card::Behavior for Shoot {
             .collect()
     }
     fn target_valid(&self, world: &World, cursor: Hex) -> bool {
-        if cursor.distance_to(self.source_pos) > self.range { return false; }
+        if !self.los.contains(&cursor) { return false; }
         match world.map().tiles().get(&cursor) {
             Some(Tile { creature: Some(id), ..}) if *id != self.source => true,
             _ => false,

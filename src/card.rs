@@ -12,6 +12,7 @@ use crate::{
 pub struct Card {
     pub name: String,
     pub ap_cost: i32,
+    // Contract: the world will not change between start_play and Behavior methods.
     #[serde(skip)]
     pub start_play: fn(&World, &Id<Creature>) -> Box<dyn Behavior>,
 }
