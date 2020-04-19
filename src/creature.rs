@@ -10,6 +10,8 @@ use crate::{
     serde_empty,
 };
 
+pub type CardId = (Id<Part>, Id<Card>);
+
 #[derive(Debug, Clone)]
 pub struct Creature {
     pub parts: IdMap<Part>,
@@ -17,6 +19,9 @@ pub struct Creature {
     pub cur_mp: i32,
     pub dead: bool,
     pub npc: Option<NPC>,
+    pub deck: Vec<CardId>,
+    pub hand: Vec<CardId>,
+    pub discard: Vec<CardId>,
 }
 
 impl Creature {
@@ -25,15 +30,22 @@ impl Creature {
         for part in parts {
             pids.add(part.clone());
         }
-        let mut out = Creature { parts: pids, cur_ap: 0, cur_mp: 0, dead: false, npc };
+        let mut out = Creature {
+            parts: pids,
+            cur_ap: 0, cur_mp: 0,
+            dead: false,
+            npc,
+            deck: vec![], hand: vec![], discard: vec![],
+        };
         out.cur_ap = out.max_ap();
         out.cur_mp = out.max_mp();
+        out.reset_cards();
         out
     }
 
     // Accessors
 
-    pub fn cards(&self) -> impl Iterator<Item=(Id<Part>, Id<Card>, &Card)> {
+    pub fn part_cards(&self) -> impl Iterator<Item=(Id<Part>, Id<Card>, &Card)> {
         self.parts.iter()
             .flat_map(|(&id, part)|
                 part.cards.iter()
@@ -105,6 +117,17 @@ impl Creature {
         }
     }
 
+    pub fn reset_cards(&mut self) {
+        self.deck = self.parts.iter()
+            .flat_map(|(&id, part)|
+                part.cards.keys()
+                    .map(move |&cid| (id, cid))
+            ).collect();
+        self.hand = vec![];
+        self.discard = vec![];
+    }
+
+    // TODO: more fine-grained access
     pub fn npc_mut(&mut self) -> Option<&mut NPC> { self.npc.as_mut() }
 }
 
