@@ -2,7 +2,7 @@ use hex::Hex;
 use serde::Serialize;
 
 use crate::{
-    creature::{Creature},
+    creature::{Creature, Part},
     event::{Action, Event},
     id_map::Id,
     world::World,
@@ -15,6 +15,16 @@ pub struct Card {
     // Contract: the world will not change between start_play and Behavior methods.
     #[serde(skip)]
     pub start_play: fn(&World, &Id<Creature>) -> Box<dyn Behavior>,
+}
+
+// TODO: use this
+#[derive(Clone)]
+pub struct InPlay {
+    pub creature_id: Id<Creature>,
+    pub part_id: Id<Part>,
+    pub card_id: Id<Card>,
+    pub behavior: Box<dyn Behavior>,
+    pub ap_cost: i32,
 }
 
 impl std::fmt::Debug for Card {

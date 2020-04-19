@@ -173,7 +173,7 @@ impl World {
         let target: Hex = from_js_value(target);
         let mut newWorld = self.wrapped.clone();
         let mut events = vec![];
-        // TODO: move this out of wasm
+        // TODO: use card::InPlay / world.play_card
         events.extend(newWorld.execute(
             &Action::ToCreature {
                 id: card.creatureId,

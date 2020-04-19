@@ -8,6 +8,7 @@ use serde::Serialize;
 use ts_data_derive::TsData;
 use wasm_bindgen::prelude::wasm_bindgen;
 use crate::{
+    card::{self, Card},
     creature::{Creature, CreatureAction, Part},
     error::{Error, Result},
     event::{Action, Event, Mod, ModId, Trigger, TriggerId},
@@ -139,6 +140,27 @@ impl World {
             ));
         }
         out
+    }
+
+    pub fn play_card(&mut self, in_play: card::InPlay, target: Hex) -> Vec<Event> {
+        let mut events = vec![];
+        events.extend(self.execute(
+            &Action::ToCreature {
+                id: in_play.creature_id,
+                action: CreatureAction::Discard {
+                    part: in_play.part_id,
+                    card: in_play.card_id,
+                },
+            }
+        ));
+        events.extend(self.execute(&Action::ToCreature {
+            id: in_play.creature_id,
+            action: CreatureAction::SpendAP { ap: in_play.ap_cost },
+        }));
+        if !Event::is_failure(&events) {
+            events.extend(in_play.behavior.apply(self, target));
+        }
+        events
     }
 
     pub fn npc_turn(&mut self) -> Vec<Event> {
