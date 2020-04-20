@@ -67,6 +67,16 @@ export class Game {
         return this._keys.get(name) || false;
     }
 
+    creatureAt(hex: wasm.Hex): [Id<wasm.Creature>, wasm.Creature] | undefined {
+        const tile = this._world.getTile(hex);
+        if (!tile) { return undefined; }
+        const id = tile.creature;
+        if (id == undefined) { return undefined; }
+        const creature = this._world.getCreature(id);
+        if (!creature) { return undefined; }
+        return [id, creature];
+    }
+
     // Mutators
 
     async animateEvents(events: wasm.Event[]) {

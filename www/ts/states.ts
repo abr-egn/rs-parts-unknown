@@ -120,6 +120,24 @@ export class PlayCard extends State {
     }
 
     onTileClicked(hex: Hex) {
+        if (!this._canTarget(hex)) { return; }
+        const world = window.game.world;
+        const spec = this._inPlay!.getTargetSpec();
+        let match;
+        if (match = spec.Part) {
+            // TODO: push a state
+            let cAt = window.game.creatureAt(hex);
+            if (!cAt) { return; }
+            let [id, creature] = cAt;
+            if (id == world.playerId) { return; }
+            let targeting: PlayCard.PartTargeting = {
+                hex,
+                targets: [],
+                onSelect: (part) => {},
+                onCancel: () => {},
+            };
+            //for (let part of )
+        }
         /* TODO(targets)
         if (!this._inPlay!.targetValid(window.game.world, hex)) {
             return;
@@ -135,12 +153,10 @@ export class PlayCard extends State {
         const spec = this._inPlay!.getTargetSpec();
         let match;
         if (match = spec.Part) {
-            const tile = world.getTile(hex);
-            if (!tile) { return false; }
-            const id = tile.creature;
-            if (id == undefined || id == world.playerId) { return false; }
-            const creature = world.getCreature(id);
-            if (!creature) { return false; }
+            let cAt = window.game.creatureAt(hex);
+            if (!cAt) { return false; }
+            let [id, creature] = cAt;
+            if (id == world.playerId) { return false; }
             let found = false;
             for (let part of creature.parts.values()) {
                 if (match.tags.every((tag) => part.tags.includes(tag))) {
@@ -156,7 +172,14 @@ export class PlayCard extends State {
 export namespace PlayCard {
     export class UI {
         [Stack.Datum] = true;
+        public partTarget?: PartTargeting;
         constructor (public card: wasm.Card) {}
+    }
+    export interface PartTargeting {
+        hex: Hex;
+        targets: [wasm.Part, boolean][];
+        onSelect: (part: wasm.Part) => void;
+        onCancel: () => void;
     }
 }
 
