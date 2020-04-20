@@ -37,6 +37,10 @@ impl InPlay {
     }
     #[wasm_bindgen(getter)]
     pub fn apCost(&self) -> i32 { self.wrapped.ap_cost }
+    #[wasm_bindgen(skip_typescript)]
+    pub fn getTargetSpec(&self) -> JsValue {
+        to_js_value(&self.wrapped.behavior.target_spec())
+    }
 }
 
 #[wasm_bindgen(typescript_custom_section)]
@@ -45,5 +49,6 @@ interface InPlay {
     range(world: World): Hex[];
     targetValid(world: World, target: Target): boolean;
     preview(world: World, target: Target): Action[];
+    getTargetSpec(): TargetSpec;
 }
 "#;

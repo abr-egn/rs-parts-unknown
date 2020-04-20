@@ -6,7 +6,7 @@ use wasm_bindgen::{
 };
 
 use crate::{
-    card::{Target, TargetSpec},
+    card::{Target},
     creature,
     event::{Action, Event},
     id_map::Id,

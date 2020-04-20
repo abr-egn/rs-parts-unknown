@@ -64,11 +64,18 @@ export class PlayCard extends State {
             throw `Invalid hand index ${this._handIx}`;
         }
         const card = creature.hand[this._handIx];
-        //this.update((draft) => { draft.build(PlayCard.UI, card).card = card; });
         
         this._inPlay = world.startPlay(this._creatureId, this._handIx);
         if (!this._inPlay) {
             throw `Card did not start play`;
+        }
+        const targetSpec = this._inPlay.getTargetSpec();
+        if (targetSpec.None) {
+            // TODO: preview, confirm
+            const [nextWorld, events] = window.game.world.finishPlay(this._inPlay!, {None: true});
+            this._inPlay = undefined;
+            window.game.stack.swap(new Update(events, nextWorld));
+            return;
         }
         const range = this._inPlay.range(world);
         this.update((draft) => {
