@@ -43,34 +43,31 @@ impl Walk {
 }
 
 #[derive(Debug, Clone)]
-pub struct Shoot {
-    source: Id<Creature>,
-    los: HashSet<Hex>,
+struct HitPart {
+    // Parameters
     damage: i32,
+    tags: Vec<Vec<PartTag>>,
+    // Bookkeeping
+    source: Id<Creature>,
+    range: HashSet<Hex>,
 }
 
-impl Shoot {
-    pub fn behavior(world: &World, source: &Id<Creature>, damage: i32) -> Box<dyn card::Behavior> {
-        let pos = world.map().creatures().get(source).unwrap().clone();
-        let los = world.map().los_from(pos);
-        Box::new(Shoot { source: *source, los, damage })
-    }
-    pub fn card() -> Card {
-        Card {
-            name: "Shoot".into(),
-            ap_cost: 1,
-            start_play: |world, source| Shoot::behavior(world, source, 1),
-        }
+impl HitPart {
+    fn behavior(world: &World, source: &Id<Creature>,
+        damage: i32, tags: Vec<Vec<PartTag>>, melee: bool) -> Box<dyn card::Behavior> {
+        let position = world.map().creatures().get(source).unwrap().clone();
+        let range = if melee {
+            position.neighbors().collect()
+        } else {
+            world.map().los_from(position)
+        };
+        Box::new(HitPart { damage, tags, source: *source, range })
     }
 }
 
-impl card::Behavior for Shoot {
-    fn range(&self, _world: &World) -> Vec<Hex> {
-        self.los.iter().cloned().collect()
-    }
-    fn target_spec(&self) -> TargetSpec {
-        TargetSpec::Part { tags: vec![vec![PartTag::Flesh]] }
-    }
+impl card::Behavior for HitPart {
+    fn range(&self, _world: &World) -> Vec<Hex> { self.range.iter().cloned().collect() }
+    fn target_spec(&self) -> TargetSpec { TargetSpec::Part { tags: self.tags.clone() } }
     fn target_valid(&self, world: &World, target: &Target) -> bool {
         if !self.target_spec().matches(world, target) { return false; }
         let creature_id = if let Target::Part { creature_id, .. } = target {
@@ -78,7 +75,7 @@ impl card::Behavior for Shoot {
         } else { return false; };
         if *creature_id == self.source { return false; }
         let pos = some_or!(world.map().creatures().get(creature_id), return false);
-        if !self.los.contains(&pos) { return false; }
+        if !self.range.contains(&pos) { return false; }
         true
     }
     fn preview(&self, _world: &World, target: &Target) -> Vec<Action> {
@@ -93,5 +90,13 @@ impl card::Behavior for Shoot {
                 action: PartAction::Hit { damage: self.damage }
             },
         }]
+    }
+}
+
+pub fn shoot() -> Card {
+    Card {
+        name: "Shoot".into(),
+        ap_cost: 1,
+        start_play: |world, source| HitPart::behavior(world, source, 1, vec![vec![PartTag::Flesh]], false),
     }
 }

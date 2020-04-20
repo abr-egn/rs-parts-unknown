@@ -405,7 +405,7 @@ fn make_player() -> Creature {
         &[PartTag::Torso, PartTag::Flesh, PartTag::Vital],
         50);
     let arm_l = Part {
-        cards: IdMap::from_iter(vec![library::card::Shoot::card()]),
+        cards: IdMap::from_iter(vec![library::card::shoot()]),
         ..Part::new(
             "Arm",
             &[PartTag::Limb, PartTag::Flesh, PartTag::Arm],
