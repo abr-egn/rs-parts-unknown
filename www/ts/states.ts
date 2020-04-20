@@ -95,7 +95,6 @@ export class PlayCard extends State {
         const world = window.game.world;
         const preview: Preview[] = [];
         
-        //if (this._inPlay!.targetValid(world, hex)) {
         const hiHexes: Hex[] = [];
         if (this._canTarget(hex)) {
             hiHexes.push(hex);
@@ -125,27 +124,29 @@ export class PlayCard extends State {
         const spec = this._inPlay!.getTargetSpec();
         let match;
         if (match = spec.Part) {
-            // TODO: push a state
-            let cAt = window.game.creatureAt(hex);
-            if (!cAt) { return; }
-            let [id, creature] = cAt;
-            if (id == world.playerId) { return; }
-            let targeting: PlayCard.PartTargeting = {
-                hex,
-                targets: [],
-                onSelect: (part) => {},
-                onCancel: () => {},
+            let creature = window.game.creatureAt(hex);
+            if (!creature) { return; }
+            if (creature.id == world.playerId) { return; }
+            window.game.stack.push(new TargetPart(creature));
+        }
+    }
+
+    onActivated(data?: any) {
+        if (!data) { return; }
+        if (data instanceof TargetPart.Select) {
+            const target: wasm.Target = {
+                Part: {
+                    creature_id: this._creatureId,
+                    part_id: data.part.id,
+                }
             };
-            //for (let part of )
+            if (!this._inPlay!.targetValid(window.game.world, target)) {
+                return;
+            }
+            const [nextWorld, events] = window.game.world.finishPlay(this._inPlay!, target);
+            this._inPlay = undefined;
+            window.game.stack.swap(new Update(events, nextWorld));
         }
-        /* TODO(targets)
-        if (!this._inPlay!.targetValid(window.game.world, hex)) {
-            return;
-        }
-        const [nextWorld, events] = window.game.world.finishPlay(this._inPlay!, hex);
-        this._inPlay = undefined;
-        window.game.stack.swap(new Update(events, nextWorld));
-        */
     }
 
     private _canTarget(hex: Hex): boolean {
@@ -153,10 +154,8 @@ export class PlayCard extends State {
         const spec = this._inPlay!.getTargetSpec();
         let match;
         if (match = spec.Part) {
-            let cAt = window.game.creatureAt(hex);
-            if (!cAt) { return false; }
-            let [id, creature] = cAt;
-            if (id == world.playerId) { return false; }
+            let creature = window.game.creatureAt(hex);
+            if (!creature) { return false; }
             let found = false;
             for (let part of creature.parts.values()) {
                 if (match.tags.every((tag) => part.tags.includes(tag))) {
@@ -172,15 +171,30 @@ export class PlayCard extends State {
 export namespace PlayCard {
     export class UI {
         [Stack.Datum] = true;
-        public partTarget?: PartTargeting;
         constructor (public card: wasm.Card) {}
     }
-    export interface PartTargeting {
-        hex: Hex;
-        targets: [wasm.Part, boolean][];
-        onSelect: (part: wasm.Part) => void;
-        onCancel: () => void;
+}
+
+export class TargetPart extends State {
+    constructor(private _creature: wasm.Creature) { super(); }
+    onPushed() {
+        // TODO
     }
+}
+export namespace TargetPart {
+    export class UI {
+        [Stack.Datum] = true;
+        constructor(
+            public hex: Hex,
+            public targets: [wasm.Part, boolean][],
+            public onSelect: (part: wasm.Part) => void,
+            public onCancel: () => void,
+        ) {}
+    }
+    export class Select {
+        constructor(public part: wasm.Part) {}
+    }
+    export class Cancel {}
 }
 
 export class Update extends State {
