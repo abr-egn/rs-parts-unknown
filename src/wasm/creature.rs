@@ -60,7 +60,7 @@ pub struct Part {
     maxHp: i32,
     curHp: i32,
     thought: i32,
-    broken: bool,
+    broken: bool,  // TODO: expose tags directly
 }
 
 #[allow(non_snake_case)]
@@ -79,7 +79,7 @@ impl Part {
             thought: source.thought,
             maxHp: source.max_hp,
             curHp: source.cur_hp,
-            broken: source.broken,
+            broken: source.tags.contains(&creature::PartTag::Broken),
         }
     }
 }

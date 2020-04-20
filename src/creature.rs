@@ -1,4 +1,8 @@
-use std::convert::TryInto;
+use std::{
+    collections::HashSet,
+    convert::TryInto,
+    iter::FromIterator,
+};
 
 use rand::prelude::*;
 use serde::{Deserialize, Serialize};
@@ -110,7 +114,7 @@ impl Creature {
                 let out = part.resolve(action).map(|pevs| {
                     let died = pevs.iter().any(|pev| *pev == PartEvent::Died);
                     let mut out: Vec<_> = pevs.into_iter().map(|pev| CreatureEvent::OnPart { id, event: pev }).collect();
-                    if died && part.vital && !self_died {
+                    if died && part.tags.contains(&PartTag::Vital) && !self_died {
                         self_died = true;
                         out.push(CreatureEvent::Died);
                     }
@@ -196,26 +200,33 @@ pub struct Part {
     // Structure
     pub name: String,
     pub cards: IdMap<Card>,
+    pub tags: HashSet<PartTag>,
     // Stats
     pub max_hp: i32,
     pub cur_hp: i32,
     pub thought: i32, // action points
     pub memory: i32,  // hand size
     pub mp: i32,
-    // Flags
-    pub vital: bool,
-    pub broken: bool,
     /* TODO: remaining part attributes
     power: i32,
     capacity: i32,
-    tags: HashSet<PartTag>,
     joints: Vec<Joint>,
     */
 }
 
 impl Part {
+    pub fn new<S: Into<String>>(name: S, tags: &[PartTag], max_hp: i32) -> Self {
+        Part {
+            name: name.into(),
+            cards: IdMap::new(),
+            tags: HashSet::from_iter(tags.iter().cloned()),
+            thought: 0, memory: 0, mp: 0,
+            max_hp, cur_hp: max_hp,
+        }
+    }
+
     pub fn resolve(&mut self, action: &PartAction) -> Result<Vec<PartEvent>> {
-        if self.broken { return Err(Error::BrokenPart); }
+        if self.tags.contains(&PartTag::Broken) { return Err(Error::BrokenPart); }
         use PartAction::*;
         match *action {
             Hit { damage } => {
@@ -228,18 +239,6 @@ impl Part {
                 }
                 return Ok(out);
             }
-        }
-    }
-}
-
-impl Default for Part {
-    fn default() -> Self {
-        Part {
-            name: "[DEFAULT]".into(),
-            cards: IdMap::new(),
-            thought: 0, memory: 0, mp: 0,
-            max_hp: 1, cur_hp: 1,
-            vital: false, broken: false,
         }
     }
 }
@@ -260,7 +259,8 @@ pub enum PartEvent {
 #[allow(unused)]
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum PartTag {
-    Vital,  // TODO: replace vital bool with this
+    // State
+    Vital, Broken,
     // Universal: shape
     Head, Torso, Limb,
     // Universal: material

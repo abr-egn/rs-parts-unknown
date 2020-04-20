@@ -1,5 +1,5 @@
 use crate::{
-    creature::{Creature, CreatureAction, Part},
+    creature::{Creature, CreatureAction, Part, PartTag},
     error::{Error, Result},
     event::{Action, Event},
     id_map::{Id},
@@ -28,17 +28,12 @@ impl npc::Behavior for Monopod {
 impl Monopod {
     pub fn creature() -> Creature {
         let head = Part {
-            name: "Hed".into(),
-            max_hp: 2,
             thought: 1,
-            vital: true,
-            ..Part::default()
+            ..Part::new("Hed", &[PartTag::Vital], 2)
         };
         let foot = Part {
-            name: "Fut".into(),
-            max_hp: 2,
             mp: 3,
-            ..Part::default()
+            ..Part::new("Fut", &[], 2)
         };
         Creature::new(&[head, foot], Some(Monopod::npc()))
     }
@@ -86,7 +81,7 @@ impl<'a> CheckRun<'a> {
         }
         // Check part
         let part = self.part;
-        if !creature.parts.values().any(|p| p.name == part && !p.broken) {
+        if !creature.parts.values().any(|p| p.name == part && !p.tags.contains(&PartTag::Broken)) {
             return Err(Error::NoSuchPart);
         }
         // Check range

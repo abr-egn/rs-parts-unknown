@@ -11,7 +11,7 @@ use wasm_bindgen::prelude::wasm_bindgen;
 
 use crate::{
     card,
-    creature::{Creature, CreatureAction, Part},
+    creature::{Creature, CreatureAction, Part, PartTag},
     error::{Error, Result},
     event::{Action, Event, Mod, ModId, Trigger, TriggerId},
     id_map::{Id, IdMap},
@@ -391,32 +391,20 @@ impl Clone for Box<dyn Tracer> {
 
 fn make_player() -> Creature {
     let head = Part {
-        name: "Head".into(),
-        max_hp: 2,
         thought: 3,
         memory: 5,
-        vital: true,
-        ..Part::default()
+        ..Part::new("Head", &[PartTag::Vital], 2)
     };
-    let torso = Part {
-        name: "Torso".into(),
-        max_hp: 5,
-        vital: true,
-        ..Part::default()
-    };
+    let torso = Part::new("Torso", &[PartTag::Vital], 5);
     let arm_l = Part {
-        name: "Arm".into(),
         cards: IdMap::from_iter(vec![library::card::Shoot::card()]),
-        max_hp: 3,
-        ..Part::default()
+        ..Part::new("Arm", &[], 3)
     };
     let arm_r = arm_l.clone();
     let leg_l = Part {
-        name: "Leg".into(),
         cards: IdMap::from_iter(vec![library::card::Walk::card()]),
-        max_hp: 3,
         mp: 1,
-        ..Part::default()
+        ..Part::new("Leg", &[], 3)
     };
     let leg_r = leg_l.clone();
     Creature::new(&[head, torso, arm_l, arm_r, leg_l, leg_r], None)
