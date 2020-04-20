@@ -1,9 +1,8 @@
-use hex::Hex;
 use js_sys::Array;
 use wasm_bindgen::prelude::*;
 
 use crate::{
-    card,
+    card::{self, Target},
     wasm::{
         world::World,
         from_js_value, to_js_value,
@@ -26,19 +25,13 @@ impl InPlay {
             .collect()
     }
     #[wasm_bindgen(skip_typescript)]
-    pub fn highlight(&self, world: &World, cursor: JsValue) -> Array /* Hex[] */ {
-        self.wrapped.behavior.highlight(&world.wrapped, from_js_value::<Hex>(cursor)).into_iter()
-            .map(|h| to_js_value::<Hex>(&h))
-            .collect()
-    }
-    #[wasm_bindgen(skip_typescript)]
-    pub fn targetValid(&self, world: &World, cursor: JsValue) -> bool {
-        self.wrapped.behavior.target_valid(&world.wrapped, from_js_value::<Hex>(cursor))
+    pub fn targetValid(&self, world: &World, target: JsValue) -> bool {
+        self.wrapped.behavior.target_valid(&world.wrapped, &from_js_value::<Target>(target))
     }
     #[wasm_bindgen(skip_typescript)]
     pub fn preview(&self, world: &World, target: JsValue) -> Array /* Action[] */ {
-        let target: Hex = from_js_value(target);
-        self.wrapped.behavior.preview(&world.wrapped, target).iter()
+        let target: Target = from_js_value(target);
+        self.wrapped.behavior.preview(&world.wrapped, &target).iter()
             .map(to_js_value)
             .collect()
     }
@@ -50,8 +43,7 @@ impl InPlay {
 const INPLAY_TS: &'static str = r#"
 interface InPlay {
     range(world: World): Hex[];
-    highlight(world: World, cursor: Hex): Hex[];
-    targetValid(world: World, cursor: Hex): boolean;
-    preview(world: World, target: Hex): Action[];
+    targetValid(world: World, target: Target): boolean;
+    preview(world: World, target: Target): Action[];
 }
 "#;

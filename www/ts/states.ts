@@ -71,13 +71,10 @@ export class PlayCard extends State {
             throw `Card did not start play`;
         }
         const range = this._inPlay.range(world);
-        // Base initial highlight on player location
-        const highlight = this._inPlay.highlight(
-            world, world.getCreatureHex(world.playerId)!);
         this.update((draft) => {
             draft.set(PlayCard.UI, card);
             const hi = draft.build(Highlight);
-            hi.hexes = highlight;
+            hi.hexes = [];
             hi.range = wasm.findBoundary(range);
         });
     }
@@ -89,8 +86,8 @@ export class PlayCard extends State {
 
     onTileEntered(hex: Hex) {
         const world = window.game.world;
-        let highlight: Hex[] = this._inPlay!.highlight(world, hex);
         const preview: Preview[] = [];
+        /* TODO(targets)
         if (this._inPlay!.targetValid(world, hex)) {
             // TODO: highlight target hex
             preview.push(Preview.make({
@@ -104,20 +101,23 @@ export class PlayCard extends State {
                 preview.push(Preview.make(action));
             }
         }
+        */
         this.update((draft) => {
             const hi = draft.build(Highlight);
-            hi.hexes = highlight;
+            hi.hexes = [];
             hi.setPreview(preview);
         });
     }
 
     onTileClicked(hex: Hex) {
+        /* TODO(targets)
         if (!this._inPlay!.targetValid(window.game.world, hex)) {
             return;
         }
         const [nextWorld, events] = window.game.world.finishPlay(this._inPlay!, hex);
         this._inPlay = undefined;
         window.game.stack.swap(new Update(events, nextWorld));
+        */
     }
 }
 export namespace PlayCard {

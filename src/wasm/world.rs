@@ -6,6 +6,7 @@ use wasm_bindgen::{
 };
 
 use crate::{
+    card::{Target, TargetSpec},
     creature,
     event::{Action, Event},
     id_map::Id,
@@ -167,9 +168,9 @@ impl World {
 
     #[wasm_bindgen(skip_typescript)]
     pub fn finishPlay(&self, in_play: InPlay, target: JsValue) -> Array /* [World, Event[]] */ {
-        let target: Hex = from_js_value(target);
+        let target: Target = from_js_value(target);
         let mut newWorld = self.wrapped.clone();
-        let events = newWorld.finish_play(in_play.wrapped, target);
+        let events = newWorld.finish_play(in_play.wrapped, &target);
         world_update(newWorld, &events)
     }
 
@@ -221,7 +222,7 @@ interface World {
 
     // Updates
 
-    finishPlay(inPlay: InPlay, target: Hex): [World, Event[]];
+    finishPlay(inPlay: InPlay, target: Target): [World, Event[]];
     npcTurn(): [World, Event[]];
     movePlayer(to: Hex): [World, Event[]];
 

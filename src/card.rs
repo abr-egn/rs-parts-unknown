@@ -1,11 +1,15 @@
 use hex::Hex;
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
+use ts_data_derive::TsData;
+use wasm_bindgen::prelude::*;
 
 use crate::{
-    creature::{Creature, Part},
+    creature::{Creature, Part, PartTag},
     event::{Action, Event},
     id_map::Id,
+    serde_empty,
     world::World,
+    some_or,
 };
 
 #[derive(Clone, Serialize)]
@@ -40,11 +44,13 @@ impl std::fmt::Debug for Card {
 // TODO: power scaling
 pub trait Behavior: BehaviorClone {
     fn range(&self, _world: &World) -> Vec<Hex> { vec![] }
-    fn highlight(&self, _world: &World, _cursor: Hex) -> Vec<Hex> { vec![] }
     // TODO: allow for multiple targets
-    fn target_valid(&self, world: &World, cursor: Hex) -> bool;
-    fn preview(&self, world: &World, target: Hex) -> Vec<Action>;
-    fn apply(&self, world: &mut World, target: Hex) -> Vec<Event> {
+    fn target_spec(&self) -> TargetSpec;
+    fn target_valid(&self, world: &World, target: &Target) -> bool {
+        self.target_spec().matches(world, target)
+    }
+    fn preview(&self, world: &World, target: &Target) -> Vec<Action>;
+    fn apply(&self, world: &mut World, target: &Target) -> Vec<Event> {
         let mut out = vec![];
         for act in self.preview(world, target) {
             let events = world.execute(&act);
@@ -54,6 +60,42 @@ pub trait Behavior: BehaviorClone {
         }
         out
     }
+}
+
+// TODO: multiple targets
+// May be better to just go to Parts { tags, count } rather than full
+// generic Multi(Vec<TargetSpec>)
+#[derive(Debug, Serialize, TsData)]
+pub enum TargetSpec {
+    #[serde(with = "serde_empty")]
+    None,
+    Part { tags: Vec<PartTag> }
+    // TODO: Creature,
+}
+
+impl TargetSpec {
+    pub fn matches(&self, world: &World, target: &Target) -> bool {
+        match self {
+            TargetSpec::None => matches!(target, Target::None),
+            TargetSpec::Part { tags } => {
+                match target {
+                    Target::Part { creature_id, part_id } => {
+                        let creature = some_or!(world.creatures().get(*creature_id), return false);
+                        let part = some_or!(creature.parts.get(*part_id), return false);
+                        tags.iter().all(|tag| part.tags.contains(tag))
+                    }
+                    _ => false,
+                }
+            }
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize, TsData)]
+pub enum Target {
+    #[serde(with = "serde_empty")]
+    None,
+    Part { creature_id: Id<Creature>, part_id: Id<Part> }
 }
 
 pub trait BehaviorClone {

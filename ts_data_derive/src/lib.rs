@@ -182,7 +182,10 @@ impl VisitMut for TypeMapper {
             "Part" => (),
             "PartAction" => (),
             "PartEvent" => (),
+            "PartTag" => (),
             "Space" => (),
+            "Target" => (),
+            "TargetSpec" => (),
             "Vec" => (),
             // De-path
             "card::Card" => replace_all(path, "Card"),

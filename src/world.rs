@@ -10,7 +10,7 @@ use ts_data_derive::TsData;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 use crate::{
-    card,
+    card::{self, Target},
     creature::{Creature, CreatureAction, Part, PartTag},
     error::{Error, Result},
     event::{Action, Event, Mod, ModId, Trigger, TriggerId},
@@ -162,7 +162,7 @@ impl World {
         out
     }
 
-    pub fn finish_play(&mut self, in_play: card::InPlay, target: Hex) -> Vec<Event> {
+    pub fn finish_play(&mut self, in_play: card::InPlay, target: &Target) -> Vec<Event> {
         let mut events = vec![];
         events.extend(self.execute(
             &Action::ToCreature {

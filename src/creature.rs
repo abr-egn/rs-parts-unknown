@@ -255,9 +255,7 @@ pub enum PartEvent {
     Died,
 }
 
-
-#[allow(unused)]
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, TsData)]
 pub enum PartTag {
     // State
     Vital, Broken,
