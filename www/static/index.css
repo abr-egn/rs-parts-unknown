@@ -56,10 +56,19 @@ div.topright {
     font-weight: bold;
 }
 
-.partTarget {
+.partTargetMenu {
     position: absolute;
     border: 1px solid white;
     background-color: rgba(0, 0, 0, 0.5);
     margin: 0px;
     padding: 5px;
+}
+
+.invalidTarget {
+    color: gray;
+}
+
+.validTarget:hover {
+    background-color: rgba(0, 127, 0, 0.5);
+    cursor: default;
 }

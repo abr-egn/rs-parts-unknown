@@ -189,6 +189,7 @@ export class TargetPart extends State {
             const canPlay = this._inPlay.targetValid(window.game.world, target);
             targets.push([part, canPlay]);
         }
+        targets.sort((a, b) => a[0].id - b[0].id);
 
         this.update((draft) => {
             draft.set(TargetPart.UI, this._hex, targets, onSelect);

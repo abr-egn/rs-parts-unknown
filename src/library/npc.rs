@@ -41,7 +41,12 @@ impl Monopod {
                 &[PartTag::Limb, PartTag::Flesh, PartTag::Leg],
                 2)
         };
-        Creature::new(&[head, foot], Some(Monopod::npc()))
+        let collar = Part::new(
+            "Collar",
+            &[PartTag::Machine],
+            1,
+        );
+        Creature::new(&[head, foot, collar], Some(Monopod::npc()))
     }
     fn npc() -> NPC {
         NPC {
