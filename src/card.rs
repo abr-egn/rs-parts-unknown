@@ -69,7 +69,7 @@ pub trait Behavior: BehaviorClone {
 pub enum TargetSpec {
     #[serde(with = "serde_empty")]
     None,
-    Part { tags: Vec<PartTag> }
+    Part { tags: Vec<PartTag> /* TODO: or of ands */ }
     // TODO: Creature,
 }
 

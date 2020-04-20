@@ -5,7 +5,7 @@ use ts_data_derive::TsData;
 use wasm_bindgen::prelude::*;
 
 use crate::{
-    card, creature,
+    card, creature::{self, PartTag},
     id_map::Id,
     npc::{self, ActionKind},
     wasm::{
@@ -60,7 +60,8 @@ pub struct Part {
     maxHp: i32,
     curHp: i32,
     thought: i32,
-    broken: bool,  // TODO: expose tags directly
+    broken: bool,  // TODO: drop in favor of tags
+    tags: Vec<PartTag>,
 }
 
 #[allow(non_snake_case)]
@@ -80,6 +81,7 @@ impl Part {
             maxHp: source.max_hp,
             curHp: source.cur_hp,
             broken: source.tags.contains(&creature::PartTag::Broken),
+            tags: source.tags.iter().cloned().collect(),
         }
     }
 }

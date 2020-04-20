@@ -94,9 +94,12 @@ export class PlayCard extends State {
     onTileEntered(hex: Hex) {
         const world = window.game.world;
         const preview: Preview[] = [];
-        /* TODO(targets)
-        if (this._inPlay!.targetValid(world, hex)) {
-            // TODO: highlight target hex
+        
+        //if (this._inPlay!.targetValid(world, hex)) {
+        const hiHexes: Hex[] = [];
+        if (this._canTarget(hex)) {
+            hiHexes.push(hex);
+            /* TODO: preview for direct targets
             preview.push(Preview.make({
                 ToCreature: {
                     id: world.playerId,
@@ -107,11 +110,11 @@ export class PlayCard extends State {
             for (let action of actions) {
                 preview.push(Preview.make(action));
             }
+            */
         }
-        */
         this.update((draft) => {
             const hi = draft.build(Highlight);
-            hi.hexes = [];
+            hi.hexes = hiHexes;
             hi.setPreview(preview);
         });
     }
@@ -125,6 +128,29 @@ export class PlayCard extends State {
         this._inPlay = undefined;
         window.game.stack.swap(new Update(events, nextWorld));
         */
+    }
+
+    private _canTarget(hex: Hex): boolean {
+        const world = window.game.world;
+        const spec = this._inPlay!.getTargetSpec();
+        let match;
+        if (match = spec.Part) {
+            const tile = world.getTile(hex);
+            if (!tile) { return false; }
+            const id = tile.creature;
+            if (id == undefined || id == world.playerId) { return false; }
+            const creature = world.getCreature(id);
+            if (!creature) { return false; }
+            let found = false;
+            for (let part of creature.parts.values()) {
+                if (match.tags.every((tag) => part.tags.includes(tag))) {
+                    found = true;
+                    break;
+                }
+            }
+            return found;
+        }
+        return false;
     }
 }
 export namespace PlayCard {
