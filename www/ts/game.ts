@@ -75,6 +75,10 @@ export class Game {
         return this._world.getCreature(id);
     }
 
+    hexCoords(hex: wasm.Hex): DOMPointReadOnly {
+        return this._board.hexCoords(hex);
+    }
+
     // Mutators
 
     async animateEvents(events: wasm.Event[]) {

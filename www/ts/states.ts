@@ -1,6 +1,7 @@
 import * as wasm from "../wasm";
 import {Id, Hex} from "../wasm";
 
+import {toTarget} from "./extra";
 import {Highlight, Preview} from "./highlight";
 import {Stack, State} from "./stack";
 
@@ -134,7 +135,7 @@ export class PlayCard extends State {
     onActivated(data?: any) {
         if (!data) { return; }
         if (data instanceof TargetPart.Select) {
-           const target = data.part.toTarget();
+           const target = toTarget(data.part);
             if (!this._inPlay!.targetValid(window.game.world, target)) {
                 return;
             }
@@ -153,7 +154,7 @@ export class PlayCard extends State {
             if (!creature) { return false; }
             let found = false;
             for (let part of creature.parts.values()) {
-                const target = part.toTarget();
+                const target = toTarget(part);
                 if (this._inPlay!.targetValid(world, target)) {
                     found = true;
                     break;
@@ -184,7 +185,7 @@ export class TargetPart extends State {
         };
         const targets: [wasm.Part, boolean][] = [];
         for (let part of this._creature.parts.values()) {
-            const target = part.toTarget();
+            const target = toTarget(part);
             const canPlay = this._inPlay.targetValid(window.game.world, target);
             targets.push([part, canPlay]);
         }

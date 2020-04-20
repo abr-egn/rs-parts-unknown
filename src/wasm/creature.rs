@@ -86,21 +86,6 @@ impl Part {
     }
 }
 
-#[wasm_bindgen(typescript_custom_section)]
-const PART_TS: &'static str = r#"
-interface Part {
-    toTarget(): Target;
-}
-Part.prototype.toTarget = function() {
-    return {
-        Part: {
-            creature_id: this.creatureId,
-            part_id: this.id,
-        }
-    };
-};
-"#;
-
 #[derive(Debug, Serialize, TsData)]
 pub struct NPC {
     motion: Option<MotionKind>,

@@ -90,6 +90,10 @@ export class GameBoard {
         return this._draw.elementCoords(pos);
     }
 
+    hexCoords(hex: Hex): DOMPointReadOnly {
+        return this._draw.elementCoords(hexToPixel(hex));
+    }
+
     private _nextFrame(): Promise<DOMHighResTimeStamp> {
         return new Promise((resolve) => this._frameWaits.push(resolve));
     }

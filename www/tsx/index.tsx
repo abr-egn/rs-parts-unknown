@@ -9,6 +9,7 @@ import * as states from "../ts/states";
 
 import {CreatureStats, CreatureIntent} from "./creature";
 import {PlayerControls} from "./player";
+import {TargetPart} from "./target";
 
 export function Index(props: {
     world: wasm.World,
@@ -37,6 +38,7 @@ export function Index(props: {
         intents = props.intents.map(([id, npc, point]) =>
             <CreatureIntent key={id} npc={npc} coords={point}></CreatureIntent>);
     }
+    let targetPart = props.data.get(states.TargetPart.UI);
     return (
         <div>
             <div className="topleft">
@@ -51,6 +53,7 @@ export function Index(props: {
                 {creatures}
             </div>
             {intents}
+            {targetPart ? <TargetPart target={targetPart}></TargetPart> : null}
             {gameOver}
         </div>
     );
