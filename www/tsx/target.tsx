@@ -27,7 +27,12 @@ export function PartMenuItem(props: {
     valid: boolean,
     onSelect: (part: wasm.Part) => void,
 }): JSX.Element {
-    return (<div className={props.valid?"validTarget":"invalidTarget"}>
-        {props.part.name}
-    </div>);
+    return (
+        <div
+            className={props.valid?"validTarget":"invalidTarget"}
+            onMouseDown={() => props.onSelect(props.part)}
+            >
+            {props.part.name}
+        </div>
+    );
 }
