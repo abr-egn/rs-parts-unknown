@@ -127,19 +127,14 @@ export class PlayCard extends State {
             let creature = window.game.creatureAt(hex);
             if (!creature) { return; }
             if (creature.id == world.playerId) { return; }
-            window.game.stack.push(new TargetPart(creature));
+            window.game.stack.push(new TargetPart(this._inPlay!, hex, creature));
         }
     }
 
     onActivated(data?: any) {
         if (!data) { return; }
         if (data instanceof TargetPart.Select) {
-            const target: wasm.Target = {
-                Part: {
-                    creature_id: this._creatureId,
-                    part_id: data.part.id,
-                }
-            };
+           const target = data.part.toTarget();
             if (!this._inPlay!.targetValid(window.game.world, target)) {
                 return;
             }
@@ -158,7 +153,8 @@ export class PlayCard extends State {
             if (!creature) { return false; }
             let found = false;
             for (let part of creature.parts.values()) {
-                if (match.tags.every((tag) => part.tags.includes(tag))) {
+                const target = part.toTarget();
+                if (this._inPlay!.targetValid(world, target)) {
                     found = true;
                     break;
                 }
@@ -176,9 +172,30 @@ export namespace PlayCard {
 }
 
 export class TargetPart extends State {
-    constructor(private _creature: wasm.Creature) { super(); }
+    constructor(
+        private _inPlay: wasm.InPlay,
+        private _hex: Hex,
+        private _creature: wasm.Creature,
+    ) { super(); }
+
     onPushed() {
-        // TODO
+        const onSelect = (part: wasm.Part) => {
+            window.game.stack.pop(new TargetPart.Select(part));
+        };
+        const targets: [wasm.Part, boolean][] = [];
+        for (let part of this._creature.parts.values()) {
+            const target = part.toTarget();
+            const canPlay = this._inPlay.targetValid(window.game.world, target);
+            targets.push([part, canPlay]);
+        }
+
+        this.update((draft) => {
+            draft.set(TargetPart.UI, this._hex, targets, onSelect);
+        });
+    }
+
+    onTileClicked(_hex: Hex) {
+        window.game.stack.pop(new TargetPart.Cancel());
     }
 }
 export namespace TargetPart {
@@ -188,7 +205,6 @@ export namespace TargetPart {
             public hex: Hex,
             public targets: [wasm.Part, boolean][],
             public onSelect: (part: wasm.Part) => void,
-            public onCancel: () => void,
         ) {}
     }
     export class Select {
