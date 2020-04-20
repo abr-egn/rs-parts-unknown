@@ -42,30 +42,33 @@ impl Walk {
     }
 }
 
-#[derive(Debug, Clone)]
 struct HitPart {
-    // Parameters
     damage: i32,
     tags: Vec<Vec<PartTag>>,
-    // Bookkeeping
-    source: Id<Creature>,
-    range: HashSet<Hex>,
+    melee: bool,
 }
 
 impl HitPart {
-    fn behavior(world: &World, source: &Id<Creature>,
-        damage: i32, tags: Vec<Vec<PartTag>>, melee: bool) -> Box<dyn card::Behavior> {
+    fn behavior(self, world: &World, source: &Id<Creature>) -> Box<dyn card::Behavior> {
         let position = world.map().creatures().get(source).unwrap().clone();
-        let range = if melee {
+        let range = if self.melee {
             position.neighbors().collect()
         } else {
             world.map().los_from(position)
         };
-        Box::new(HitPart { damage, tags, source: *source, range })
+        Box::new(HitPartBehavior { damage: self.damage, tags: self.tags, source: *source, range })
     }
 }
 
-impl card::Behavior for HitPart {
+#[derive(Debug, Clone)]
+struct HitPartBehavior {
+    damage: i32,
+    tags: Vec<Vec<PartTag>>,
+    source: Id<Creature>,
+    range: HashSet<Hex>,
+}
+
+impl card::Behavior for HitPartBehavior {
     fn range(&self, _world: &World) -> Vec<Hex> { self.range.iter().cloned().collect() }
     fn target_spec(&self) -> TargetSpec { TargetSpec::Part { tags: self.tags.clone() } }
     fn target_valid(&self, world: &World, target: &Target) -> bool {
@@ -97,6 +100,6 @@ pub fn shoot() -> Card {
     Card {
         name: "Shoot".into(),
         ap_cost: 1,
-        start_play: |world, source| HitPart::behavior(world, source, 1, vec![vec![PartTag::Flesh]], false),
+        start_play: |world, source| HitPart { damage: 1, tags: vec![vec![PartTag::Flesh]], melee: false }.behavior(world, source),
     }
 }
