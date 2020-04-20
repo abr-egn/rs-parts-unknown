@@ -11,7 +11,7 @@ export class State {
 
     onPushed() {}
     onPopped() {}
-    onActivated() {}
+    onActivated(data?: any) {}
     onDeactivated() {}
     onTileClicked(hex: Hex) {}
     onTileEntered(hex: Hex) {}
@@ -36,14 +36,14 @@ export class State {
         this.onPopped();
     }
 
-    _onActivated() {
+    _onActivated(data?: any) {
         if (LOGGING) {
             console.log("  ACTIVATED:", this.constructor.name);
         }
         this.update((draft) => {
             draft.set(Stack.Active, this);
         });
-        this.onActivated();
+        this.onActivated(data);
     }
 
     _onDeactivated() {
@@ -75,7 +75,7 @@ export class Stack {
             this._pushImpl(state);
         });
     }
-    pop() {
+    pop(data?: any) {
         setTimeout(() => {
             if (this._stack.length < 2) {
                 console.error("pop() length=", this._stack.length);
@@ -86,10 +86,10 @@ export class Stack {
                 this._stack[this._stack.length - 2].constructor.name);
             this._popImpl();
             this._onUpdate();
-            this._top()!._onActivated();
+            this._top()!._onActivated(data);
         });
     }
-    swap(state: State) {
+    swap(state: State, data?: any) {
         setTimeout(() => {
             if (this._stack.length < 1) {
                 console.error("swap() length=", this._stack.length);
@@ -121,12 +121,12 @@ export class Stack {
     private _top(): State | undefined {
         return this._stack[this._stack.length - 1];
     }
-    private _pushImpl(state: State) {
+    private _pushImpl(state: State, data?: any) {
         this._top()?._onDeactivated();
         this._oldData.push(this._data);
         this._stack.push(state);
         state._onPushed(this._updater);
-        state._onActivated();
+        state._onActivated(data);
     }
     private _popImpl() {
         this._top()!._onDeactivated();
