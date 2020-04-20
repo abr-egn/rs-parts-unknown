@@ -7,12 +7,12 @@ import * as states from "../ts/states";
 
 export function CardList(props: {
     active: boolean,
-    cards: wasm.Card[],
+    hand: wasm.Card[],
     partHighlight?: Id<wasm.Part>,
     setPartHighlight: (part: Id<wasm.Part> | undefined) => void,
 }): JSX.Element {
-    const startPlay = (card: wasm.Card) => {
-        window.game.stack.push(new states.PlayCard(card));
+    const startPlay = (creatureId: Id<wasm.Creature>, ix: number) => {
+        window.game.stack.push(new states.PlayCard(creatureId, ix));
     };
     const canPlay = (card: wasm.Card): boolean => {
         return window.game.world.checkSpendAP(card.creatureId, card.apCost);
@@ -27,24 +27,14 @@ export function CardList(props: {
         props.setPartHighlight(undefined);
     }
   
-    props.cards.sort((a, b) => {
-        if (a.creatureId != b.creatureId) {
-            return a.creatureId - b.creatureId;
-        }
-        if (a.partId != b.partId) {
-            return a.partId - b.partId;
-        }
-        return a.id - b.id;
-    });
-  
-    const list = props.cards.map((card) =>
+    const list = props.hand.map((card, ix) =>
         <li key={cardKey(card)}
             onMouseEnter={(ev) => onCardEnter(card, ev)}
             onMouseLeave={(ev) => onCardLeave(card, ev)}
             className={card.partId == props.partHighlight ? "partHighlight" : ""}
             >
             <button
-                onClick={() => startPlay(card)}
+                onClick={() => startPlay(card.creatureId, ix)}
                 disabled={!props.active || !canPlay(card)}>
                 Play
             </button>

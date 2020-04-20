@@ -1,7 +1,5 @@
-import {
-    Action, Behavior, Boundary, Card, Creature, Event, GameState, Hex, Id, World,
-    findBoundary,
-} from "../wasm";
+import * as wasm from "../wasm";
+import {Id, Hex} from "../wasm";
 
 import {Highlight, Preview} from "./highlight";
 import {Stack, State} from "./stack";
@@ -13,7 +11,7 @@ export class Base extends State {
             if (!ui) { return; }
             for (let id of ui.selected.keys()) {
                 let range = window.game.world.getCreatureRange(id);
-                let bounds = findBoundary(range);
+                let bounds = wasm.findBoundary(range);
                 ui.selected.set(id, bounds);
             }
         });
@@ -32,12 +30,12 @@ export class Base extends State {
                 if (!shift) {
                     ui.selected.clear();
                 }
-                const id: Id<Creature> = tile!.creature!;
+                const id: Id<wasm.Creature> = tile!.creature!;
                 if (ui.selected.has(id)) {
                     ui.selected.delete(id);
                 } else {
                     let range = world.getCreatureRange(id);
-                    let bounds = findBoundary(range);
+                    let bounds = wasm.findBoundary(range);
                     ui.selected.set(id, bounds);
                 }
             });
@@ -47,54 +45,61 @@ export class Base extends State {
 export namespace Base {
     export class UI {
         [Stack.Datum] = true;
-        selected: Map<Id<Creature>, Boundary[]> = new Map();
+        selected: Map<Id<wasm.Creature>, wasm.Boundary[]> = new Map();
     }
 }
 
 export class PlayCard extends State {
-    private _behavior?: Behavior;
-    constructor(private _card: Card) { super(); }
+    private _inPlay?: wasm.InPlay;
+    constructor(
+        private _creatureId: Id<wasm.Creature>,
+        private _handIx: number,
+    ) { super(); }
 
     onPushed() {
-        this.update((draft) => { draft.build(PlayCard.UI, this._card).card = this._card; });
         const world = window.game.world;
-        this._behavior = world.startPlay(this._card);
-        if (!this._behavior) {
-            console.log("Card did not start play:");
-            console.log(this._card);
-            window.game.stack.pop();
-            return;
+        const creature = world.getCreature(this._creatureId);
+        if (!creature) { throw `Invalid creature id ${this._creatureId}`; }
+        if (this._handIx >= creature.hand.length) {
+            throw `Invalid hand index ${this._handIx}`;
         }
-        const range = this._behavior.range(world);
+        const card = creature.hand[this._handIx];
+        //this.update((draft) => { draft.build(PlayCard.UI, card).card = card; });
+        
+        this._inPlay = world.startPlay(this._creatureId, this._handIx);
+        if (!this._inPlay) {
+            throw `Card did not start play`;
+        }
+        const range = this._inPlay.range(world);
         // Base initial highlight on player location
-        const highlight = this._behavior.highlight(
+        const highlight = this._inPlay.highlight(
             world, world.getCreatureHex(world.playerId)!);
         this.update((draft) => {
-            draft.set(PlayCard.UI, this._card);
+            draft.set(PlayCard.UI, card);
             const hi = draft.build(Highlight);
             hi.hexes = highlight;
-            hi.range = findBoundary(range);
+            hi.range = wasm.findBoundary(range);
         });
     }
 
     onPopped() {
-        this._behavior?.free();
-        this._behavior = undefined;
+        this._inPlay?.free();
+        this._inPlay = undefined;
     }
 
     onTileEntered(hex: Hex) {
         const world = window.game.world;
-        let highlight: Hex[] = this._behavior!.highlight(world, hex);
+        let highlight: Hex[] = this._inPlay!.highlight(world, hex);
         const preview: Preview[] = [];
-        if (this._behavior!.targetValid(world, hex)) {
+        if (this._inPlay!.targetValid(world, hex)) {
             // TODO: highlight target hex
             preview.push(Preview.make({
                 ToCreature: {
                     id: world.playerId,
-                    action: { SpendAP: { ap: this._card.apCost } }
+                    action: { SpendAP: { ap: this._inPlay!.apCost } }
                 }
             }));
-            const actions = this._behavior!.preview(world, hex);
+            const actions = this._inPlay!.preview(world, hex);
             for (let action of actions) {
                 preview.push(Preview.make(action));
             }
@@ -107,31 +112,31 @@ export class PlayCard extends State {
     }
 
     onTileClicked(hex: Hex) {
-        if (!this._behavior!.targetValid(window.game.world, hex)) {
+        if (!this._inPlay!.targetValid(window.game.world, hex)) {
             return;
         }
-        const [nextWorld, events] = window.game.world.playCard(this._card, this._behavior!, hex);
-        this._behavior = undefined;
+        const [nextWorld, events] = window.game.world.finishPlay(this._inPlay!, hex);
+        this._inPlay = undefined;
         window.game.stack.swap(new Update(events, nextWorld));
     }
 }
 export namespace PlayCard {
     export class UI {
         [Stack.Datum] = true;
-        constructor (public card: Card) {}
+        constructor (public card: wasm.Card) {}
     }
 }
 
 export class Update extends State {
     constructor(
-        private _events: Event[],
-        private _nextWorld: World,
+        private _events: wasm.Event[],
+        private _nextWorld: wasm.World,
     ) { super(); }
 
     async onPushed() {
         await window.game.animateEvents(this._events);
         window.game.updateWorld(this._nextWorld);
-        let state: GameState;
+        let state: wasm.GameState;
         switch (state = window.game.world.state()) {
             case "Play": {
                 window.game.stack.pop();
@@ -153,7 +158,7 @@ export class EndTurn extends State {
 
 export class MovePlayer extends State {
     private _hexes: Hex[] = [];
-    private _range: Boundary[] = [];
+    private _range: wasm.Boundary[] = [];
     private _from!: Hex;
     private _mp!: number;
     constructor() { super() }
@@ -162,7 +167,7 @@ export class MovePlayer extends State {
         const world = window.game.world;
         const playerId = world.playerId;
         this._hexes = world.getCreatureRange(playerId);
-        this._range = findBoundary(this._hexes);
+        this._range = wasm.findBoundary(this._hexes);
         this._from = world.getCreatureHex(playerId)!;
         this._mp = world.getCreature(playerId)!.curMp;
         this.update((draft) => { draft.build(Highlight).range = this._range; });
@@ -198,7 +203,7 @@ export class MovePlayer extends State {
 }
 
 export class GameOver extends State {
-    constructor(private _state: GameState) { super(); }
+    constructor(private _state: wasm.GameState) { super(); }
     onPushed() {
         this.update((draft) => { draft.build(GameOver.UI, this._state); });
     }
@@ -206,6 +211,6 @@ export class GameOver extends State {
 export namespace GameOver {
     export class UI {
         [Stack.Datum] = true;
-        constructor(public state: GameState) { }
+        constructor(public state: wasm.GameState) { }
     }
 }

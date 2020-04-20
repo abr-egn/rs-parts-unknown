@@ -36,7 +36,7 @@ export function PlayerControls(props: {
         />
         <CardList
             active={canPlay}
-            cards={props.player.hand}
+            hand={props.player.hand}
             partHighlight={partHighlight}
             setPartHighlight={setPartHighlight}
         />

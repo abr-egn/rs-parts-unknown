@@ -6,14 +6,13 @@ use wasm_bindgen::{
 };
 
 use crate::{
-    creature::{self, CreatureAction},
+    creature,
     event::{Action, Event},
     id_map::Id,
     map::Tile,
     wasm::{
-        behavior::Behavior,
-        card::Card,
         creature::Creature,
+        in_play::InPlay,
         from_js_value, to_js_value,
     },
     world,
@@ -121,12 +120,11 @@ impl World {
     }
 
     #[wasm_bindgen(skip_typescript)]
-    pub fn startPlay(&self, card: JsValue) -> Option<Behavior> {
-        let card: Card = from_js_value(card);
-        let creature = self.wrapped.creatures().get(card.creatureId)?;
-        let part = creature.parts.get(card.partId)?;
-        let real_card = part.cards.get(card.id)?;
-        Some(Behavior::new((real_card.start_play)(&self.wrapped, &card.creatureId)))
+    pub fn startPlay(&self, creature_id: JsValue, hand_ix: JsValue) -> Option<InPlay> {
+        let creature_id: Id<creature::Creature> = from_js_value(creature_id);
+        let hand_ix: usize = from_js_value(hand_ix);
+        self.wrapped.start_play(creature_id, hand_ix).ok()
+            .map(|ip| InPlay { wrapped: ip })
     }
 
     #[wasm_bindgen(skip_typescript)]
@@ -168,25 +166,10 @@ impl World {
     // Updates
 
     #[wasm_bindgen(skip_typescript)]
-    pub fn playCard(&self, card: JsValue, behavior: Behavior, target: JsValue) -> Array /* [World, Event[]] */ {
-        let card: Card = from_js_value(card);
+    pub fn finishPlay(&self, in_play: InPlay, target: JsValue) -> Array /* [World, Event[]] */ {
         let target: Hex = from_js_value(target);
         let mut newWorld = self.wrapped.clone();
-        let mut events = vec![];
-        // TODO: use card::InPlay / world.play_card
-        events.extend(newWorld.execute(
-            &Action::ToCreature {
-                id: card.creatureId,
-                action: CreatureAction::Discard { part: card.partId, card: card.id },
-            }
-        ));
-        events.extend(newWorld.execute(&Action::ToCreature {
-            id: card.creatureId,
-            action: CreatureAction::SpendAP { ap: card.apCost },
-        }));
-        if !Event::is_failure(&events) {
-            events.extend(behavior.wrapped.apply(&mut newWorld, target));
-        }
+        let events = newWorld.finish_play(in_play.wrapped, target);
         world_update(newWorld, &events)
     }
 
@@ -231,14 +214,14 @@ interface World {
     getCreatureHex(id: Id<Creature>): Hex | undefined;
     getCreatureRange(id: Id<Creature>): Hex[];
     checkSpendAP(id: Id<Creature>, ap: number): boolean;
-    startPlay(card: Card): Behavior | undefined;
+    startPlay(creatureId: Id<Creature>, handIx: number): InPlay | undefined;
     affectsAction(action: Action): string[];
     path(from: Hex, to: Hex): Hex[];
     state(): GameState;
 
     // Updates
 
-    playCard(card: Card, behavior: Behavior, target: Hex): [World, Event[]];
+    finishPlay(inPlay: InPlay, target: Hex): [World, Event[]];
     npcTurn(): [World, Event[]];
     movePlayer(to: Hex): [World, Event[]];
 
