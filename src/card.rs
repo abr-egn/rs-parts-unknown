@@ -69,7 +69,7 @@ pub trait Behavior: BehaviorClone {
 pub enum TargetSpec {
     #[serde(with = "serde_empty")]
     None,
-    Part { tags: Vec<PartTag> /* TODO: or of ands */ }
+    Part { tags: Vec<Vec<PartTag>> /* Or<<X and Y>, <Q and R>> */ }
     // TODO: Creature,
 }
 
@@ -82,7 +82,12 @@ impl TargetSpec {
                     Target::Part { creature_id, part_id } => {
                         let creature = some_or!(world.creatures().get(*creature_id), return false);
                         let part = some_or!(creature.parts.get(*part_id), return false);
-                        tags.iter().all(|tag| part.tags.contains(tag))
+                        for group in tags {
+                            if group.iter().all(|tag| part.tags.contains(tag)) {
+                                return true;
+                            }
+                        }
+                        return false;
                     }
                     _ => false,
                 }

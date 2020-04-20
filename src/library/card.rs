@@ -69,7 +69,7 @@ impl card::Behavior for Shoot {
         self.los.iter().cloned().collect()
     }
     fn target_spec(&self) -> TargetSpec {
-        TargetSpec::Part { tags: vec![PartTag::Flesh] }
+        TargetSpec::Part { tags: vec![vec![PartTag::Flesh]] }
     }
     fn target_valid(&self, world: &World, target: &Target) -> bool {
         if !self.target_spec().matches(world, target) { return false; }
