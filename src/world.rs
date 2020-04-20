@@ -393,18 +393,30 @@ fn make_player() -> Creature {
     let head = Part {
         thought: 3,
         memory: 5,
-        ..Part::new("Head", &[PartTag::Vital], 2)
+        ..Part::new(
+            "Head",
+            &[PartTag::Head, PartTag::Flesh, PartTag::Vital],
+            2)
     };
-    let torso = Part::new("Torso", &[PartTag::Vital], 5);
+    let torso = Part::new(
+        "Torso",
+        &[PartTag::Torso, PartTag::Flesh, PartTag::Vital],
+        5);
     let arm_l = Part {
         cards: IdMap::from_iter(vec![library::card::Shoot::card()]),
-        ..Part::new("Arm", &[], 3)
+        ..Part::new(
+            "Arm",
+            &[PartTag::Limb, PartTag::Flesh, PartTag::Arm],
+            3)
     };
     let arm_r = arm_l.clone();
     let leg_l = Part {
         cards: IdMap::from_iter(vec![library::card::Walk::card()]),
         mp: 1,
-        ..Part::new("Leg", &[], 3)
+        ..Part::new(
+            "Leg",
+            &[PartTag::Limb, PartTag::Flesh, PartTag::Leg],
+            3)
     };
     let leg_r = leg_l.clone();
     Creature::new(&[head, torso, arm_l, arm_r, leg_l, leg_r], None)

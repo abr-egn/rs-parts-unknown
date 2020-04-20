@@ -29,11 +29,17 @@ impl Monopod {
     pub fn creature() -> Creature {
         let head = Part {
             thought: 1,
-            ..Part::new("Hed", &[PartTag::Vital], 2)
+            ..Part::new(
+                "Hed",
+                &[PartTag::Head, PartTag::Flesh, PartTag::Vital],
+                2)
         };
         let foot = Part {
             mp: 3,
-            ..Part::new("Fut", &[], 2)
+            ..Part::new(
+                "Fut", 
+                &[PartTag::Limb, PartTag::Flesh, PartTag::Leg],
+                2)
         };
         Creature::new(&[head, foot], Some(Monopod::npc()))
     }
