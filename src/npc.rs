@@ -3,7 +3,7 @@ use ts_data_derive::TsData;
 use wasm_bindgen::prelude::*;
 
 use crate::{
-    creature::{Creature, Part},
+    creature::{Creature},
     error::{Result},
     event::{Event},
     id_map::Id,
@@ -59,7 +59,6 @@ pub enum ActionKind {
 
 pub trait Behavior: BehaviorClone + std::fmt::Debug + Send {
     fn next(&mut self, world: &World, id: Id<Creature>) -> (Option<Motion>, Option<Action>);
-    fn blocking(&self, world: &World, id: Id<Creature>) -> Id<Part>;
 }
 
 pub trait BehaviorClone {

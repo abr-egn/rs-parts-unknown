@@ -25,13 +25,6 @@ impl npc::Behavior for Monopod {
         self.kick_time = !self.kick_time;
         (Some(npc::Motion::ToMelee), action)
     }
-    fn blocking(&self, world: &World, id: Id<Creature>) -> Id<Part> {
-        let creature = world.creatures().get(id).unwrap();
-        if let Some(foot) = creature.parts.get(self.foot) {
-            if !foot.tags.contains(&PartTag::Broken) { return self.foot; }
-        }
-        return self.head;
-    }
 }
 
 impl Monopod {

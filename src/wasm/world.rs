@@ -189,14 +189,6 @@ impl World {
         world_update(new, &events)
     }
 
-    // Mutators
-
-    #[wasm_bindgen(skip_typescript)]
-    pub fn setPlayerBlocking(&mut self, partId: JsValue) {
-        let partId: Id<creature::Part> = from_js_value(partId);
-        self.wrapped.set_player_blocking(partId);
-    }
-
     // Debugging
 
     #[wasm_bindgen(skip_typescript)]
@@ -233,10 +225,6 @@ interface World {
     finishPlay(inPlay: InPlay, target: Target): [World, Event[]];
     npcTurn(): [World, Event[]];
     movePlayer(to: Hex): [World, Event[]];
-
-    // Mutators
-
-    setPlayerBlocking(partId: Id<Part>);
 
     // Debugging
 

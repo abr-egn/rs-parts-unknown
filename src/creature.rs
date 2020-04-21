@@ -30,7 +30,6 @@ pub struct Creature {
     pub draw: Vec<CardId>,  // end of vec -> top of pile
     pub hand: Vec<CardId>,
     pub discard: Vec<CardId>,
-    pub blocking: Id<Part>,
 }
 
 impl Creature {
@@ -45,14 +44,12 @@ impl Creature {
     }
 
     pub fn new_ids(parts: IdMap<Part>, npc: Option<NPC>) -> Self {
-        let blocking = *parts.keys().last().unwrap();
         let mut out = Creature {
             parts,
             cur_ap: 0, cur_mp: 0,
             dead: false,
             npc,
             draw: vec![], hand: vec![], discard: vec![],
-            blocking,
         };
         out.cur_ap = out.max_ap();
         out.cur_mp = out.max_mp();
@@ -269,7 +266,7 @@ pub enum PartEvent {
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, TsData)]
 pub enum PartTag {
     // State
-    Vital, Broken,
+    Vital, Broken, Open,
     // Universal: shape
     Head, Torso, Limb,
     // Universal: material

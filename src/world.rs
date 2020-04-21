@@ -240,10 +240,6 @@ impl World {
         events
     }
 
-    pub fn set_player_blocking(&mut self, id: Id<Part>) {
-        self.creatures.get_mut(&self.player_id).unwrap().blocking = id;
-    }
-
     // Private
 
     fn execute_(
@@ -364,10 +360,8 @@ impl World {
                 }
             };
             npc.update(self, id);
-            let blocking = npc.behavior.blocking(self, id);
             let creature = self.creatures.get_mut(&id).unwrap();
             *creature.npc_mut().unwrap() = npc;
-            creature.blocking = blocking;
         }
     }
 }

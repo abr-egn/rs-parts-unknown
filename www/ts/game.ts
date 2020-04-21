@@ -93,11 +93,6 @@ export class Game {
         this._onUpdate();
     }
 
-    setPlayerBlocking(partId: Id<wasm.Part>) {
-        this._world.setPlayerBlocking(partId);
-        this._onUpdate();
-    }
-
     // Private
 
     private _onUpdate() {
