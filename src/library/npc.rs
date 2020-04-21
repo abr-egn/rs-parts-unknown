@@ -2,14 +2,16 @@ use crate::{
     creature::{Creature, CreatureAction, Part, PartTag},
     error::{Error, Result},
     event::{Action, Event},
-    id_map::{Id},
-    npc::{self, NPC},
+    id_map::{Id, IdMap},
+    npc,
     world::World,
 };
 
 #[derive(Debug, Clone)]
 pub struct Monopod {
     kick_time: bool,
+    head: Id<Part>,
+    foot: Id<Part>,
 }
 
 impl npc::Behavior for Monopod {
@@ -23,37 +25,37 @@ impl npc::Behavior for Monopod {
         self.kick_time = !self.kick_time;
         (Some(npc::Motion::ToMelee), action)
     }
+    fn blocking(&self, world: &World, id: Id<Creature>) -> Id<Part> {
+        let creature = world.creatures().get(id).unwrap();
+        if let Some(foot) = creature.parts.get(self.foot) {
+            if !foot.tags.contains(&PartTag::Broken) { return self.foot; }
+        }
+        return self.head;
+    }
 }
 
 impl Monopod {
     pub fn creature() -> Creature {
-        let head = Part {
+        let mut parts = IdMap::new();
+        let head = parts.add(Part {
             thought: 1,
             ..Part::new(
                 "Hed",
                 &[PartTag::Head, PartTag::Flesh, PartTag::Vital],
                 20)
-        };
-        let foot = Part {
+        });
+        let foot = parts.add(Part {
             mp: 3,
             ..Part::new(
                 "Fut", 
                 &[PartTag::Limb, PartTag::Flesh, PartTag::Leg],
                 20)
-        };
-        let collar = Part::new(
-            "Collar",
-            &[PartTag::Machine],
-            10,
-        );
-        Creature::new(&[head, foot, collar], Some(Monopod::npc()))
-    }
-    fn npc() -> NPC {
-        NPC {
-            next_motion: None,
-            next_action: None,
-            behavior: Box::new(Monopod { kick_time: true }),
-        }
+        });
+        
+        Creature::new_npc(parts, Monopod {
+            kick_time: true,
+            head, foot,
+        })
     }
 
     fn kick(world: &mut World, id: Id<Creature>) -> Result<Vec<Event>> {

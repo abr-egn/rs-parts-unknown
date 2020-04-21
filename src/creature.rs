@@ -13,7 +13,7 @@ use crate::{
     card::Card,
     error::{Error, Result},
     id_map::{Id, IdMap},
-    npc::NPC,
+    npc::{self, NPC},
     serde_empty,
     some_or,
 };
@@ -41,9 +41,13 @@ impl Creature {
             tmp.cur_hp = tmp.max_hp;
             pids.add(tmp);
         }
-        let blocking = *pids.keys().last().unwrap();
+        Creature::new_ids(pids, npc)
+    }
+
+    pub fn new_ids(parts: IdMap<Part>, npc: Option<NPC>) -> Self {
+        let blocking = *parts.keys().last().unwrap();
         let mut out = Creature {
-            parts: pids,
+            parts,
             cur_ap: 0, cur_mp: 0,
             dead: false,
             npc,
@@ -54,6 +58,10 @@ impl Creature {
         out.cur_mp = out.max_mp();
         out.reset_cards();
         out
+    }
+
+    pub fn new_npc<B: 'static + npc::Behavior>(parts: IdMap<Part>, behavior: B) -> Self {
+        Creature::new_ids(parts, Some(NPC::new(Box::new(behavior))))
     }
 
     // Accessors

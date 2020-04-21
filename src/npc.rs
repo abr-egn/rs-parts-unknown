@@ -3,7 +3,7 @@ use ts_data_derive::TsData;
 use wasm_bindgen::prelude::*;
 
 use crate::{
-    creature::{Creature},
+    creature::{Creature, Part},
     error::{Result},
     event::{Event},
     id_map::Id,
@@ -18,6 +18,9 @@ pub struct NPC {
 }
 
 impl NPC {
+    pub fn new(behavior: Box<dyn Behavior>) -> Self {
+        NPC { next_motion: None, next_action: None, behavior }
+    }
     pub fn update(&mut self, world: &World, id: Id<Creature>) {
         let (motion, action) = self.behavior.next(world, id);
         self.next_motion = motion;
@@ -56,6 +59,7 @@ pub enum ActionKind {
 
 pub trait Behavior: BehaviorClone + std::fmt::Debug + Send {
     fn next(&mut self, world: &World, id: Id<Creature>) -> (Option<Motion>, Option<Action>);
+    fn blocking(&self, world: &World, id: Id<Creature>) -> Id<Part>;
 }
 
 pub trait BehaviorClone {
