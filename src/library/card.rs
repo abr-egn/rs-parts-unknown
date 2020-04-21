@@ -99,25 +99,33 @@ impl card::Behavior for HitPartBehavior {
     }
 }
 
-pub fn shoot() -> Card {
+pub fn throw_debris() -> Card {
     Card {
-        name: "Shoot".into(),
+        name: "Throw Debris".into(),
         ap_cost: 1,
-        start_play: |world, source| HitPart { damage: 1, tags: vec![vec![]], melee: false }.behavior(world, source),
+        start_play: |world, source| HitPart { damage: 5, tags: vec![vec![]], melee: false }.behavior(world, source),
+    }
+}
+
+pub fn punch() -> Card {
+    Card {
+        name: "Punch".into(),
+        ap_cost: 1,
+        start_play: |world, source| HitPart { damage: 10, tags: vec![vec![]], melee: true }.behavior(world, source),
     }
 }
 
 /* 10 cards:
 arms:
-    2 melee heavy attack
-    2 ranged light attack
-    2 defense
+    [+] 2 melee heavy attack
+    [+] 2 ranged light attack
+    [ ] 2 defense
 legs:
-    2 open change
+    [ ] 2 open change
 torso:
-    1 heal
+    [ ] 1 heal
 head:
-    1 utility (draw, ?)
+    [ ] 1 utility (draw, ?)
 
 */
 
