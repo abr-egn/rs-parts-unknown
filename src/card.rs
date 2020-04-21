@@ -69,29 +69,27 @@ pub trait Behavior: BehaviorClone {
 pub enum TargetSpec {
     #[serde(with = "serde_empty")]
     None,
-    Part { tags: Vec<Vec<PartTag>> /* Or<<X and Y>, <Q and R>> */ }
-    // TODO: Creature,
+    Part { tags: Vec<Vec<PartTag>> /* Or<<X and Y>, <Q and R>> */ },
+    #[serde(with = "serde_empty")]
+    Creature,
 }
 
 impl TargetSpec {
     pub fn matches(&self, world: &World, target: &Target) -> bool {
-        match self {
-            TargetSpec::None => matches!(target, Target::None),
-            TargetSpec::Part { tags } => {
-                match target {
-                    Target::Part { creature_id, part_id } => {
-                        let creature = some_or!(world.creatures().get(*creature_id), return false);
-                        let part = some_or!(creature.parts.get(*part_id), return false);
-                        for group in tags {
-                            if group.iter().all(|tag| part.tags.contains(tag)) {
-                                return true;
-                            }
-                        }
-                        return false;
+        match (self, target) {
+            (TargetSpec::None, Target::None) => true,
+            (TargetSpec::Part { tags }, Target::Part { creature_id, part_id }) => {
+                let creature = some_or!(world.creatures().get(*creature_id), return false);
+                let part = some_or!(creature.parts.get(*part_id), return false);
+                for group in tags {
+                    if group.iter().all(|tag| part.tags.contains(tag)) {
+                        return true;
                     }
-                    _ => false,
                 }
+                false
             }
+            (TargetSpec::Creature, Target::Creature { .. }) => true,
+            _ => false,
         }
     }
 }
@@ -100,7 +98,8 @@ impl TargetSpec {
 pub enum Target {
     #[serde(with = "serde_empty")]
     None,
-    Part { creature_id: Id<Creature>, part_id: Id<Part> }
+    Part { creature_id: Id<Creature>, part_id: Id<Part> },
+    Creature { id: Id<Creature> },
 }
 
 pub trait BehaviorClone {
