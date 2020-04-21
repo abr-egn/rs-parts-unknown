@@ -54,11 +54,9 @@ export class GameBoard implements GameBoard.View {
         for (let event of events) {
             preview(event);
             let data;
-            // TODO: update UI for stat changes
             if (data = event.CreatureMoved) {
                 await this._moveCreatureTo(data.id, hexToPixel(data.to))
-            }
-            if (data = event.OnCreature) {
+            } else if (data = event.OnCreature) {
                 let ce;
                 if (ce = data.event.OnPart) {
                     let pe;
