@@ -63,6 +63,10 @@ export class Game {
         return this._stack;
     }
 
+    get board(): GameBoard.View {
+        return this._board;
+    }
+
     key(name: string): boolean {
         return this._keys.get(name) || false;
     }
@@ -73,10 +77,6 @@ export class Game {
         const id = tile.creature;
         if (id == undefined) { return undefined; }
         return this._world.getCreature(id);
-    }
-
-    hexCoords(hex: wasm.Hex): DOMPointReadOnly {
-        return this._board.hexCoords(hex);
     }
 
     // Mutators

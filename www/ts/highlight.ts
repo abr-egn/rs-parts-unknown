@@ -1,6 +1,6 @@
 import * as wasm from "../wasm";
 import {Hex, Id} from "../wasm";
-import {FloatText} from "./draw";
+import {FloatText, hexToPixel} from "./draw";
 import {Stack} from "./stack";
 
 export class Highlight {
@@ -43,6 +43,7 @@ export class Highlight {
                 let tp;
                 if (tp = tc.action.Hit) {
                     this._addHpDelta(act.id, tc.id, -tp.damage);
+                    this._float.push(window.game.board.hpFloat(act.id, tc.id, -tp.damage));
                 }
             }
         } else if (act = prev.action.MoveCreature) {

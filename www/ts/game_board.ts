@@ -1,5 +1,5 @@
 import {
-    Creature, Event, Hex, Id, Tile, World,
+    Creature, Event, Hex, Id, Part, Tile, World,
 } from "../wasm";
 
 import {
@@ -10,7 +10,7 @@ import {Highlight} from "./highlight";
 import {Stack} from "./stack";
 import * as states from "./states";
 
-export class GameBoard {
+export class GameBoard implements GameBoard.View {
     private readonly _draw: Draw;
     private _mouseHex?: Hex;
     private _tsMillis: DOMHighResTimeStamp;
@@ -57,31 +57,40 @@ export class GameBoard {
             if (data = event.CreatureMoved) {
                 await this._moveCreatureTo(data.id, hexToPixel(data.to))
             }
-            if (data = event.OnCreature?.event.OnPart?.event.ChangeHP) {
-                const FLOAT_SPEED = 10.0;
+            if (data = event.OnCreature) {
+                let ce;
+                if (ce = data.event.OnPart) {
+                    let pe;
+                    if (pe = ce.event.ChangeHP) {
+                        const FLOAT_SPEED = 10.0;
 
-                const creature_id = event.OnCreature.id;
-                const creature = this._cache.creatures.get(creature_id)!;
-                const part = creature.parts.get(event.OnCreature.event.OnPart.id)!;
-                let point = this._creaturePos.get(creature_id)!;
-                const sign = data.delta < 0 ? "-" : "+";
-                let float: FloatText = {
-                    pos: new DOMPoint(point.x, point.y),
-                    text: `${part.name}: ${sign}${Math.abs(data.delta)} HP`,
-                    style: "#FF0000",
-                };
-                this._floatText.add(float);
-                const start = this._tsMillis;
-                let now = this._tsMillis;
-                while (now - start < 2000) {
-                    const tmp = await this._nextFrame();
-                    const delta = tmp - now;
-                    now = tmp;
-                    float.pos.y -= FLOAT_SPEED*(delta/1000);
+                        const float = this.hpFloat(data.id, ce.id, pe.delta);
+                        this._floatText.add(float);
+                        const start = this._tsMillis;
+                        let now = this._tsMillis;
+                        while (now - start < 2000) {
+                            const tmp = await this._nextFrame();
+                            const delta = tmp - now;
+                            now = tmp;
+                            float.pos.y -= FLOAT_SPEED*(delta/1000);
+                        }
+                        this._floatText.delete(float);
+                    }
                 }
-                this._floatText.delete(float);
             }
         }
+    }
+
+    hpFloat(creatureId: Id<Creature>, partId: Id<Part>, delta: number): FloatText {
+        const creature = this._cache.creatures.get(creatureId)!;
+        const part = creature.parts.get(partId)!;
+        let point = this._creaturePos.get(creatureId)!;
+        const sign = delta < 0 ? "-" : "+";
+        return {
+            pos: new DOMPoint(point.x, point.y),
+            text: `${part.name}: ${sign}${Math.abs(delta)} HP`,
+            style: "#FF0000",
+        };
     }
 
     creatureCoords(id: Id<Creature>): DOMPointReadOnly | undefined {
@@ -206,6 +215,11 @@ export namespace GameBoard {
     
     export interface DataQuery {
         get<T extends Constructor>(key: T): Readonly<InstanceType<T>> | undefined;
+    }
+
+    export interface View {
+        hexCoords(hex: Hex): DOMPointReadOnly;
+        hpFloat(creatureId: Id<Creature>, partId: Id<Part>, delta: number): FloatText;    
     }
 }
 
