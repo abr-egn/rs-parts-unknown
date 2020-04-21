@@ -10,6 +10,7 @@ export function CreatureStats(props: {
     stats?: Map<Stat, number>,
     partHighlight?: Id<wasm.Part>,
     setPartHighlight?: (part: Id<wasm.Part> | undefined) => void,
+    setBlocking?: (part: Id<wasm.Part>) => void,
 }): JSX.Element {
     const onPartEnter = (part: Id<wasm.Part>, event: React.MouseEvent) => {
         if (props.setPartHighlight) {
@@ -44,8 +45,11 @@ export function CreatureStats(props: {
         if (id == props.partHighlight) {
             classNames.push("partHighlight");
         }
+        let onClick = () => {};
         if (id == props.creature.blocking) {
             classNames.push("blocking");
+        } else if (props.setBlocking && !part.broken) {
+            onClick = () => {props.setBlocking!(id);};
         }
         parts.push(
             <li
@@ -53,6 +57,7 @@ export function CreatureStats(props: {
                 onMouseEnter={(ev) => onPartEnter(id, ev)}
                 onMouseLeave={(ev) => onPartLeave(id, ev)}
                 className={classNames.join(" ")}
+                onClick={onClick}
                 >
                 {part.name}<br/>
                 HP: {part.curHp}/{part.maxHp}

@@ -33,6 +33,7 @@ export function PlayerControls(props: {
             stats={props.stats}
             partHighlight={partHighlight}
             setPartHighlight={setPartHighlight}
+            setBlocking={(id) => { window.game.setPlayerBlocking(id); } }
         />
         <CardList
             active={canPlay}
