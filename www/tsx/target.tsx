@@ -17,7 +17,7 @@ export function TargetPart(props: {
             key={part.id}
             part={part}
             valid={valid}
-            onSelect={props.target.onSelect}
+            callbacks={props.target.callbacks}
         ></PartMenuItem>);
     return <div className="partTargetMenu" style={style}>{parts}</div>;
 }
@@ -25,12 +25,22 @@ export function TargetPart(props: {
 export function PartMenuItem(props: {
     part: wasm.Part,
     valid: boolean,
-    onSelect: (part: wasm.Part) => void,
+    callbacks: states.TargetPart.Callbacks,
 }): JSX.Element {
+    let onMouseDown = undefined;
+    let onMouseEnter = undefined;
+    let onMouseLeave = undefined;
+    if (props.valid) {
+        onMouseDown = () => props.callbacks.onSelect(props.part);
+        onMouseEnter = () => props.callbacks.onHoverEnter(props.part);
+        onMouseLeave = props.callbacks.onHoverLeave;
+    }
     return (
         <div
             className={props.valid?"validTarget":"invalidTarget"}
-            onMouseDown={() => props.onSelect(props.part)}
+            onMouseDown={onMouseDown}
+            onMouseEnter={onMouseEnter}
+            onMouseLeave={onMouseLeave}
             >
             {props.part.name}
         </div>

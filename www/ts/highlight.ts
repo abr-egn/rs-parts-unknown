@@ -32,31 +32,37 @@ export class Highlight {
         if (act = prev.action.ToCreature) {
             let tc;
             if (tc = act.action.GainAP) {
-                this._addDelta(act.id, "AP", tc.ap);
+                this._addStatDelta(act.id, "AP", tc.ap);
             } else if (tc = act.action.SpendAP) {
-                this._addDelta(act.id, "AP", -tc.ap);
+                this._addStatDelta(act.id, "AP", -tc.ap);
             } else if (tc = act.action.GainMP) {
-                this._addDelta(act.id, "MP", tc.mp);
+                this._addStatDelta(act.id, "MP", tc.mp);
             } else if (tc = act.action.SpendMP) {
-                this._addDelta(act.id, "MP", -tc.mp);
+                this._addStatDelta(act.id, "MP", -tc.mp);
+            } else if (tc = act.action.ToPart) {
+                let tp;
+                if (tp = tc.action.Hit) {
+                    this._addHpDelta(act.id, tc.id, -tp.damage);
+                }
             }
         } else if (act = prev.action.MoveCreature) {
             this._throb.push(prev.action.MoveCreature.to);
         }
-        /* TODO(hit preview)
-        else if (act = prev.action.HitCreature) {
-            throb.push(this._cache.creatureHex.get(p.action.HitCreature.id)!);
-            const hex = window.game.world.getCreatureHex(act.id)!;
-            this._float.push({
-                text: `-${act.damage} HP`,
-                pos: hexToPixel(hex),
-                style: "#FF0000",
-            });
-        }
-        */
     }
 
-    private _addDelta(id: Id<wasm.Creature>, stat: Stat, delta: number) {
+    private _addStatDelta(id: Id<wasm.Creature>, stat: Stat, delta: number) {
+        let c = this._getStats(id);
+        let oldDelta = c.statDelta.get(stat) || 0;
+        c.statDelta.set(stat, oldDelta + delta);
+    }
+
+    private _addHpDelta(creatureId: Id<wasm.Creature>, partId: Id<wasm.Part>, delta: number) {
+        let c = this._getStats(creatureId);
+        let oldDelta = c.hpDelta.get(partId) || 0;
+        c.hpDelta.set(partId, oldDelta + delta);
+    }
+
+    private _getStats(id: Id<wasm.Creature>): StatPreview {
         let c = this.stats.get(id);
         if (!c) {
             c = {
@@ -65,8 +71,7 @@ export class Highlight {
             };
             this.stats.set(id, c);
         }
-        let oldDelta = c.statDelta.get(stat) || 0;
-        c.statDelta.set(stat, oldDelta + delta);
+        return c;
     }
 }
 

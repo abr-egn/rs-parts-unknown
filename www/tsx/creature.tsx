@@ -3,7 +3,7 @@ import * as React from "react";
 import * as wasm from "../wasm";
 import {Id} from "../wasm";
 
-import {Stat, StatPreview} from "../ts/highlight";
+import {StatPreview} from "../ts/highlight";
 
 export function CreatureStats(props: {
     creature: wasm.Creature,

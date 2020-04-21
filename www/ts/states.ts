@@ -182,8 +182,23 @@ export class TargetPart extends State {
     ) { super(); }
 
     onPushed() {
-        const onSelect = (part: wasm.Part) => {
-            window.game.stack.pop(new TargetPart.Select(part));
+        const callbacks = {
+            onSelect: (part: wasm.Part) => {
+                window.game.stack.pop(new TargetPart.Select(part));
+            },
+            onHoverEnter: (part: wasm.Part) => {
+                const target = toTarget(part);
+                const actions = this._inPlay.preview(window.game.world, target);
+                const previews = actions.map(Preview.make);
+                this.update((draft) => {
+                    draft.build(Highlight).setPreview(previews);
+                });
+            },
+            onHoverLeave: () => {
+                this.update((draft) => {
+                    draft.build(Highlight).setPreview([]);
+                });
+            },
         };
         const targets: [wasm.Part, boolean][] = [];
         for (let part of this._creature.parts.values()) {
@@ -195,7 +210,7 @@ export class TargetPart extends State {
 
         // TODO: preview
         this.update((draft) => {
-            draft.set(TargetPart.UI, this._hex, targets, onSelect);
+            draft.set(TargetPart.UI, this._hex, targets, callbacks);
         });
     }
 
@@ -209,13 +224,18 @@ export namespace TargetPart {
         constructor(
             public hex: Hex,
             public targets: [wasm.Part, boolean][],
-            public onSelect: (part: wasm.Part) => void,
+            public callbacks: Callbacks,
         ) {}
     }
     export class Select {
         constructor(public part: wasm.Part) {}
     }
     export class Cancel {}
+    export interface Callbacks {
+        onSelect: (part: wasm.Part) => void,
+        onHoverEnter: (part: wasm.Part) => void,
+        onHoverLeave: () => void,
+    }
 }
 
 export class Update extends State {
