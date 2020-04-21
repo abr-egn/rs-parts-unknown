@@ -81,11 +81,8 @@ export class Game {
 
     // Mutators
 
-    async animateEvents(events: wasm.Event[]) {
-        return this._board.animateEvents(events);
-    }
-
-    updateWorld(world: wasm.World) {
+    async updateWorld(events: wasm.Event[], world: wasm.World, preview: (ev: wasm.Event) => void) {
+        await this._board.animateEvents(events, preview);
         this._world.free();
         this._world = world;
         this._board.updateWorld(this._world);

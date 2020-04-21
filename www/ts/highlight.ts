@@ -26,7 +26,7 @@ export class Highlight {
         }
     }
 
-    addEvents(event: Readonly<wasm.Event>) {
+    addEvents(event: Readonly<wasm.Event>, statOnly?: boolean) {
         let ev;
         if (ev = event.OnCreature) {
             let oc;
@@ -38,11 +38,15 @@ export class Highlight {
                 let op;
                 if (op = oc.event.ChangeHP) {
                     this._addHpDelta(ev.id, oc.id, op.delta);
-                    this._float.push(window.game.board.hpFloat(ev.id, oc.id, op.delta));
+                    if (!statOnly) {
+                        this._float.push(window.game.board.hpFloat(ev.id, oc.id, op.delta));
+                    }
                 }
             }
         } else if (ev = event.CreatureMoved) {
-            this._throb.push(ev.from, ev.to);
+            if (!statOnly) {
+                this._throb.push(ev.from, ev.to);
+            }
         }
     }
 

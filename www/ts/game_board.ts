@@ -50,8 +50,9 @@ export class GameBoard implements GameBoard.View {
         }
     }
 
-    async animateEvents(events: Event[]) {
+    async animateEvents(events: Event[], preview: (ev: Event) => void) {
         for (let event of events) {
+            preview(event);
             let data;
             // TODO: update UI for stat changes
             if (data = event.CreatureMoved) {

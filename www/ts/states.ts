@@ -249,8 +249,16 @@ export class Update extends State {
     ) { super(); }
 
     async onPushed() {
-        await window.game.animateEvents(this._events);
-        window.game.updateWorld(this._nextWorld);
+        const preview = (ev: wasm.Event) => {
+            this.update((draft) => {
+                let hi = draft.build(Highlight);
+                hi.addEvents(ev, true);
+            });
+        };
+        this.update((draft) => {
+            draft.build(Highlight).setEvents([]);
+        });
+        await window.game.updateWorld(this._events, this._nextWorld, preview);
         let state: wasm.GameState;
         switch (state = window.game.world.state()) {
             case "Play": {
