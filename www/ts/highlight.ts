@@ -42,7 +42,7 @@ export class Highlight {
                 }
             }
         } else if (ev = event.CreatureMoved) {
-            this._throb.push(ev.to);
+            this._throb.push(ev.from, ev.to);
         }
     }
 
