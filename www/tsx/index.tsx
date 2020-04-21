@@ -20,14 +20,13 @@ export function Index(props: {
     const base = props.data.get(states.Base.UI);
     const stats = props.data.get(Highlight)?.stats;
     let creatures = [];
-    if (base?.selected) {
-        for (let id of base.selected.keys()) {
-            const creature = world.getCreature(id);
-            if (creature) {
-                creatures.push(<CreatureStats key={id} creature={creature} stats={stats?.get(id)}/>);
-            }
+   for (let id of world.getCreatureIds()) {
+        if (id == world.playerId) { continue; }
+        const creature = world.getCreature(id);
+        if (creature) {
+            creatures.push(<CreatureStats key={id} creature={creature} stats={stats?.get(id)}/>);
         }
-    }
+   }
     const gameOverState = props.data.get(states.GameOver.UI)?.state;
     let gameOver = undefined;
     if (gameOverState) {
