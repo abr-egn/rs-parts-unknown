@@ -103,3 +103,19 @@ pub fn shoot() -> Card {
         start_play: |world, source| HitPart { damage: 1, tags: vec![vec![PartTag::Flesh]], melee: false }.behavior(world, source),
     }
 }
+
+/* 10 cards:
+arms:
+    2 melee heavy attack
+    2 ranged light attack
+    2 defense
+legs:
+    2 block change
+torso:
+    1 heal
+head:
+    1 utility (draw, ?)
+
+*/
+
+//pub fn jab
