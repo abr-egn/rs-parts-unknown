@@ -22,6 +22,37 @@ export function CreatureStats(props: {
         }
     };
 
+    let sorted = Array.from(props.creature.parts);
+    sorted.sort(([id_a, _p_a], [id_b, _p_b]) => id_a - id_b);
+    let parts = [];
+    for (let [id, part] of sorted) {
+        let classNames = [];
+        if (id == props.partHighlight) {
+            classNames.push("partHighlight");
+        }
+        if (part.tags.includes("Open")) {
+            classNames.push("open");
+        }
+        let hpDelta = props.stats?.hpDelta.get(id) || 0;
+        const hpStyle: React.CSSProperties = {};
+        if (hpDelta < 0) {
+            hpStyle.color = "red";
+        } else if (hpDelta > 0) {
+            hpStyle.color = "green";
+        }
+        parts.push(
+            <li
+                key={id}
+                onMouseEnter={(ev) => onPartEnter(id, ev)}
+                onMouseLeave={(ev) => onPartLeave(id, ev)}
+                className={classNames.join(" ")}
+                >
+                {part.name}<br/>
+                <span style={hpStyle}>HP: {part.curHp + hpDelta}/{part.maxHp}</span>
+            </li>
+        );
+    }
+
     let apDelta = props.stats?.statDelta.get("AP") || 0;
     const apStyle: React.CSSProperties = {};
     if (apDelta < 0) {
@@ -36,29 +67,7 @@ export function CreatureStats(props: {
     } else if (mpDelta > 0) {
         mpStyle.color = "green";
     }
-    let sorted = Array.from(props.creature.parts);
-    sorted.sort(([id_a, _p_a], [id_b, _p_b]) => id_a - id_b);
-    let parts = [];
-    for (let [id, part] of sorted) {
-        let classNames = [];
-        if (id == props.partHighlight) {
-            classNames.push("partHighlight");
-        }
-        if (part.tags.includes("Open")) {
-            classNames.push("open");
-        }
-        parts.push(
-            <li
-                key={id}
-                onMouseEnter={(ev) => onPartEnter(id, ev)}
-                onMouseLeave={(ev) => onPartLeave(id, ev)}
-                className={classNames.join(" ")}
-                >
-                {part.name}<br/>
-                HP: {part.curHp}/{part.maxHp}
-            </li>
-        );
-    }
+
     return (<div className="uibox">
         <div style={apStyle}>AP: {props.creature.curAp + apDelta}</div>
         <div style={mpStyle}>MP: {props.creature.curMp + mpDelta}</div>
