@@ -24,6 +24,7 @@ pub struct Creature {
     dead: bool,
     npc: Option<NPC>,
     hand: Vec<Card>,
+    blocking: Id<creature::Part>,
 }
 
 impl Creature {
@@ -45,6 +46,7 @@ impl Creature {
             curMp: source.cur_mp,
             dead: source.dead,
             npc: source.npc.as_ref().map(NPC::new),
+            blocking: source.blocking,
         }
     }
     pub fn js(&self) -> JsValue { to_js_value(&self) }

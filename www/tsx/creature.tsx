@@ -40,12 +40,19 @@ export function CreatureStats(props: {
     sorted.sort(([id_a, _p_a], [id_b, _p_b]) => id_a - id_b);
     let parts = [];
     for (let [id, part] of sorted) {
+        let classNames = [];
+        if (id == props.partHighlight) {
+            classNames.push("partHighlight");
+        }
+        if (id == props.creature.blocking) {
+            classNames.push("blocking");
+        }
         parts.push(
             <li
                 key={id}
                 onMouseEnter={(ev) => onPartEnter(id, ev)}
                 onMouseLeave={(ev) => onPartLeave(id, ev)}
-                className={id == props.partHighlight ? "partHighlight" : ""}
+                className={classNames.join(" ")}
                 >
                 {part.name}<br/>
                 HP: {part.curHp}/{part.maxHp}
