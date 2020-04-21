@@ -25,6 +25,7 @@ export function PlayerControls(props: {
     const canPlay = props.active?.is(states.Base) || false;
     const inPlay = props.active?.is(states.PlayCard) || false;
     const canCancel = (inPlay || props.active?.is(states.MovePlayer)) || false;
+    const blockBroken = props.player.parts.get(props.player.blocking)!.broken;
 
     return (<div>
         Player:
@@ -42,7 +43,7 @@ export function PlayerControls(props: {
             setPartHighlight={setPartHighlight}
         />
         {inPlay && <div>Playing: {props.play?.card.name}</div>}
-        <EndTurnButton active={canPlay}/>
+        <EndTurnButton active={canPlay && !blockBroken}/>
         {canPlay && <button onClick={movePlayer}>Move</button>}
         {canCancel &&  <div><button onClick={cancelPlay}>Cancel</button></div>}
     </div>);
