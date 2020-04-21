@@ -402,13 +402,13 @@ fn make_player() -> Creature {
     };
     let torso = Part::new(
         "Torso",
-        &[PartTag::Torso, PartTag::Flesh, PartTag::Vital],
+        &[PartTag::Torso, PartTag::Flesh, PartTag::Vital, PartTag::Open],
         50);
     let arm_l = Part {
         cards: IdMap::from_iter(vec![library::card::shoot()]),
         ..Part::new(
             "Arm",
-            &[PartTag::Limb, PartTag::Flesh, PartTag::Arm],
+            &[PartTag::Limb, PartTag::Flesh, PartTag::Arm, PartTag::Open],
             30)
     };
     let arm_r = arm_l.clone();
@@ -417,7 +417,7 @@ fn make_player() -> Creature {
         mp: 1,
         ..Part::new(
             "Leg",
-            &[PartTag::Limb, PartTag::Flesh, PartTag::Leg],
+            &[PartTag::Limb, PartTag::Flesh, PartTag::Leg, PartTag::Open],
             30)
     };
     let leg_r = leg_l.clone();

@@ -81,14 +81,10 @@ impl Creature {
             .sum()
     }
 
-    // TODO: replace with tag-restricted choice
-    pub fn hit_action(&self, damage: i32) -> CreatureAction {
-        let mut rng = thread_rng();
-        let part_id = self.parts.keys().choose(&mut rng).unwrap();
-        CreatureAction::ToPart {
-            id: *part_id,
-            action: PartAction::Hit { damage },
-        }
+    pub fn open_parts(&self) -> impl Iterator<Item=(Id<Part>, &Part)> {
+        self.parts.iter()
+            .map(|(id, p)| (*id, p))
+            .filter(|(_, p)| p.tags.contains(&PartTag::Open))
     }
 
     // Mutators

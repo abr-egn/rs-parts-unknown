@@ -1,5 +1,5 @@
 use crate::{
-    creature::{Creature, CreatureAction, Part, PartTag},
+    creature::{Creature, CreatureAction, Part, PartAction, PartTag},
     error::{Error, Result},
     event::{Action, Event},
     id_map::{Id, IdMap},
@@ -41,7 +41,7 @@ impl Monopod {
             mp: 3,
             ..Part::new(
                 "Fut", 
-                &[PartTag::Limb, PartTag::Flesh, PartTag::Leg],
+                &[PartTag::Limb, PartTag::Flesh, PartTag::Leg, PartTag::Open],
                 20)
         });
         
@@ -54,7 +54,14 @@ impl Monopod {
     fn kick(world: &mut World, id: Id<Creature>) -> Result<Vec<Event>> {
         let player_id = world.player_id();
         let player = world.creatures().get(player_id).unwrap();
-        let hit = player.hit_action(1);
+        let mut open: Vec<_> = player.open_parts().collect();
+        if open.is_empty() { return Ok(vec![]); }
+        open.sort_by(|(_, a), (_, b)| a.cur_hp.cmp(&b.cur_hp));
+        let (pid, _) = open.first().unwrap();
+        let hit = CreatureAction::ToPart {
+            id: *pid,
+            action: PartAction::Hit { damage: 1 },
+        };
         CheckRun {
             world, id,
             part: "Fut",

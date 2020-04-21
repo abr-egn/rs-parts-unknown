@@ -73,12 +73,15 @@ impl card::Behavior for HitPartBehavior {
     fn target_spec(&self) -> TargetSpec { TargetSpec::Part { tags: self.tags.clone() } }
     fn target_valid(&self, world: &World, target: &Target) -> bool {
         if !self.target_spec().matches(world, target) { return false; }
-        let creature_id = if let Target::Part { creature_id, .. } = target {
-            creature_id
+        let (creature_id, part_id) = if let Target::Part { creature_id, part_id } = target {
+            (*creature_id, *part_id)
         } else { return false; };
-        if *creature_id == self.source { return false; }
-        let pos = some_or!(world.map().creatures().get(creature_id), return false);
+        if creature_id == self.source { return false; }
+        let pos = some_or!(world.map().creatures().get(&creature_id), return false);
         if !self.range.contains(&pos) { return false; }
+        let creature = some_or!(world.creatures().get(creature_id), return false);
+        let part = some_or!(creature.parts.get(part_id), return false);
+        if !part.tags.contains(&PartTag::Open) { return false; }
         true
     }
     fn preview(&self, _world: &World, target: &Target) -> Vec<Action> {
@@ -100,7 +103,7 @@ pub fn shoot() -> Card {
     Card {
         name: "Shoot".into(),
         ap_cost: 1,
-        start_play: |world, source| HitPart { damage: 1, tags: vec![vec![PartTag::Flesh]], melee: false }.behavior(world, source),
+        start_play: |world, source| HitPart { damage: 1, tags: vec![vec![]], melee: false }.behavior(world, source),
     }
 }
 
@@ -110,7 +113,7 @@ arms:
     2 ranged light attack
     2 defense
 legs:
-    2 block change
+    2 open change
 torso:
     1 heal
 head:
