@@ -30,7 +30,7 @@ pub struct Creature {
     pub draw: Vec<CardId>,  // end of vec -> top of pile
     pub hand: Vec<CardId>,
     pub discard: Vec<CardId>,
-    //pub blocking: Id<Part>,
+    pub blocking: Id<Part>,
 }
 
 impl Creature {
@@ -41,12 +41,14 @@ impl Creature {
             tmp.cur_hp = tmp.max_hp;
             pids.add(tmp);
         }
+        let blocking = *pids.keys().last().unwrap();
         let mut out = Creature {
             parts: pids,
             cur_ap: 0, cur_mp: 0,
             dead: false,
             npc,
             draw: vec![], hand: vec![], discard: vec![],
+            blocking,
         };
         out.cur_ap = out.max_ap();
         out.cur_mp = out.max_mp();
