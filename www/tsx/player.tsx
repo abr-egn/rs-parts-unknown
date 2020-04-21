@@ -3,7 +3,7 @@ import * as React from "react";
 import * as wasm from "../wasm";
 import {Id} from "../wasm";
 
-import {Stat} from "../ts/highlight";
+import {StatPreview} from "../ts/highlight";
 import {Stack} from "../ts/stack";
 import * as states from "../ts/states";
 
@@ -14,7 +14,7 @@ export function PlayerControls(props: {
     player: wasm.Creature,
     active?: Stack.Active,
     play?: states.PlayCard.UI,
-    stats?: Map<Stat, number>,
+    stats?: StatPreview,
 }): JSX.Element {
     const cancelPlay = () => window.game.stack.pop();
     const movePlayer = () => window.game.stack.push(new states.MovePlayer());

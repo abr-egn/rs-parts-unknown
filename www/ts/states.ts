@@ -193,6 +193,7 @@ export class TargetPart extends State {
         }
         targets.sort((a, b) => a[0].id - b[0].id);
 
+        // TODO: preview
         this.update((draft) => {
             draft.set(TargetPart.UI, this._hex, targets, onSelect);
         });

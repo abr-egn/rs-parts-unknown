@@ -3,11 +3,11 @@ import * as React from "react";
 import * as wasm from "../wasm";
 import {Id} from "../wasm";
 
-import {Stat} from "../ts/highlight";
+import {Stat, StatPreview} from "../ts/highlight";
 
 export function CreatureStats(props: {
     creature: wasm.Creature,
-    stats?: Map<Stat, number>,
+    stats?: StatPreview,
     partHighlight?: Id<wasm.Part>,
     setPartHighlight?: (part: Id<wasm.Part> | undefined) => void,
 }): JSX.Element {
@@ -22,14 +22,14 @@ export function CreatureStats(props: {
         }
     };
 
-    let apDelta = props.stats?.get("AP") || 0;
+    let apDelta = props.stats?.statDelta.get("AP") || 0;
     const apStyle: React.CSSProperties = {};
     if (apDelta < 0) {
         apStyle.color = "red";
     } else if (apDelta > 0) {
         apStyle.color = "green";
     }
-    let mpDelta = props.stats?.get("MP") || 0;
+    let mpDelta = props.stats?.statDelta.get("MP") || 0;
     const mpStyle: React.CSSProperties = {};
     if (mpDelta < 0) {
         mpStyle.color = "red";
