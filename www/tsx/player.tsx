@@ -29,6 +29,7 @@ export function PlayerControls(props: {
     return (<div>
         <CreatureStats
             creature={props.player}
+            focused={false}
             stats={props.stats}
             partHighlight={partHighlight}
             setPartHighlight={setPartHighlight}

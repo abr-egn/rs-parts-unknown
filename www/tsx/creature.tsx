@@ -7,6 +7,7 @@ import {StatPreview} from "../ts/highlight";
 
 export function CreatureStats(props: {
     creature: wasm.Creature,
+    focused: boolean,
     stats?: StatPreview,
     partHighlight?: Id<wasm.Part>,
     setPartHighlight?: (part: Id<wasm.Part> | undefined) => void,
@@ -68,7 +69,7 @@ export function CreatureStats(props: {
         mpStyle.color = "green";
     }
 
-    return (<div className="uibox">
+    return (<div className={props.focused?"focusedBox":"uibox"}>
         <div>{props.creature.name}</div>
         <div style={apStyle}>AP: {props.creature.curAp + apDelta}</div>
         <div style={mpStyle}>MP: {props.creature.curMp + mpDelta}</div>

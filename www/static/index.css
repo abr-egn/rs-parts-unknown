@@ -33,6 +33,12 @@ div.topright {
     padding: 5px;
 }
 
+.focusedBox {
+    border: 1px solid blue;
+    margin: 5px;
+    padding: 5px;
+}
+
 .gameOver {
     position: absolute;
     top: 50%;

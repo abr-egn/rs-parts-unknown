@@ -17,6 +17,24 @@ export class Base extends State {
             }
         });
     }
+    onTileEntered(hex: Hex) {
+        const tile = window.game.world.getTile(hex);
+        if (tile?.creature != undefined) {
+            const id = tile.creature;
+            this.update((draft) => {
+                draft.build(Base.UI).hovered.add(id);
+            });
+        }
+    }
+    onTileExited(hex: Hex) {
+        const tile = window.game.world.getTile(hex);
+        if (tile?.creature != undefined) {
+            const id = tile.creature;
+            this.update((draft) => {
+                draft.build(Base.UI).hovered.delete(id);
+            });
+        }
+    }
     onTileClicked(hex: Hex) {
         const world = window.game.world;
         let tile = world.getTile(hex);
@@ -47,6 +65,7 @@ export namespace Base {
     export class UI {
         [Stack.Datum] = true;
         selected: Map<Id<wasm.Creature>, wasm.Boundary[]> = new Map();
+        hovered: Set<Id<wasm.Creature>> = new Set();
     }
 }
 

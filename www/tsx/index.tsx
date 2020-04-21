@@ -24,7 +24,12 @@ export function Index(props: {
         if (id == world.playerId) { continue; }
         const creature = world.getCreature(id);
         if (creature) {
-            creatures.push(<CreatureStats key={id} creature={creature} stats={stats?.get(id)}/>);
+            creatures.push(<CreatureStats
+                key={id}
+                creature={creature}
+                focused={base?.hovered.has(id) || false}
+                stats={stats?.get(id)}
+            />);
         }
    }
     const gameOverState = props.data.get(states.GameOver.UI)?.state;
