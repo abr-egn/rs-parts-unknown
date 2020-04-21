@@ -27,9 +27,10 @@ pub struct Creature {
     pub cur_mp: i32,
     pub dead: bool,
     pub npc: Option<NPC>,
-    pub deck: Vec<CardId>,  // end of vec -> top of deck
+    pub draw: Vec<CardId>,  // end of vec -> top of pile
     pub hand: Vec<CardId>,
     pub discard: Vec<CardId>,
+    //pub blocking: Id<Part>,
 }
 
 impl Creature {
@@ -45,7 +46,7 @@ impl Creature {
             cur_ap: 0, cur_mp: 0,
             dead: false,
             npc,
-            deck: vec![], hand: vec![], discard: vec![],
+            draw: vec![], hand: vec![], discard: vec![],
         };
         out.cur_ap = out.max_ap();
         out.cur_mp = out.max_mp();
@@ -132,14 +133,14 @@ impl Creature {
                     self.discard.push(card);
                 }
                 let uhand: usize = self.hand_size().try_into().unwrap();
-                if self.deck.len() < uhand {
+                if self.draw.len() < uhand {
                     out.push(CreatureEvent::DeckRecycled);
-                    self.deck.append(&mut self.discard);
-                    self.deck.shuffle(&mut rand::thread_rng());
+                    self.draw.append(&mut self.discard);
+                    self.draw.shuffle(&mut rand::thread_rng());
                 }
-                let udraw = std::cmp::min(self.deck.len(), uhand);
+                let udraw = std::cmp::min(self.draw.len(), uhand);
                 for _ in 0..udraw {
-                    let card = some_or!(self.deck.pop(), break);
+                    let card = some_or!(self.draw.pop(), break);
                     out.push(CreatureEvent::Drew { part: card.0, card: card.1 });
                     self.hand.push(card);
                 }
@@ -157,7 +158,7 @@ impl Creature {
     }
 
     pub fn reset_cards(&mut self) {
-        self.deck = self.parts.iter()
+        self.draw = self.parts.iter()
             .flat_map(|(&id, part)|
                 part.cards.keys()
                     .map(move |&cid| (id, cid))
