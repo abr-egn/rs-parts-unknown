@@ -421,5 +421,5 @@ fn make_player() -> Creature {
             30)
     };
     let leg_r = leg_l.clone();
-    Creature::new(&[head, torso, arm_l, arm_r, leg_l, leg_r], None)
+    Creature::new("Player", &[head, torso, arm_l, arm_r, leg_l, leg_r], None)
 }

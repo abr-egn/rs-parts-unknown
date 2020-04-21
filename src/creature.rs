@@ -22,6 +22,7 @@ pub type CardId = (Id<Part>, Id<Card>);
 
 #[derive(Debug, Clone)]
 pub struct Creature {
+    pub name: String,
     pub parts: IdMap<Part>,
     pub cur_ap: i32,
     pub cur_mp: i32,
@@ -33,18 +34,19 @@ pub struct Creature {
 }
 
 impl Creature {
-    pub fn new(parts: &[Part], npc: Option<NPC>) -> Self {
+    pub fn new<S: Into<String>>(name: S, parts: &[Part], npc: Option<NPC>) -> Self {
         let mut pids = IdMap::new();
         for part in parts {
             let mut tmp = part.clone();
             tmp.cur_hp = tmp.max_hp;
             pids.add(tmp);
         }
-        Creature::new_ids(pids, npc)
+        Creature::new_ids(name, pids, npc)
     }
 
-    pub fn new_ids(parts: IdMap<Part>, npc: Option<NPC>) -> Self {
+    pub fn new_ids<S: Into<String>>(name: S, parts: IdMap<Part>, npc: Option<NPC>) -> Self {
         let mut out = Creature {
+            name: name.into(),
             parts,
             cur_ap: 0, cur_mp: 0,
             dead: false,
@@ -57,8 +59,8 @@ impl Creature {
         out
     }
 
-    pub fn new_npc<B: 'static + npc::Behavior>(parts: IdMap<Part>, behavior: B) -> Self {
-        Creature::new_ids(parts, Some(NPC::new(Box::new(behavior))))
+    pub fn new_npc<S: Into<String>, B: 'static + npc::Behavior>(name: S, parts: IdMap<Part>, behavior: B) -> Self {
+        Creature::new_ids(name, parts, Some(NPC::new(Box::new(behavior))))
     }
 
     // Accessors

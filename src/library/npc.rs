@@ -45,7 +45,7 @@ impl Monopod {
                 20)
         });
         
-        Creature::new_npc(parts, Monopod {
+        Creature::new_npc("Monopod", parts, Monopod {
             kick_time: true,
             head, foot,
         })

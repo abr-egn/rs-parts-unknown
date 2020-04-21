@@ -27,7 +27,6 @@ export function PlayerControls(props: {
     const canCancel = (inPlay || props.active?.is(states.MovePlayer)) || false;
 
     return (<div>
-        Player:
         <CreatureStats
             creature={props.player}
             stats={props.stats}

@@ -18,6 +18,7 @@ use crate::{
 #[allow(non_snake_case)]
 pub struct Creature {
     id: Id<creature::Creature>,
+    name: String,
     parts: HashMap<Id<creature::Part>, Part>,
     curAp: i32,
     curMp: i32,
@@ -39,6 +40,7 @@ impl Creature {
             .collect();
         Creature {
             id,
+            name: source.name.clone(),
             parts,
             hand,
             curAp: source.cur_ap,

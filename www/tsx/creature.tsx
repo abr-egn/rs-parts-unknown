@@ -69,6 +69,7 @@ export function CreatureStats(props: {
     }
 
     return (<div className="uibox">
+        <div>{props.creature.name}</div>
         <div style={apStyle}>AP: {props.creature.curAp + apDelta}</div>
         <div style={mpStyle}>MP: {props.creature.curMp + mpDelta}</div>
         <ul>{parts}</ul>
