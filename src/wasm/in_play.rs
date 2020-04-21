@@ -29,9 +29,9 @@ impl InPlay {
         self.wrapped.behavior.target_valid(&world.wrapped, &from_js_value::<Target>(target))
     }
     #[wasm_bindgen(skip_typescript)]
-    pub fn preview(&self, world: &World, target: JsValue) -> Array /* Action[] */ {
+    pub fn simulate(&self, world: &World, target: JsValue) -> Array /* Event[] */ {
         let target: Target = from_js_value(target);
-        self.wrapped.behavior.preview(&world.wrapped, &target).iter()
+        self.wrapped.behavior.simulate(&world.wrapped, &target).iter()
             .map(to_js_value)
             .collect()
     }
@@ -48,7 +48,7 @@ const INPLAY_TS: &'static str = r#"
 interface InPlay {
     range(world: World): Hex[];
     targetValid(world: World, target: Target): boolean;
-    preview(world: World, target: Target): Action[];
+    simulate(world: World, target: Target): Event[];
     getTargetSpec(): TargetSpec;
 }
 "#;

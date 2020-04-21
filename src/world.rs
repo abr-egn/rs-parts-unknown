@@ -126,6 +126,17 @@ impl World {
         out
     }
 
+    pub fn execute_all(&mut self, actions: &[Action]) -> Vec<Event> {
+        let mut out = vec![];
+        for act in actions {
+            let events = self.execute(&act);
+            let failed = Event::is_failure(&events);
+            out.extend(events);
+            if failed { break; }
+        }
+        out
+    }
+
     pub fn move_creature(&mut self, creature_id: Id<Creature>, to: Hex) -> Vec<Event> {
         let from = match self.map.creatures().get(&creature_id) {
             Some(h) => h,

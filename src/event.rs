@@ -27,7 +27,7 @@ pub enum Event {
     OnCreature { id: Id<Creature>, event: CreatureEvent },
 }
 
-impl Event {   
+impl Event {
     pub fn failed(err: Error) -> Event {
         Event::Failed { action: Action::Nothing, reason: format!("{:?}", err) }
     }

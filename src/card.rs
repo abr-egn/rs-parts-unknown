@@ -5,7 +5,7 @@ use wasm_bindgen::prelude::*;
 
 use crate::{
     creature::{Creature, Part, PartTag},
-    event::{Action, Event},
+    event::{Event},
     id_map::Id,
     serde_empty,
     world::World,
@@ -49,17 +49,12 @@ pub trait Behavior: BehaviorClone {
     fn target_valid(&self, world: &World, target: &Target) -> bool {
         self.target_spec().matches(world, target)
     }
-    fn preview(&self, world: &World, target: &Target) -> Vec<Action>;
-    fn apply(&self, world: &mut World, target: &Target) -> Vec<Event> {
-        let mut out = vec![];
-        for act in self.preview(world, target) {
-            let events = world.execute(&act);
-            let failed = Event::is_failure(&events);
-            out.extend(events);
-            if failed { break; }
-        }
-        out
+    fn simulate(&self, world: &World, target: &Target) -> Vec<Event> {
+        let mut tmp = world.clone();
+        tmp.tracer = None;
+        self.apply(&mut tmp, target)
     }
+    fn apply(&self, world: &mut World, target: &Target) -> Vec<Event>;
 }
 
 // TODO: multiple targets

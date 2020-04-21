@@ -2,7 +2,7 @@ import * as wasm from "../wasm";
 import {Id, Hex} from "../wasm";
 
 import {toTarget} from "./extra";
-import {Highlight, Preview} from "./highlight";
+import {Highlight} from "./highlight";
 import {Stack, State} from "./stack";
 
 export class Base extends State {
@@ -113,28 +113,15 @@ export class PlayCard extends State {
 
     onTileEntered(hex: Hex) {
         const world = window.game.world;
-        const preview: Preview[] = [];
         
         const hiHexes: Hex[] = [];
         if (this._canTarget(hex)) {
             hiHexes.push(hex);
-            /* TODO: preview for direct targets
-            preview.push(Preview.make({
-                ToCreature: {
-                    id: world.playerId,
-                    action: { SpendAP: { ap: this._inPlay!.apCost } }
-                }
-            }));
-            const actions = this._inPlay!.preview(world, hex);
-            for (let action of actions) {
-                preview.push(Preview.make(action));
-            }
-            */
+            // TODO: preview for simple targets
         }
         this.update((draft) => {
             const hi = draft.build(Highlight);
             hi.hexes = hiHexes;
-            hi.setPreview(preview);
         });
     }
 
@@ -142,8 +129,7 @@ export class PlayCard extends State {
         if (!this._canTarget(hex)) { return; }
         const world = window.game.world;
         const spec = this._inPlay!.getTargetSpec();
-        let match;
-        if (match = spec.Part) {
+        if (spec.Part) {
             let creature = window.game.creatureAt(hex);
             if (!creature) { return; }
             if (creature.id == world.playerId) { return; }
@@ -207,15 +193,14 @@ export class TargetPart extends State {
             },
             onHoverEnter: (part: wasm.Part) => {
                 const target = toTarget(part);
-                const actions = this._inPlay.preview(window.game.world, target);
-                const previews = actions.map(Preview.make);
+                const events = this._inPlay.simulate(window.game.world, target);
                 this.update((draft) => {
-                    draft.build(Highlight).setPreview(previews);
+                    draft.build(Highlight).setEvents(events);
                 });
             },
             onHoverLeave: () => {
                 this.update((draft) => {
-                    draft.build(Highlight).setPreview([]);
+                    draft.build(Highlight).setEvents([]);
                 });
             },
         };
@@ -304,25 +289,10 @@ export class MovePlayer extends State {
     }
     onTileEntered(hex: Hex) {
         const world = window.game.world;
-        const path = world.path(this._from, hex);
-        const preview: Preview[] = [];
-        const mpCost = Math.min(Math.max(0, path.length-1), this._mp);
-        if (mpCost > 0) {
-            preview.push(Preview.make({
-                ToCreature: {
-                    id: world.playerId,
-                    action: { SpendMP: { mp: mpCost } },
-                }
-            }));
-        }
-        for (let hex of path.slice(0, this._mp+1)) {
-            preview.push(Preview.make({
-                MoveCreature: { id: world.playerId, to: hex }
-            }));
-        }
+        const events = world.simulateMove(hex);
         this.update((draft) => {
             const hi = draft.build(Highlight);
-            hi.setPreview(preview);
+            hi.setEvents(events);
         });
     }
     onTileClicked(hex: Hex) {

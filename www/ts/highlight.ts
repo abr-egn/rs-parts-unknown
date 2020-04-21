@@ -1,6 +1,6 @@
 import * as wasm from "../wasm";
 import {Hex, Id} from "../wasm";
-import {FloatText, hexToPixel} from "./draw";
+import {FloatText} from "./draw";
 import {Stack} from "./stack";
 
 export class Highlight {
@@ -17,37 +17,32 @@ export class Highlight {
     get float(): Readonly<FloatText[]> { return this._float; }
     get throb(): Readonly<Hex[]> { return this._throb; }
     
-    setPreview(preview: Readonly<Preview[]>) {
+    setEvents(events: Readonly<wasm.Event[]>) {
         this._stats = new Map();
         this._float = [];
         this._throb = [];
-        for (let prev of preview) {
-            this.addPreview(prev);
+        for (let event of events) {
+            this.addEvents(event);
         }
     }
 
-    addPreview(prev: Readonly<Preview>) {
-        // TODO: show p.affects
-        let act;
-        if (act = prev.action.ToCreature) {
-            let tc;
-            if (tc = act.action.GainAP) {
-                this._addStatDelta(act.id, "AP", tc.ap);
-            } else if (tc = act.action.SpendAP) {
-                this._addStatDelta(act.id, "AP", -tc.ap);
-            } else if (tc = act.action.GainMP) {
-                this._addStatDelta(act.id, "MP", tc.mp);
-            } else if (tc = act.action.SpendMP) {
-                this._addStatDelta(act.id, "MP", -tc.mp);
-            } else if (tc = act.action.ToPart) {
-                let tp;
-                if (tp = tc.action.Hit) {
-                    this._addHpDelta(act.id, tc.id, -tp.damage);
-                    this._float.push(window.game.board.hpFloat(act.id, tc.id, -tp.damage));
+    addEvents(event: Readonly<wasm.Event>) {
+        let ev;
+        if (ev = event.OnCreature) {
+            let oc;
+            if (oc = ev.event.ChangeAP) {
+                this._addStatDelta(ev.id, "AP", oc.delta);
+            } else if (oc = ev.event.ChangeMP) {
+                this._addStatDelta(ev.id, "MP", oc.delta);
+            } else if (oc = ev.event.OnPart) {
+                let op;
+                if (op = oc.event.ChangeHP) {
+                    this._addHpDelta(ev.id, oc.id, op.delta);
+                    this._float.push(window.game.board.hpFloat(ev.id, oc.id, op.delta));
                 }
             }
-        } else if (act = prev.action.MoveCreature) {
-            this._throb.push(prev.action.MoveCreature.to);
+        } else if (ev = event.CreatureMoved) {
+            this._throb.push(ev.to);
         }
     }
 
@@ -83,18 +78,4 @@ type StatMap = Map<Id<wasm.Creature>, StatPreview>;
 export interface StatPreview {
     statDelta: Map<Stat, number>,
     hpDelta: Map<Id<wasm.Part>, number>,
-}
-
-export interface Preview {
-    action: wasm.Action,
-    affects: string[],
-}
-
-export namespace Preview {
-    export function make(act: wasm.Action): Preview {
-        return {
-            action: act,
-            affects: window.game.world.affectsAction(act),
-        };
-    }
 }

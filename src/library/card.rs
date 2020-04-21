@@ -5,7 +5,7 @@ use hex::Hex;
 use crate::{
     card::{self, Card, Target, TargetSpec},
     creature::{Creature, CreatureAction, PartAction, PartTag},
-    event::{Action},
+    event::{Action, Event},
     id_map::Id,
     world::World,
     some_or,
@@ -20,11 +20,11 @@ pub struct Walk {
 
 impl card::Behavior for Walk {
     fn target_spec(&self) -> TargetSpec { TargetSpec::None }
-    fn preview(&self, _world: &World, _target: &Target) -> Vec<Action> {
-        vec![Action::ToCreature {
+    fn apply(&self, world: &mut World, _target: &Target) -> Vec<Event> {
+        world.execute(&Action::ToCreature {
             id: self.creature_id,
             action: CreatureAction::GainMP { mp: 1 },
-        }]
+        })
     }
 }
 
@@ -84,18 +84,18 @@ impl card::Behavior for HitPartBehavior {
         if !part.tags.contains(&PartTag::Open) { return false; }
         true
     }
-    fn preview(&self, _world: &World, target: &Target) -> Vec<Action> {
+    fn apply(&self, world: &mut World, target: &Target) -> Vec<Event> {
         let (creature_id, part_id) = match target {
             Target::Part { creature_id, part_id } => (*creature_id, *part_id),
             _ => return vec![],
         };
-        vec![Action::ToCreature {
+        world.execute(&Action::ToCreature {
             id: creature_id,
             action: CreatureAction::ToPart {
                 id: part_id,
                 action: PartAction::Hit { damage: self.damage }
             },
-        }]
+        })
     }
 }
 

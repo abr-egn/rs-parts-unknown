@@ -164,6 +164,15 @@ impl World {
         to_js_value(&self.wrapped.state())
     }
 
+    #[wasm_bindgen(skip_typescript)]
+    pub fn simulateMove(&self, to: JsValue) -> Array /* Event[] */ {
+        let to: Hex = from_js_value(to);
+        let mut new = self.wrapped.clone();
+        new.tracer = None;
+        new.move_creature(new.player_id(), to).iter()
+            .map(to_js_value).collect()
+    }
+
     // Updates
 
     #[wasm_bindgen(skip_typescript)]
@@ -219,6 +228,7 @@ interface World {
     affectsAction(action: Action): string[];
     path(from: Hex, to: Hex): Hex[];
     state(): GameState;
+    simulateMove(to: Hex): Event[];
 
     // Updates
 
