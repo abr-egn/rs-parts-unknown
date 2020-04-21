@@ -53,7 +53,7 @@ export class GameBoard {
     async animateEvents(events: Event[]) {
         for (let event of events) {
             let data;
-            // TODO: update UI for AP/MP changes
+            // TODO: update UI for stat changes
             if (data = event.CreatureMoved) {
                 await this._moveCreatureTo(data.id, hexToPixel(data.to))
             }
@@ -99,7 +99,7 @@ export class GameBoard {
     }
 
     private async _moveCreatureTo(id: number, dest: DOMPointReadOnly) {
-        const MOVE_SPEED = 1.0;
+        const MOVE_SPEED = 2.0;
 
         let start = this._creaturePos.get(id);
         if (start == undefined) { return; }
