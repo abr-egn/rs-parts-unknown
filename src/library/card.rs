@@ -126,7 +126,6 @@ torso:
     [ ] 1 heal
 head:
     [ ] 1 utility (draw, ?)
-
 */
 
 //pub fn jab
