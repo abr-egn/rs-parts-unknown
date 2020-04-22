@@ -72,6 +72,7 @@ export class Stack {
     push(state: State) {
         setTimeout(() => {
             console.log("PUSH: %s", state.constructor.name);
+            this._top()?._onDeactivated();
             this._pushImpl(state);
         });
     }
@@ -122,7 +123,6 @@ export class Stack {
         return this._stack[this._stack.length - 1];
     }
     private _pushImpl(state: State, data?: any) {
-        this._top()?._onDeactivated();
         this._oldData.push(this._data);
         this._stack.push(state);
         state._onPushed(this._updater);
