@@ -147,6 +147,14 @@ export class PlayCard extends State {
             }
             const [nextWorld, events] = window.game.world.finishPlay(this._inPlay!, target);
             this._inPlay = undefined;
+            
+            // TODO: this causes a brief window of time when the stack update
+            // hasn't happened yet, so the state is visible to the UI.
+            /*
+            this.update((draft) => {
+                draft.build()
+            })
+            */
             window.game.stack.swap(new Update(events, nextWorld));
         }
     }
@@ -175,6 +183,7 @@ export class PlayCard extends State {
 export namespace PlayCard {
     export class UI {
         [Stack.Datum] = true;
+        updating: boolean = false;
         constructor (public card: wasm.Card) {}
     }
 }
@@ -212,7 +221,6 @@ export class TargetPart extends State {
         }
         targets.sort((a, b) => a[0].id - b[0].id);
 
-        // TODO: preview
         this.update((draft) => {
             draft.set(TargetPart.UI, this._hex, targets, callbacks);
         });
