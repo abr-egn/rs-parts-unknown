@@ -27,22 +27,32 @@ export function CardList(props: {
         props.setPartHighlight(undefined);
     }
   
-    const list = props.hand.map((card, ix) =>
-        <li key={cardKey(card)}
-            onMouseEnter={(ev) => onCardEnter(card, ev)}
-            onMouseLeave={(ev) => onCardLeave(card, ev)}
-            className={card.partId == props.partHighlight ? "partHighlight" : ""}
-            >
-            <button
-                onClick={() => startPlay(card.creatureId, ix)}
-                disabled={!props.active || !canPlay(card)}>
-                Play
-            </button>
-            [{card.apCost}] {card.name}
-        </li>
-    );
+    const list = props.hand.map((card, ix) => {
+        const playable = props.active && canPlay(card);
+        let onClick = undefined;
+        const classes = [];
+        if (playable) {
+            classes.push("validTarget");
+            onClick = () => startPlay(card.creatureId, ix);
+        } else {
+            classes.push("invalidTarget");
+        }
+        if (card.partId == props.partHighlight) {
+            classes.push("partHighlight");
+        }
+        return (
+            <li key={cardKey(card)}
+                onMouseEnter={(ev) => onCardEnter(card, ev)}
+                onMouseLeave={(ev) => onCardLeave(card, ev)}
+                onMouseDown={onClick}
+                className={classes.join(" ")}
+                >
+                [{card.apCost}] {card.name}
+            </li>
+        );
+    });
     return (<div>
-        Cards:
+        Hand:
         <ul>{list}</ul>
     </div>);
   }
