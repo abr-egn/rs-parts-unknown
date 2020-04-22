@@ -3,7 +3,6 @@ import * as React from "react";
 import * as wasm from "../wasm";
 import {Id} from "../wasm";
 
-import {StatPreview} from "../ts/highlight";
 import {Stack} from "../ts/stack";
 import * as states from "../ts/states";
 
@@ -13,7 +12,6 @@ import {CreatureStats} from "./creature";
 
 export function PlayerControls(props: {
     player: wasm.Creature,
-    stats?: StatPreview,
 }): JSX.Element {
     const data = React.useContext(StackData);
     const active = data.get(Stack.Active);
@@ -35,7 +33,6 @@ export function PlayerControls(props: {
         <CreatureStats
             creature={props.player}
             focused={false}
-            stats={props.stats}
             partHighlight={partHighlight}
             setPartHighlight={setPartHighlight}
         />

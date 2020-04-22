@@ -11,7 +11,8 @@ import {CreatureStats, CreatureIntent} from "./creature";
 import {PlayerControls} from "./player";
 import {TargetPart} from "./target";
 
-export const StackData = React.createContext(new Stack.Data() as Stack.DataView);
+export const StackData = React.createContext((undefined as unknown) as Stack.DataView);
+export const WorldContext = React.createContext((undefined as unknown) as wasm.World);
 
 export function Index(props: {
     world: wasm.World,
@@ -20,9 +21,9 @@ export function Index(props: {
 }): JSX.Element {
     const world = props.world;
     const base = props.data.get(states.Base.UI);
-    const stats = props.data.get(Highlight)?.stats;
+
     let creatures = [];
-   for (let id of world.getCreatureIds()) {
+    for (let id of world.getCreatureIds()) {
         if (id == world.playerId) { continue; }
         const creature = world.getCreature(id);
         if (creature) {
@@ -30,10 +31,9 @@ export function Index(props: {
                 key={id}
                 creature={creature}
                 focused={base?.hovered.has(id) || false}
-                stats={stats?.get(id)}
             />);
         }
-   }
+    }
     const gameOverState = props.data.get(states.GameOver.UI)?.state;
     let gameOver = undefined;
     if (gameOverState) {
@@ -45,12 +45,13 @@ export function Index(props: {
             <CreatureIntent key={id} npc={npc} coords={point}></CreatureIntent>);
     }
     let targetPart = props.data.get(states.TargetPart.UI);
-    return (<StackData.Provider value={props.data}>
+    return (
+    <StackData.Provider value={props.data}>
+    <WorldContext.Provider value={props.world}>
         <div>
             <div className="topleft">
                 <PlayerControls
                     player={world.getCreature(world.playerId)!}
-                    stats={stats?.get(world.playerId)}
                 />
             </div>
             <div className="topright">
@@ -60,6 +61,7 @@ export function Index(props: {
             {targetPart ? <TargetPart target={targetPart}></TargetPart> : null}
             {gameOver}
         </div>
+    </WorldContext.Provider>
     </StackData.Provider>);
 }
 
