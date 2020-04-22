@@ -20,6 +20,7 @@ use crate::{
 
 pub type CardId = (Id<Part>, Id<Card>);
 
+// TODO: stats for damage scaling
 #[derive(Debug, Clone)]
 pub struct Creature {
     pub name: String,
