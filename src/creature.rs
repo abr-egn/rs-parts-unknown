@@ -93,6 +93,16 @@ impl Creature {
             .filter(|(_, p)| p.tags.contains(&PartTag::Open))
     }
 
+    pub fn scale_damage_from(&self, damage: i32, _part: Option<Id<Part>>) -> i32 {
+        // TODO
+        damage
+    }
+
+    pub fn scale_damage_to(&self, damage: i32, _part: Option<Id<Part>>) -> i32 {
+        // TODO
+        damage
+    }
+
     // Mutators
 
     pub fn resolve(&mut self, action: &CreatureAction) -> Result<Vec<CreatureEvent>> {
@@ -119,9 +129,17 @@ impl Creature {
                 return Ok(vec![ChangeMP { delta: -mp }]);
             }
             ToPart { id, ref action } => {
+                let scaled_action = match action {
+                    PartAction::Hit { damage } => {
+                        PartAction::Hit { damage: self.scale_damage_to(*damage, Some(id)) }
+                    }
+                    _ => action.clone(),
+                };
+
                 let part = self.parts.get_mut(&id).ok_or(Error::NoSuchPart)?;
                 let was_open = part.tags.contains(&PartTag::Open);
-                let pevs = part.resolve(action)?;
+
+                let pevs = part.resolve(&scaled_action)?;
 
                 let mut self_died = false;
                 let mut out = vec![];

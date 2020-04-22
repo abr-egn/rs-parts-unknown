@@ -18,7 +18,7 @@ pub struct Card {
     pub ap_cost: i32,
     // Contract: the world will not change between start_play and Behavior methods.
     #[serde(skip)]
-    pub start_play: fn(&World, &Id<Creature>) -> Box<dyn Behavior>,
+    pub start_play: fn(&World, &Id<Creature>, &Id<Part>) -> Box<dyn Behavior>,
 }
 
 // TODO: use this

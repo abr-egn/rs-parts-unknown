@@ -100,7 +100,7 @@ impl World {
         let (part_id, card_id) = creature.hand[hand_ix];
         let part = creature.parts.get(part_id).ok_or(Error::NoSuchPart)?;
         let card = part.cards.get(card_id).ok_or(Error::NoSuchCard)?;
-        let behavior = (card.start_play)(self, &creature_id);
+        let behavior = (card.start_play)(self, &creature_id, &part_id);
         Ok(card::InPlay {
             creature_id,
             part_id,

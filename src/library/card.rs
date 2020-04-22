@@ -4,7 +4,7 @@ use hex::Hex;
 
 use crate::{
     card::{self, Card, Target, TargetSpec},
-    creature::{Creature, CreatureAction, PartAction, PartTag},
+    creature::{Creature, CreatureAction, Part, PartAction, PartTag},
     event::{Action, Event},
     id_map::Id,
     world::World,
@@ -13,9 +13,7 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct Walk {
-    range: i32,
     creature_id: Id<Creature>,
-    start: Hex,
 }
 
 impl card::Behavior for Walk {
@@ -33,12 +31,11 @@ impl Walk {
         Card {
             name: "Walk".into(),
             ap_cost: 1,
-            start_play: |world, source| Walk::behavior(world, source, 2),
+            start_play: |_, source, _| Walk::behavior(source),
         }
     }
-    fn behavior(world: &World, source: &Id<Creature>, range: i32) -> Box<dyn card::Behavior> {
-        let start = world.map().creatures().get(source).unwrap().clone();
-        Box::new(Walk { range, creature_id: *source, start })
+    fn behavior(source: &Id<Creature>) -> Box<dyn card::Behavior> {
+        Box::new(Walk { creature_id: *source })
     }
 }
 
@@ -49,14 +46,16 @@ struct HitPart {
 }
 
 impl HitPart {
-    fn behavior(self, world: &World, source: &Id<Creature>) -> Box<dyn card::Behavior> {
+    fn behavior(self, world: &World, source: &Id<Creature>, part: &Id<Part>) -> Box<dyn card::Behavior> {
         let position = world.map().creatures().get(source).unwrap().clone();
         let range = if self.melee {
             position.neighbors().collect()
         } else {
             world.map().los_from(position)
         };
-        Box::new(HitPartBehavior { damage: self.damage, tags: self.tags, source: *source, range })
+        let creature = world.creatures().get(*source).unwrap();
+        let damage = creature.scale_damage_from(self.damage, Some(*part));
+        Box::new(HitPartBehavior { damage, tags: self.tags, source: *source, range })
     }
 }
 
@@ -111,7 +110,7 @@ pub fn throw_debris() -> Card {
     Card {
         name: "Throw Debris".into(),
         ap_cost: 1,
-        start_play: |world, source| HitPart { damage: 5, tags: vec![vec![]], melee: false }.behavior(world, source),
+        start_play: |world, source, part| HitPart { damage: 5, tags: vec![vec![]], melee: false }.behavior(world, source, part),
     }
 }
 
@@ -119,7 +118,7 @@ pub fn punch() -> Card {
     Card {
         name: "Punch".into(),
         ap_cost: 1,
-        start_play: |world, source| HitPart { damage: 10, tags: vec![vec![]], melee: true }.behavior(world, source),
+        start_play: |world, source, part| HitPart { damage: 10, tags: vec![vec![]], melee: true }.behavior(world, source, part),
     }
 }
 
