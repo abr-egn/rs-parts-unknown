@@ -18,7 +18,7 @@ impl npc::Behavior for Monopod {
     fn next(&mut self, _world: &World, _id: Id<Creature>) -> (Option<npc::Motion>, Option<npc::Action>) {
         let action = if self.kick_time {
             Some(npc::Action {
-                kind: npc::ActionKind::Attack,
+                kind: npc::ActionKind::Attack { damage: Monopod::KICK_DAMAGE },
                 run: Monopod::kick,
             })
         } else { None };
@@ -51,6 +51,8 @@ impl Monopod {
         })
     }
 
+    const KICK_DAMAGE: i32 = 1;
+
     fn kick(world: &mut World, id: Id<Creature>) -> Result<Vec<Event>> {
         let player_id = world.player_id();
         let player = world.creatures().get(player_id).unwrap();
@@ -60,7 +62,7 @@ impl Monopod {
         let (pid, _) = open.first().unwrap();
         let hit = CreatureAction::ToPart {
             id: *pid,
-            action: PartAction::Hit { damage: 1 },
+            action: PartAction::Hit { damage: Monopod::KICK_DAMAGE },
         };
         CheckRun {
             world, id,

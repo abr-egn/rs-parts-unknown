@@ -7,6 +7,7 @@ use crate::{
     error::{Result},
     event::{Event},
     id_map::Id,
+    serde_empty,
     world::World,
 };
 
@@ -54,7 +55,11 @@ impl std::fmt::Debug for Action {
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, TsData)]
 pub enum ActionKind {
-    Attack,
+    // TODO: Melee vs. Ranged attack
+    // TODO: preview damage modifiers somehow
+    Attack { damage: i32 },
+    #[serde(with = "serde_empty")]
+    Unknown,
 }
 
 pub trait Behavior: BehaviorClone + std::fmt::Debug + Send {

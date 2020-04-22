@@ -92,7 +92,12 @@ export function CreatureIntent(props: {
         left: props.coords.x,
         bottom: height - props.coords.y,
     };
+    let actionStr = "???";
+    let action;
+    if (action = props.npc.action?.Attack) {
+        actionStr = `Attack: ${action.damage}`;
+    }
     return (<div className="intent" style={style}>
-        {props.npc.motion}<br/>{props.npc.action}
+        {props.npc.motion}<br/>{actionStr}
     </div>);
 }
