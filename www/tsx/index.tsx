@@ -32,7 +32,6 @@ export function Index(props: {
             <CreatureIntent key={id} npc={npc} coords={point}></CreatureIntent>);
     }
 
-    let targetPart = props.data.get(states.TargetPart.UI);
     return (
     <StackData.Provider value={props.data}>
     <WorldContext.Provider value={props.world}>
