@@ -11,6 +11,8 @@ import {CreatureStats, CreatureIntent} from "./creature";
 import {PlayerControls} from "./player";
 import {TargetPart} from "./target";
 
+export const StackData = React.createContext(new Stack.Data() as Stack.DataView);
+
 export function Index(props: {
     world: wasm.World,
     data: Stack.DataView,
@@ -43,14 +45,11 @@ export function Index(props: {
             <CreatureIntent key={id} npc={npc} coords={point}></CreatureIntent>);
     }
     let targetPart = props.data.get(states.TargetPart.UI);
-    return (
+    return (<StackData.Provider value={props.data}>
         <div>
             <div className="topleft">
                 <PlayerControls
                     player={world.getCreature(world.playerId)!}
-                    active={props.data.get(Stack.Active)}
-                    play={props.data.get(states.PlayCard.UI)}
-                    toUpdate={props.data.get(states.PlayCard.ToUpdate)}
                     stats={stats?.get(world.playerId)}
                 />
             </div>
@@ -61,7 +60,7 @@ export function Index(props: {
             {targetPart ? <TargetPart target={targetPart}></TargetPart> : null}
             {gameOver}
         </div>
-    );
+    </StackData.Provider>);
 }
 
 function GameOver(props: {state: wasm.GameState}): JSX.Element {
