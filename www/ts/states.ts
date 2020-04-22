@@ -148,13 +148,10 @@ export class PlayCard extends State {
             const [nextWorld, events] = window.game.world.finishPlay(this._inPlay!, target);
             this._inPlay = undefined;
             
-            // TODO: this causes a brief window of time when the stack update
-            // hasn't happened yet, so the state is visible to the UI.
-            /*
-            this.update((draft) => {
-                draft.build()
-            })
-            */
+            // The stack swap is deferred, so there's a brief window of time when
+            // the current state is visible to the UI.  Set a tag so the UI
+            // doesn't flicker for a frame.
+            this.update((draft) => { draft.build(PlayCard.ToUpdate); });
             window.game.stack.swap(new Update(events, nextWorld));
         }
     }
@@ -185,6 +182,9 @@ export namespace PlayCard {
         [Stack.Datum] = true;
         updating: boolean = false;
         constructor (public card: wasm.Card) {}
+    }
+    export class ToUpdate {
+        [Stack.Datum] = true;
     }
 }
 

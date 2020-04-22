@@ -14,6 +14,7 @@ export function PlayerControls(props: {
     player: wasm.Creature,
     active?: Stack.Active,
     play?: states.PlayCard.UI,
+    toUpdate?: states.PlayCard.ToUpdate,
     stats?: StatPreview,
 }): JSX.Element {
     const cancelPlay = () => window.game.stack.pop();
@@ -25,9 +26,9 @@ export function PlayerControls(props: {
     const hasAp = props.player.curAp > 0;
     const hasMp = props.player.curMp > 0;
 
-    const canPlay = hasAp && props.active?.is(states.Base) || false;
-    const inPlay = props.active?.is(states.PlayCard) || false;
-    const canCancel = (inPlay || props.active?.is(states.MovePlayer)) || false;
+    const canPlay = Boolean(hasAp && props.active?.is(states.Base));
+    const inPlay = Boolean(props.active?.is(states.PlayCard) && !props.toUpdate);
+    const canCancel = Boolean(inPlay || props.active?.is(states.MovePlayer));
 
     return (<div>
         <CreatureStats

@@ -50,6 +50,7 @@ export function Index(props: {
                     player={world.getCreature(world.playerId)!}
                     active={props.data.get(Stack.Active)}
                     play={props.data.get(states.PlayCard.UI)}
+                    toUpdate={props.data.get(states.PlayCard.ToUpdate)}
                     stats={stats?.get(world.playerId)}
                 />
             </div>
