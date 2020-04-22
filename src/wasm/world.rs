@@ -17,6 +17,7 @@ use crate::{
         from_js_value, to_js_value,
     },
     world,
+    some_or,
 };
 
 #[wasm_bindgen]
@@ -129,22 +130,12 @@ impl World {
     }
 
     #[wasm_bindgen(skip_typescript)]
-    pub fn affectsAction(&self, action: JsValue) -> Array /* string[] */ {
+    pub fn triggeredBy(&self, action: JsValue) -> Array /* string[] */ {
         let action: Action = from_js_value(action);
-        let (mods, triggers) = self.wrapped.affects_action(&action);
+        let triggers = self.wrapped.triggered_by(&action);
         let out = Array::new();
-        for mod_id in mods {
-            let m = match self.wrapped.mods().get(mod_id) {
-                Some(m) => m,
-                None => continue,
-            };
-            out.push(&JsValue::from(m.name()));
-        }
         for trigger_id in triggers {
-            let t = match self.wrapped.triggers().get(trigger_id) {
-                Some(t) => t,
-                None => continue,
-            };
+            let t = some_or!(self.wrapped.triggers().get(trigger_id), continue);
             out.push(&JsValue::from(t.name()));
         }
         out

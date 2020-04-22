@@ -39,33 +39,6 @@ impl Event {
     }
 }
 
-pub trait Mod: ModClone + std::fmt::Debug + Send {
-    fn name(&self) -> &'static str;
-    fn applies(&self, action: &Action) -> bool;
-    fn apply(&mut self, action: &mut Action);
-}
-
-pub type ModId = Id<Box<dyn Mod>>;
-
-pub trait ModClone {
-    fn clone_box(&self) -> Box<dyn Mod>;
-}
-
-impl<T> ModClone for T
-where
-    T: 'static + Mod + Clone,
-{
-    fn clone_box(&self) -> Box<dyn Mod> {
-        Box::new(self.clone())
-    }
-}
-
-impl Clone for Box<dyn Mod> {
-    fn clone(&self) -> Self {
-        self.clone_box()
-    }
-}
-
 pub trait Trigger: TriggerClone + std::fmt::Debug + Send {
     fn name(&self) -> &'static str;
     fn applies(&self, action: &Action) -> bool;

@@ -13,7 +13,7 @@ use crate::{
     card::{self, Target},
     creature::{Creature, CreatureAction, Part, PartTag},
     error::{Error, Result},
-    event::{Action, Event, Mod, ModId, Trigger, TriggerId},
+    event::{Action, Event, Trigger, TriggerId},
     id_map::{Id, IdMap},
     library,
     map::{Map},
@@ -25,7 +25,6 @@ pub struct World {
     map: Map,
     player_id: Id<Creature>,
     creatures: IdMap<Creature>,
-    mods: IdMap<Box<dyn Mod>>,
     triggers: IdMap<Box<dyn Trigger>>,
     /* TODO: persistent stat changes
     Example: effect that changes the cost of cards.
@@ -51,7 +50,6 @@ impl World {
             map: map,
             player_id: pc_id,
             creatures: creatures,
-            mods: IdMap::new(),
             triggers: IdMap::new(),
             tracer: None,
         };
@@ -70,19 +68,13 @@ impl World {
     pub fn map(&self) -> &Map { &self.map }
     pub fn player_id(&self) -> Id<Creature> { self.player_id }
     pub fn creatures(&self) -> &IdMap<Creature> { &self.creatures }
-    pub fn mods(&self) -> &IdMap<Box<dyn Mod>> { &self.mods }
     pub fn triggers(&self) -> &IdMap<Box<dyn Trigger>> { &self.triggers }
 
-    pub fn affects_action(&self, action: &Action) -> (Vec<ModId>, Vec<TriggerId>) {
-        let mods = self.mods.iter()
-            .filter(|(_, m)| m.applies(action))
-            .map(|(id, _)| *id)
-            .collect();
-        let triggers = self.triggers.iter()
+    pub fn triggered_by(&self, action: &Action) -> Vec<TriggerId> {
+        self.triggers.iter()
             .filter(|(_, t)| t.applies(action))
             .map(|(id, _)| *id)
-            .collect();
-        (mods, triggers)
+            .collect()
     }
 
     pub fn state(&self) -> GameState {
@@ -260,8 +252,7 @@ impl World {
         out: &mut Vec<Event>,
     ) {
         self.tracer.as_ref().map(|t| t.start_action(action));
-        let action = self.apply_mods(action);
-        let events = self.resolve(&action).unwrap_or_else(|err|
+        let events = self.resolve(action).unwrap_or_else(|err|
             vec![Event::Failed {
                 action: action.clone(),
                 reason: format!("{:?}", err),
@@ -293,17 +284,6 @@ impl World {
     fn trigger_order(&self) -> Vec<TriggerId> {
         // TODO: non-arbitrary order
         self.triggers.keys().cloned().collect()
-    }
-
-    fn apply_mods(&mut self, action: &Action) -> Action {
-        let mut modded = action.clone();
-        // TODO: non-arbitrary order
-        for (_, m) in self.mods.iter_mut() {
-            if !m.applies(&modded) { continue; }
-            m.apply(&mut modded);
-            self.tracer.as_ref().map(|t| t.mod_action(&m.name(), &modded));
-        }
-        modded
     }
 
     fn resolve(&mut self, action: &Action) -> Result<Vec<Event>> {
