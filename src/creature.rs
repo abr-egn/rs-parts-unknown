@@ -67,18 +67,21 @@ impl Creature {
 
     pub fn max_ap(&self) -> i32 {
         self.parts.values()
+            .filter(|part| !part.tags.contains(&PartTag::Broken))
             .map(|part| part.thought)
             .sum()
     }
 
     pub fn hand_size(&self) -> i32 {
         self.parts.values()
+            .filter(|part| !part.tags.contains(&PartTag::Broken))
             .map(|part| part.memory)
             .sum()
     }
 
     pub fn max_mp(&self) -> i32 {
         self.parts.values()
+            .filter(|part| !part.tags.contains(&PartTag::Broken))
             .map(|part| part.mp)
             .sum()
     }
@@ -116,18 +119,48 @@ impl Creature {
             }
             ToPart { id, ref action } => {
                 let part = self.parts.get_mut(&id).ok_or(Error::NoSuchPart)?;
+                let was_open = part.tags.contains(&PartTag::Open);
+                let pevs = part.resolve(action)?;
+
                 let mut self_died = false;
-                let out = part.resolve(action).map(|pevs| {
-                    let died = pevs.iter().any(|pev| *pev == PartEvent::Died);
-                    let mut out: Vec<_> = pevs.into_iter().map(|pev| CreatureEvent::OnPart { id, event: pev }).collect();
-                    if died && part.tags.contains(&PartTag::Vital) && !self_died {
+                let mut out = vec![];
+                let part_died = pevs.iter().any(|pev| *pev == PartEvent::Died);
+                out.extend(pevs.into_iter().map(|pev| CreatureEvent::OnPart { id, event: pev }));
+                if part_died {
+                    if part.tags.contains(&PartTag::Vital) && !self_died {
                         self_died = true;
                         out.push(CreatureEvent::Died);
                     }
-                    out
-                });
-                if self_died { self.dead = true; }
-                out
+                    if self.cur_ap > self.max_ap() {
+                        out.push(CreatureEvent::ChangeAP {
+                            delta: self.max_ap() - self.cur_ap,
+                        });
+                        self.cur_ap = self.max_ap();
+                    }
+                    if self.cur_mp > self.max_mp() {
+                        out.push(CreatureEvent::ChangeMP {
+                            delta: self.max_mp() - self.cur_mp,
+                        });
+                        self.cur_mp = self.max_mp();
+                    }
+                    if was_open {
+                        let ids: Vec<_> = self.parts.iter()
+                            .filter_map(|(id, part)| {
+                                if part.tags.contains(&PartTag::Broken) { None }
+                                else { Some(*id) }
+                            })
+                            .collect();
+                        if !ids.is_empty() {
+                            let ix = thread_rng().gen_range(0, ids.len());
+                            self.parts.get_mut(&ids[ix]).unwrap().tags.insert(PartTag::Open);
+                        }
+                    }
+                }
+                if self_died {
+                    // TODO: event
+                    self.dead = true;
+                }
+                Ok(out)
             }
             NewHand => {
                 let mut out = vec![];
@@ -241,6 +274,8 @@ impl Part {
                 self.cur_hp -= damage;
                 let mut out = vec![PartEvent::ChangeHP { delta: -damage }];
                 if self.cur_hp <= 0 {
+                    self.tags.remove(&PartTag::Open);
+                    self.tags.insert(PartTag::Broken);
                     out.push(PartEvent::Died);
                 }
                 return Ok(out);

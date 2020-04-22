@@ -22,7 +22,10 @@ export function PlayerControls(props: {
     const defPartHi = (): Id<wasm.Part> | undefined => { return undefined; }
     const [partHighlight, setPartHighlight] = React.useState(defPartHi());
 
-    const canPlay = props.active?.is(states.Base) || false;
+    const hasAp = props.player.curAp > 0;
+    const hasMp = props.player.curMp > 0;
+
+    const canPlay = hasAp && props.active?.is(states.Base) || false;
     const inPlay = props.active?.is(states.PlayCard) || false;
     const canCancel = (inPlay || props.active?.is(states.MovePlayer)) || false;
 
@@ -41,13 +44,13 @@ export function PlayerControls(props: {
             setPartHighlight={setPartHighlight}
         />
         {inPlay && <div>Playing: {props.play?.card.name}</div>}
-        <EndTurnButton active={canPlay}/>
-        {canPlay && <button onClick={movePlayer}>Move</button>}
+        {canPlay && <EndTurnButton/>}
+        {canPlay && hasMp && <button onClick={movePlayer}>Move</button>}
         {canCancel &&  <div><button onClick={cancelPlay}>Cancel</button></div>}
     </div>);
 }
 
-function EndTurnButton(props: {active: boolean}): JSX.Element {
+function EndTurnButton(props: {}): JSX.Element {
     const onClick = () => window.game.stack.push(new states.EndTurn());
-    return <button onClick={onClick} disabled={!props.active}>End Turn</button>;
+    return <button onClick={onClick}>End Turn</button>;
 }
