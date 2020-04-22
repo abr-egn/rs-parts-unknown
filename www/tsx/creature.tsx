@@ -4,17 +4,19 @@ import * as wasm from "../wasm";
 import {Id} from "../wasm";
 
 import {Highlight} from "../ts/highlight";
+import * as states from "../ts/states";
 
 import {StackData} from "./index";
 
 export function CreatureStats(props: {
     creature: wasm.Creature,
-    focused: boolean,
     partHighlight?: Id<wasm.Part>,
     setPartHighlight?: (part: Id<wasm.Part> | undefined) => void,
 }): JSX.Element {
     const data = React.useContext(StackData);
     const stats = data.get(Highlight)?.stats.get(props.creature.id);
+    const base = data.get(states.Base.UI);
+    const focused = Boolean(base?.hovered.has(props.creature.id));
 
     const onPartEnter = (part: Id<wasm.Part>, event: React.MouseEvent) => {
         if (props.setPartHighlight) {
@@ -73,7 +75,7 @@ export function CreatureStats(props: {
         mpStyle.color = "green";
     }
 
-    return (<div className={props.focused?"focusedBox":"uibox"}>
+    return (<div className={focused?"focusedBox":"uibox"}>
         <div>{props.creature.name}</div>
         <div style={apStyle}>AP: {props.creature.curAp + apDelta}</div>
         <div style={mpStyle}>MP: {props.creature.curMp + mpDelta}</div>

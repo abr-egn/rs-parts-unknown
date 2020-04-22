@@ -4,20 +4,24 @@ import * as wasm from "../wasm";
 
 import * as states from "../ts/states";
 
-export function TargetPart(props: {
-    target: states.TargetPart.UI,
-}): JSX.Element {
-    const point = window.game.board.hexCoords(props.target.hex);
+import {StackData} from "./index";
+
+export function TargetPart(props: {}): JSX.Element | null {
+    const data = React.useContext(StackData);
+    const target = data.get(states.TargetPart.UI);
+    if (!target) { return null; }
+
+    const point = window.game.board.hexCoords(target.hex);
     const style = {
         left: point.x,
         top: point.y,
     };
-    let parts = props.target.targets.map(([part, valid]) =>
+    let parts = target.targets.map(([part, valid]) =>
         <PartMenuItem
             key={part.id}
             part={part}
             valid={valid}
-            callbacks={props.target.callbacks}
+            callbacks={target.callbacks}
         ></PartMenuItem>);
     return <div className="partTargetMenu" style={style}>{parts}</div>;
 }

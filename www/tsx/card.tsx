@@ -5,17 +5,21 @@ import {Id} from "../wasm";
 
 import * as states from "../ts/states";
 
+import {WorldContext} from "./index";
+
 export function CardList(props: {
     active: boolean,
     hand: wasm.Card[],
     partHighlight?: Id<wasm.Part>,
     setPartHighlight: (part: Id<wasm.Part> | undefined) => void,
 }): JSX.Element {
+    const world = React.useContext(WorldContext);
+
     const startPlay = (creatureId: Id<wasm.Creature>, ix: number) => {
         window.game.stack.push(new states.PlayCard(creatureId, ix));
     };
     const canPlay = (card: wasm.Card): boolean => {
-        return window.game.world.checkSpendAP(card.creatureId, card.apCost);
+        return world.checkSpendAP(card.creatureId, card.apCost);
     };
     const cardKey = (card: wasm.Card): string => {
         return `(${card.creatureId},${card.partId},${card.id})`;

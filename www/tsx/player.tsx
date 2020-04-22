@@ -6,13 +6,14 @@ import {Id} from "../wasm";
 import {Stack} from "../ts/stack";
 import * as states from "../ts/states";
 
-import {StackData} from "./index";
 import {CardList} from "./card";
 import {CreatureStats} from "./creature";
+import {StackData, WorldContext} from "./index";
 
-export function PlayerControls(props: {
-    player: wasm.Creature,
-}): JSX.Element {
+export function PlayerControls(props: {}): JSX.Element {
+    const world = React.useContext(WorldContext);
+    const player = world.getCreature(world.playerId)!;
+
     const data = React.useContext(StackData);
     const active = data.get(Stack.Active);
     const play = data.get(states.PlayCard.UI);
@@ -22,8 +23,8 @@ export function PlayerControls(props: {
     const movePlayer = () => window.game.stack.push(new states.MovePlayer());
     const [partHighlight, setPartHighlight] = React.useState(undefined as (undefined | (() => Id<wasm.Part>)))
 
-    const hasAp = props.player.curAp > 0;
-    const hasMp = props.player.curMp > 0;
+    const hasAp = player.curAp > 0;
+    const hasMp = player.curMp > 0;
 
     const canPlay = Boolean(hasAp && active?.is(states.Base));
     const inPlay = Boolean(active?.is(states.PlayCard) && !toUpdate);
@@ -31,14 +32,13 @@ export function PlayerControls(props: {
 
     return (<div>
         <CreatureStats
-            creature={props.player}
-            focused={false}
+            creature={player}
             partHighlight={partHighlight}
             setPartHighlight={setPartHighlight}
         />
         <CardList
             active={canPlay}
-            hand={props.player.hand}
+            hand={player.hand}
             partHighlight={partHighlight}
             setPartHighlight={setPartHighlight}
         />
