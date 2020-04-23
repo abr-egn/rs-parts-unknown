@@ -95,12 +95,12 @@ impl Creature {
 
     pub fn scale_damage_from(&self, damage: i32, _part: Option<Id<Part>>) -> i32 {
         // TODO
-        damage
+        damage*2
     }
 
     pub fn scale_damage_to(&self, damage: i32, _part: Option<Id<Part>>) -> i32 {
         // TODO
-        damage
+        damage*3
     }
 
     // Mutators
@@ -133,7 +133,7 @@ impl Creature {
                     PartAction::Hit { damage } => {
                         PartAction::Hit { damage: self.scale_damage_to(*damage, Some(id)) }
                     }
-                    _ => action.clone(),
+                    //_ => action.clone(),
                 };
 
                 let part = self.parts.get_mut(&id).ok_or(Error::NoSuchPart)?;

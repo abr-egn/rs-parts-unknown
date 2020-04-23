@@ -26,7 +26,7 @@ export function PlayerControls(props: {}): JSX.Element {
     const hasAp = player.curAp > 0;
     const hasMp = player.curMp > 0;
 
-    const canPlay = Boolean(hasAp && active?.is(states.Base));
+    const baseActive = Boolean(active?.is(states.Base));
     const inPlay = Boolean(active?.is(states.PlayCard) && !toUpdate);
     const canCancel = Boolean(inPlay || active?.is(states.MovePlayer));
 
@@ -37,14 +37,14 @@ export function PlayerControls(props: {}): JSX.Element {
             setPartHighlight={setPartHighlight}
         />
         <CardList
-            active={canPlay}
+            active={hasAp && baseActive}
             hand={player.hand}
             partHighlight={partHighlight}
             setPartHighlight={setPartHighlight}
         />
         {inPlay && <div>Playing: {play?.card.name}</div>}
-        {canPlay && <EndTurnButton/>}
-        {canPlay && hasMp && <button onClick={movePlayer}>Move</button>}
+        {baseActive && <EndTurnButton/>}
+        {baseActive && hasMp && <button onClick={movePlayer}>Move</button>}
         {canCancel &&  <div><button onClick={cancelPlay}>Cancel</button></div>}
     </div>);
 }
