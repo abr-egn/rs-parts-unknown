@@ -112,6 +112,7 @@ export class PlayCard extends State {
     }
 
     onTileEntered(hex: Hex) {
+        // TODO: allow target selection via stat block UI.  Somehow.
         const world = window.game.world;
         
         const hiHexes: Hex[] = [];
@@ -140,7 +141,6 @@ export class PlayCard extends State {
 
     onTileClicked(hex: Hex) {
         if (!this._canTarget(hex)) { return; }
-        const world = window.game.world;
         const spec = this._inPlay!.getTargetSpec();
         if (spec.Part) {
             let creature = window.game.creatureAt(hex);
