@@ -12,7 +12,7 @@ pub fn player() -> Creature {
         memory: 5,
         ..Part::new(
             "Head",
-            &[PartTag::Head, PartTag::Flesh, PartTag::Vital],
+            &[PartTag::Head, PartTag::Flesh, PartTag::Vital, PartTag::Open],
             20)
     };
     let torso = Part::new(
@@ -32,7 +32,7 @@ pub fn player() -> Creature {
     };
     let arm_r = arm_l.clone();
     let leg_l = Part {
-        cards: IdMap::from_iter(vec![library::card::Walk::card()]),
+        cards: IdMap::from_iter(vec![library::card::stagger()]),
         mp: 1,
         ..Part::new(
             "Leg",

@@ -43,7 +43,7 @@ impl std::fmt::Debug for Card {
 
 // TODO: power scaling
 pub trait Behavior: BehaviorClone {
-    fn range(&self, _world: &World) -> Vec<Hex> { vec![] }
+    fn range(&self, _world: &World) -> Vec<Hex>;
     // TODO: allow for multiple targets
     fn target_spec(&self) -> TargetSpec;
     fn target_valid(&self, world: &World, target: &Target) -> bool {
@@ -84,7 +84,7 @@ impl TargetSpec {
                 }
                 false
             }
-            (TargetSpec::Creature, Target::Creature { .. }) => true,
+            (TargetSpec::Creature, Target::Creature { id }) => *id != world.player_id(),
             _ => false,
         }
     }

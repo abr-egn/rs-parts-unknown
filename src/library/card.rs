@@ -1,6 +1,7 @@
 use std::collections::HashSet;
 
 use hex::Hex;
+use rand::prelude::*;
 
 use crate::{
     card::{self, Card, Target, TargetSpec},
@@ -10,34 +11,6 @@ use crate::{
     world::World,
     some_or,
 };
-
-#[derive(Debug, Clone)]
-pub struct Walk {
-    creature_id: Id<Creature>,
-}
-
-impl card::Behavior for Walk {
-    fn target_spec(&self) -> TargetSpec { TargetSpec::None }
-    fn apply(&self, world: &mut World, _target: &Target) -> Vec<Event> {
-        world.execute(&Action::ToCreature {
-            id: self.creature_id,
-            action: CreatureAction::GainMP { mp: 1 },
-        })
-    }
-}
-
-impl Walk {
-    pub fn card() -> Card {
-        Card {
-            name: "Walk".into(),
-            ap_cost: 1,
-            start_play: |_, source, _| Walk::behavior(source),
-        }
-    }
-    fn behavior(source: &Id<Creature>) -> Box<dyn card::Behavior> {
-        Box::new(Walk { creature_id: *source })
-    }
-}
 
 struct HitPart {
     damage: i32,
@@ -137,6 +110,7 @@ struct Guard {
 }
 
 impl card::Behavior for Guard {
+    fn range(&self, _world: &World) -> Vec<Hex> { vec![] }
     fn target_spec(&self) -> TargetSpec {
         TargetSpec::Part { on_player: true, tags: vec![vec![PartTag::Open]] }
     }
@@ -167,11 +141,69 @@ impl card::Behavior for Guard {
     }
 }
 
+pub fn stagger() -> Card {
+    Card {
+        name: "Stagger".into(),
+        ap_cost: 1,
+        start_play: |_, _, _| Box::new(Stagger)
+    }
+}
+
+#[derive(Debug, Clone)]
+struct Stagger;
+
+impl card::Behavior for Stagger {
+    fn range(&self, world: &World) -> Vec<Hex> {
+        let pos = world.map().creatures().get(&world.player_id()).unwrap();
+        pos.neighbors().collect()
+    }
+    fn target_spec(&self) -> TargetSpec {
+        TargetSpec::Creature
+    }
+    fn target_valid(&self, world: &World, target: &Target) -> bool {
+        if !self.target_spec().matches(world, target) { return false; }
+        let (_, part_ids) = Stagger::target_parts(world, target);
+        !part_ids.is_empty()
+    }
+    fn simulate(&self, _world: &World, _target: &Target) -> Vec<Event> {
+        // TODO: some kind of cosmetic event
+        vec![]
+    }
+    fn apply(&self, world: &mut World, target: &Target) -> Vec<Event> {
+        let (target_id, part_ids) = Stagger::target_parts(world, target);
+        if part_ids.is_empty() { return vec![]; }
+
+        let ix = thread_rng().gen_range(0, part_ids.len());
+        world.execute(&Action::ToCreature{
+            id: target_id,
+            action: CreatureAction::ToPart {
+                id: part_ids[ix],
+                action: PartAction::SetTags { tags: vec![PartTag::Open] }
+            }
+        })
+    }
+}
+
+impl Stagger {
+    fn target_parts(world: &World, target: &Target) -> (Id<Creature>, Vec<Id<Part>>) {
+        let target_id = match target {
+            Target::Creature { id } => *id,
+            _ => panic!("invalid target"),
+        };
+        let creature = world.creatures().get(target_id).unwrap();
+        let part_ids: Vec<_> = creature.parts.iter().filter_map(|(id, part)| {
+            if part.tags.contains(&PartTag::Broken) { None }
+            else { Some(*id) }
+        }).collect();
+        (target_id, part_ids)
+    }
+}
+
 /* 10 cards:
 arms:
     [+] 2 melee heavy attack
     [+] 2 ranged light attack
-    [ ] 2 defense
+    [+] 2 defense
 legs:
     [ ] 2 stagger
 torso:
