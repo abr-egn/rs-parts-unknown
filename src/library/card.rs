@@ -103,6 +103,7 @@ pub fn guard() -> Card {
     }
 }
 
+// TODO: this should only last 1 turn
 #[derive(Debug, Clone)]
 struct Guard {
     source_creature: Id<Creature>,
