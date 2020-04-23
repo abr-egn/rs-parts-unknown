@@ -223,7 +223,7 @@ impl World {
             }
 
             if let Some(a) = action {
-                match (a.run)(self, id) {
+                match a.check_run(self, id) {
                     Ok(es) => events.extend(es),
                     Err(e) => warn!("NPC action failed: {}", e),
                 }

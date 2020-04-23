@@ -7,7 +7,7 @@ use wasm_bindgen::prelude::*;
 use crate::{
     card, creature::{self, PartTag},
     id_map::Id,
-    npc::{self, ActionKind},
+    npc::{self, IntentKind},
     wasm::{
         to_js_value,
         card::Card,
@@ -91,7 +91,7 @@ impl Part {
 #[derive(Debug, Serialize, TsData)]
 pub struct NPC {
     motion: Option<MotionKind>,
-    action: Option<ActionKind>,
+    intent: Option<IntentKind>,
 }
 
 impl NPC {
@@ -101,7 +101,7 @@ impl NPC {
         });
         NPC {
             motion,
-            action: source.next_action.as_ref().map(|a| a.kind.clone()),
+            intent: source.next_action.as_ref().map(|a| a.kind.clone()),
         }
     }
 }

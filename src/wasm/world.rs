@@ -216,7 +216,7 @@ interface World {
     getCreatureRange(id: Id<Creature>): Hex[];
     checkSpendAP(id: Id<Creature>, ap: number): boolean;
     startPlay(creatureId: Id<Creature>, handIx: number): InPlay | undefined;
-    affectsAction(action: Action): string[];
+    triggeredBy(action: Action): string[];
     path(from: Hex, to: Hex): Hex[];
     state(): GameState;
     simulateMove(to: Hex): Event[];
