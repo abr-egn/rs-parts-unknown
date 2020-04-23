@@ -1,7 +1,7 @@
 import * as wasm from "../wasm";
 import {Id, Hex} from "../wasm";
 
-import {toTarget} from "./extra";
+import {partToTarget, creatureToTarget} from "./extra";
 import {Highlight} from "./highlight";
 import {Stack, State} from "./stack";
 
@@ -117,11 +117,24 @@ export class PlayCard extends State {
         const hiHexes: Hex[] = [];
         if (this._canTarget(hex)) {
             hiHexes.push(hex);
-            // TODO: preview for simple targets
+            const spec = this._inPlay!.getTargetSpec();
+            if (spec.Creature) {
+                const target = creatureToTarget(window.game.creatureAt(hex)!);
+                const events = this._inPlay!.simulate(world, target);
+                this.update((draft) => {
+                    draft.build(Highlight).setEvents(events);
+                });
+            }
         }
         this.update((draft) => {
             const hi = draft.build(Highlight);
             hi.hexes = hiHexes;
+        });
+    }
+
+    onTileExited(hex: Hex) {
+        this.update((draft) => {
+            draft.build(Highlight).setEvents([]);
         });
     }
 
@@ -133,25 +146,21 @@ export class PlayCard extends State {
             let creature = window.game.creatureAt(hex);
             if (!creature) { return; }
             window.game.stack.push(new TargetPart(this._inPlay!, hex, creature));
+        } else if (spec.Creature) {
+            let creature = window.game.creatureAt(hex);
+            if (!creature) { return; }
+            const target = creatureToTarget(creature);
+            this._playOnTarget(target);
+        } else {
+            throw "Unknown target spec!";
         }
-        // TODO: spec.Creature
     }
 
     onActivated(data?: any) {
         if (!data) { return; }
         if (data instanceof TargetPart.Select) {
-           const target = toTarget(data.part);
-            if (!this._inPlay!.targetValid(window.game.world, target)) {
-                return;
-            }
-            const [nextWorld, events] = window.game.world.finishPlay(this._inPlay!, target);
-            this._inPlay = undefined;
-            
-            // The stack swap is deferred, so there's a brief window of time when
-            // the current state is visible to the UI.  Set a tag so the UI
-            // doesn't flicker for a frame.
-            this.update((draft) => { draft.build(PlayCard.ToUpdate); });
-            window.game.stack.swap(new Update(events, nextWorld));
+            const target = partToTarget(data.part);
+            this._playOnTarget(target);
         }
     }
 
@@ -164,16 +173,34 @@ export class PlayCard extends State {
             if (!creature) { return false; }
             let found = false;
             for (let part of creature.parts.values()) {
-                const target = toTarget(part);
+                const target = partToTarget(part);
                 if (this._inPlay!.targetValid(world, target)) {
                     found = true;
                     break;
                 }
             }
             return found;
+        } else if (match = spec.Creature) {
+            let creature = window.game.creatureAt(hex);
+            if (!creature) { return false; }
+            if (creature.id == world.playerId) { return false; }
+            return true;
         }
-        // TODO: spec.Creature
         return false;
+    }
+
+    private _playOnTarget(target: wasm.Target) {
+        if (!this._inPlay!.targetValid(window.game.world, target)) {
+            return;
+        }
+        const [nextWorld, events] = window.game.world.finishPlay(this._inPlay!, target);
+        this._inPlay = undefined;
+        
+        // The stack swap is deferred, so there's a brief window of time when
+        // the current state is visible to the UI.  Set a tag so the UI
+        // doesn't flicker for a frame.
+        this.update((draft) => { draft.build(PlayCard.ToUpdate); });
+        window.game.stack.swap(new Update(events, nextWorld));
     }
 }
 export namespace PlayCard {
@@ -200,7 +227,7 @@ export class TargetPart extends State {
                 window.game.stack.pop(new TargetPart.Select(part));
             },
             onHoverEnter: (part: wasm.Part) => {
-                const target = toTarget(part);
+                const target = partToTarget(part);
                 const events = this._inPlay.simulate(window.game.world, target);
                 this.update((draft) => {
                     draft.build(Highlight).setEvents(events);
@@ -214,7 +241,7 @@ export class TargetPart extends State {
         };
         const targets: [wasm.Part, boolean][] = [];
         for (let part of this._creature.parts.values()) {
-            const target = toTarget(part);
+            const target = partToTarget(part);
             const canPlay = this._inPlay.targetValid(window.game.world, target);
             targets.push([part, canPlay]);
         }

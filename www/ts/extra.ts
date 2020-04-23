@@ -1,6 +1,6 @@
 import * as wasm from "../wasm";
 
-export function toTarget(part: wasm.Part): wasm.Target {
+export function partToTarget(part: wasm.Part): wasm.Target {
     return {
         Part: {
             creature_id: part.creatureId,
@@ -8,3 +8,11 @@ export function toTarget(part: wasm.Part): wasm.Target {
         }
     };
 };
+
+export function creatureToTarget(creature: wasm.Creature): wasm.Target {
+    return {
+        Creature: {
+            id: creature.id,
+        }
+    };
+}
