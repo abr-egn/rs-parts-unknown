@@ -43,7 +43,7 @@ impl npc::Behavior for Monopod {
             Some(npc::Intent {
                 from: self.foot,
                 cost: 1,
-                kind: npc::IntentKind::Attack { base_damage: 1, range: npc::Range::Melee },
+                kind: npc::IntentKind::Attack { base_damage: 10, range: npc::Range::Melee },
             })
         } else { None };
         self.kick_time = !self.kick_time;

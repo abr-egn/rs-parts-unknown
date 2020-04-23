@@ -95,12 +95,12 @@ impl Creature {
 
     pub fn scale_damage_from(&self, damage: i32, _part: Option<Id<Part>>) -> i32 {
         // TODO
-        damage*2
+        damage
     }
 
     pub fn scale_damage_to(&self, damage: i32, _part: Option<Id<Part>>) -> i32 {
         // TODO
-        damage*3
+        damage
     }
 
     // Mutators
@@ -133,7 +133,7 @@ impl Creature {
                     PartAction::Hit { damage } => {
                         PartAction::Hit { damage: self.scale_damage_to(*damage, Some(id)) }
                     }
-                    //_ => action.clone(),
+                    _ => action.clone(),
                 };
 
                 let part = self.parts.get_mut(&id).ok_or(Error::NoSuchPart)?;
@@ -143,9 +143,13 @@ impl Creature {
 
                 let mut self_died = false;
                 let mut out = vec![];
-                let part_died = pevs.iter().any(|pev| *pev == PartEvent::Died);
+                // If it both became broken in this event, and as end result is broken:
+                let part_broken = pevs.iter().any(|pev| match pev {
+                    PartEvent::TagsSet { tags } => tags.contains(&PartTag::Broken),
+                    _ => false,
+                }) && part.tags.contains(&PartTag::Broken);
                 out.extend(pevs.into_iter().map(|pev| CreatureEvent::OnPart { id, event: pev }));
-                if part_died {
+                if part_broken {
                     if part.tags.contains(&PartTag::Vital) && !self_died {
                         self_died = true;
                         out.push(CreatureEvent::Died);
@@ -266,7 +270,7 @@ pub struct Part {
     pub memory: i32,  // hand size
     pub mp: i32,
     /* TODO: remaining part attributes
-    power: i32,
+    power: i32,  // TODO: level?
     capacity: i32,
     joints: Vec<Joint>,
     */
@@ -286,18 +290,47 @@ impl Part {
     pub fn resolve(&mut self, action: &PartAction) -> Result<Vec<PartEvent>> {
         if self.tags.contains(&PartTag::Broken) { return Err(Error::BrokenPart); }
         use PartAction::*;
-        match *action {
+        match action {
             Hit { damage } => {
-                let damage = std::cmp::min(self.cur_hp, damage);
+                let damage = std::cmp::min(self.cur_hp, *damage);
                 if damage <= 0 { return Ok(vec![]); }
                 self.cur_hp -= damage;
                 let mut out = vec![PartEvent::ChangeHP { delta: -damage }];
                 if self.cur_hp <= 0 {
-                    self.tags.remove(&PartTag::Open);
-                    self.tags.insert(PartTag::Broken);
-                    out.push(PartEvent::Died);
+                    if self.tags.remove(&PartTag::Open) {
+                        out.push(PartEvent::TagsCleared { tags: vec![PartTag::Open] });
+                    }
+                    if self.tags.insert(PartTag::Broken) {
+                        out.push(PartEvent::TagsSet { tags: vec![PartTag::Broken] });
+                    }
                 }
                 return Ok(out);
+            }
+            SetTags { tags } => {
+                let mut set = vec![];
+                for tag in tags {
+                    if self.tags.insert(*tag) {
+                        set.push(*tag);
+                    }
+                }
+                if set.is_empty() {
+                    return Ok(vec![]);
+                } else {
+                    return Ok(vec![PartEvent::TagsSet { tags: set }]);
+                }
+            }
+            ClearTags { tags } => {
+                let mut cleared = vec![];
+                for tag in tags {
+                    if self.tags.remove(tag) {
+                        cleared.push(*tag);
+                    }
+                }
+                if cleared.is_empty() {
+                    return Ok(vec![]);
+                } else {
+                    return Ok(vec![PartEvent::TagsCleared { tags: cleared }]);
+                }
             }
         }
     }
@@ -305,17 +338,19 @@ impl Part {
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, TsData)]
 pub enum PartAction {
-    Hit { damage: i32 }
+    Hit { damage: i32 },
+    SetTags { tags: Vec<PartTag> },
+    ClearTags { tags: Vec<PartTag> },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, TsData)]
 pub enum PartEvent {
     ChangeHP { delta: i32 },
-    #[serde(with = "serde_empty")]
-    Died,
+    TagsSet { tags: Vec<PartTag> },
+    TagsCleared { tags: Vec<PartTag> },
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, TsData)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Deserialize, Serialize, TsData)]
 pub enum PartTag {
     // State
     Vital, Broken, Open,

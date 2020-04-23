@@ -128,7 +128,7 @@ arms:
     [+] 2 ranged light attack
     [ ] 2 defense
 legs:
-    [ ] 2 open change
+    [ ] 2 stagger
 torso:
     [ ] 1 heal
 head:
