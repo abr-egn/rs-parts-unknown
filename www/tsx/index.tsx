@@ -16,7 +16,7 @@ export const WorldContext = React.createContext((undefined as unknown) as wasm.W
 export function Index(props: {
     world: wasm.World,
     data: Stack.DataView,
-    intents: [Id<wasm.Creature>, wasm.NPC, DOMPointReadOnly][],
+    intents: [wasm.Creature, DOMPointReadOnly][],
 }): JSX.Element {
     const world = props.world;
 
@@ -28,8 +28,8 @@ export function Index(props: {
 
     let intents: JSX.Element[] = [];
     if (!props.data.get(Stack.Active)?.is(states.Update)) {
-        intents = props.intents.map(([id, npc, point]) =>
-            <CreatureIntent key={id} npc={npc} coords={point}></CreatureIntent>);
+        intents = props.intents.map(([creature, point]) =>
+            <CreatureIntent key={creature.id} creature={creature} coords={point}></CreatureIntent>);
     }
 
     return (

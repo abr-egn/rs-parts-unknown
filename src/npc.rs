@@ -28,7 +28,7 @@ impl NPC {
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TsData)]
 pub enum Motion {
     ToMelee,
     /* TODO: more npc motions
@@ -37,7 +37,7 @@ pub enum Motion {
     */
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, TsData)]
 pub struct Intent {
     pub from: Id<Part>, // TODO: redundancy?
     pub cost: i32,

@@ -6,7 +6,7 @@ import {Id} from "../wasm";
 import {Highlight} from "../ts/highlight";
 import * as states from "../ts/states";
 
-import {StackData} from "./index";
+import {StackData, WorldContext} from "./index";
 
 export function CreatureStats(props: {
     creature: wasm.Creature,
@@ -84,9 +84,11 @@ export function CreatureStats(props: {
 }
 
 export function CreatureIntent(props: {
-    npc: wasm.NPC,
+    creature: wasm.Creature,
     coords: DOMPointReadOnly,
 }): JSX.Element {
+    const world = React.useContext(WorldContext);
+    const npc = props.creature.npc!;
     const height = window.innerHeight;
     const style = {
         left: props.coords.x,
@@ -94,10 +96,12 @@ export function CreatureIntent(props: {
     };
     let intentStr = "???";
     let intent;
-    if (intent = props.npc.intent?.Attack) {
-        intentStr = `${intent.range} Attack: ${intent.base_damage}`;
+    if (intent = npc.intent?.kind.Attack) {
+        let damage_from = world.scaleDamageFrom(intent.base_damage, props.creature.id, npc.intent.from);
+        let damage = world.scaleDamageTo(damage_from, world.playerId, undefined);
+        intentStr = `${intent.range} Attack: ${damage}`;
     }
     return (<div className="intent" style={style}>
-        {props.npc.motion}<br/>{intentStr}
+        {npc.motion}<br/>{intentStr}
     </div>);
 }

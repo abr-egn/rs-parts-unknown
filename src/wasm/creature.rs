@@ -7,7 +7,7 @@ use wasm_bindgen::prelude::*;
 use crate::{
     card, creature::{self, PartTag},
     id_map::Id,
-    npc::{self, IntentKind},
+    npc::{self, Intent, Motion},
     wasm::{
         to_js_value,
         card::Card,
@@ -90,23 +90,15 @@ impl Part {
 
 #[derive(Debug, Serialize, TsData)]
 pub struct NPC {
-    motion: Option<MotionKind>,
-    intent: Option<IntentKind>,
+    motion: Option<Motion>,
+    intent: Option<Intent>,
 }
 
 impl NPC {
     fn new(source: &npc::NPC) -> Self {
-        let motion = source.next_motion.as_ref().map(|m| match m {
-            npc::Motion::ToMelee => MotionKind::ToMelee,
-        });
         NPC {
-            motion,
-            intent: source.next_action.as_ref().map(|a| a.kind.clone()),
+            motion: source.next_motion.clone(),
+            intent: source.next_action.clone(),
         }
     }
-}
-
-#[derive(Debug, Serialize, TsData)]
-pub enum MotionKind {
-    ToMelee,
 }

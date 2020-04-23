@@ -101,17 +101,16 @@ export class Game {
         ReactDOM.render(element, document.getElementById("root"));
     }
 
-    private _getIntents(): [Id<wasm.Creature>, wasm.NPC, DOMPointReadOnly][] {
-        const intents: [Id<wasm.Creature>, wasm.NPC, DOMPointReadOnly][] = [];
+    private _getIntents(): [wasm.Creature, DOMPointReadOnly][] {
+        const intents: [wasm.Creature, DOMPointReadOnly][] = [];
         for (let id of this._world.getCreatureIds()) {
             const point = this._board.creatureCoords(id);
             if (!point) { continue; }
             const creature = this._world.getCreature(id);
             if (!creature) { continue; }
             if (creature.dead) { continue; }
-            let intent = creature.npc;
-            if (!intent) { continue; }
-            intents.push([id, intent, point]);
+            if (!creature.npc?.intent) { continue; }
+            intents.push([creature, point]);
         }
         return intents;
     }
