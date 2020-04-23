@@ -96,7 +96,9 @@ export function CreatureIntent(props: {
     };
     let intentStr = "???";
     let intent;
-    if (intent = npc.intent?.kind.Attack) {
+    if (!npc.intent) {
+        intentStr = "";
+    } else if (intent = npc.intent?.kind.Attack) {
         let damage_from = world.scaleDamageFrom(intent.base_damage, props.creature.id, npc.intent.from);
         let damage = world.scaleDamageTo(damage_from, world.playerId, undefined);
         intentStr = `${intent.range} Attack: ${damage}`;

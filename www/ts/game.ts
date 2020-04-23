@@ -109,7 +109,7 @@ export class Game {
             const creature = this._world.getCreature(id);
             if (!creature) { continue; }
             if (creature.dead) { continue; }
-            if (!creature.npc?.intent) { continue; }
+            if (!creature.npc) { continue; }
             intents.push([creature, point]);
         }
         return intents;
