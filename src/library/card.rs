@@ -69,7 +69,7 @@ struct HitPartBehavior {
 
 impl card::Behavior for HitPartBehavior {
     fn range(&self, _world: &World) -> Vec<Hex> { self.range.iter().cloned().collect() }
-    fn target_spec(&self) -> TargetSpec { TargetSpec::Part { tags: self.tags.clone() } }
+    fn target_spec(&self) -> TargetSpec { TargetSpec::Part { on_player: false, tags: self.tags.clone() } }
     fn target_valid(&self, world: &World, target: &Target) -> bool {
         if !self.target_spec().matches(world, target) { return false; }
         let (creature_id, part_id) = if let Target::Part { creature_id, part_id } = target {
@@ -120,6 +120,10 @@ pub fn punch() -> Card {
         ap_cost: 1,
         start_play: |world, source, part| HitPart { damage: 10, tags: vec![vec![]], melee: true }.behavior(world, source, part),
     }
+}
+
+struct Guard {
+
 }
 
 /* 10 cards:

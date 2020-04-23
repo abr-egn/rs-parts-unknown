@@ -132,7 +132,6 @@ export class PlayCard extends State {
         if (spec.Part) {
             let creature = window.game.creatureAt(hex);
             if (!creature) { return; }
-            if (creature.id == world.playerId) { return; }
             window.game.stack.push(new TargetPart(this._inPlay!, hex, creature));
         }
         // TODO: spec.Creature

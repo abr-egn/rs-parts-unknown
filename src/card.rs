@@ -64,7 +64,7 @@ pub trait Behavior: BehaviorClone {
 pub enum TargetSpec {
     #[serde(with = "serde_empty")]
     None,
-    Part { tags: Vec<Vec<PartTag>> /* Or<<X and Y>, <Q and R>> */ },
+    Part { on_player: bool, tags: Vec<Vec<PartTag>> /* Or<<X and Y>, <Q and R>> */ },
     #[serde(with = "serde_empty")]
     Creature,
 }
@@ -73,7 +73,8 @@ impl TargetSpec {
     pub fn matches(&self, world: &World, target: &Target) -> bool {
         match (self, target) {
             (TargetSpec::None, Target::None) => true,
-            (TargetSpec::Part { tags }, Target::Part { creature_id, part_id }) => {
+            (TargetSpec::Part { on_player, tags }, Target::Part { creature_id, part_id }) => {
+                if *on_player != (*creature_id == world.player_id()) { return false; }
                 let creature = some_or!(world.creatures().get(*creature_id), return false);
                 let part = some_or!(creature.parts.get(*part_id), return false);
                 for group in tags {
