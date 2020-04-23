@@ -23,6 +23,7 @@ pub fn player() -> Creature {
         cards: IdMap::from_iter(vec![
             library::card::throw_debris(),
             library::card::punch(),
+            library::card::guard(),
         ]),
         ..Part::new(
             "Arm",

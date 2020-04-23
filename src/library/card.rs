@@ -160,7 +160,7 @@ impl card::Behavior for Guard {
             id: target_id,
             action: CreatureAction::ToPart {
                 id: part_id,
-                action: PartAction::SetTags { tags: vec![PartTag::Open] },
+                action: PartAction::ClearTags { tags: vec![PartTag::Open] },
             }
         }));
         out
