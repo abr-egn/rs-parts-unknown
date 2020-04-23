@@ -122,8 +122,49 @@ pub fn punch() -> Card {
     }
 }
 
-struct Guard {
+pub fn guard() -> Card {
+    Card {
+        name: "Guard".into(),
+        ap_cost: 1,
+        start_play: |_, source, part| Box::new(Guard { source_creature: *source, source_part: *part })
+    }
+}
 
+#[derive(Debug, Clone)]
+struct Guard {
+    source_creature: Id<Creature>,
+    source_part: Id<Part>,
+}
+
+impl card::Behavior for Guard {
+    fn target_spec(&self) -> TargetSpec {
+        TargetSpec::Part { on_player: true, tags: vec![vec![PartTag::Open]] }
+    }
+    fn apply(&self, world: &mut World, target: &Target) -> Vec<Event> {
+        let (target_id, part_id) = match target {
+            Target::Part { creature_id, part_id } => (*creature_id, *part_id),
+            _ => panic!("invalid target"),
+        };
+        let mut out = vec![];
+        out.extend(world.execute(&Action::ToCreature {
+            id: self.source_creature,
+            action: CreatureAction::ToPart {
+                id: self.source_part,
+                action: PartAction::SetTags { tags: vec![PartTag::Open] },
+            }
+        }));
+        if Event::is_failure(&out) {
+            return out;
+        }
+        out.extend(world.execute(&Action::ToCreature {
+            id: target_id,
+            action: CreatureAction::ToPart {
+                id: part_id,
+                action: PartAction::SetTags { tags: vec![PartTag::Open] },
+            }
+        }));
+        out
+    }
 }
 
 /* 10 cards:

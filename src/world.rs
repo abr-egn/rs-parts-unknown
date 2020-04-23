@@ -1,6 +1,5 @@
 use std::{
     collections::HashSet,
-    iter::FromIterator,
 };
 
 use hex::{self, Hex};
@@ -11,7 +10,7 @@ use wasm_bindgen::prelude::wasm_bindgen;
 
 use crate::{
     card::{self, Target},
-    creature::{Creature, CreatureAction, Part, PartTag},
+    creature::{Creature, CreatureAction},
     error::{Error, Result},
     event::{Action, Event, Trigger, TriggerId},
     id_map::{Id, IdMap},
@@ -39,7 +38,7 @@ pub struct World {
 impl World {
     pub fn new() -> Self {
         let mut creatures = IdMap::new();
-        let pc_id = creatures.add(make_player());
+        let pc_id = creatures.add(library::player::player());
         let mut map = Map::new();
         map.place_at(pc_id, hex::ORIGIN).unwrap();
         let enemy_id = creatures.add(library::npc::Monopod::creature());
@@ -380,40 +379,4 @@ impl<T: Tracer + Clone + 'static> TracerClone for T {
 
 impl Clone for Box<dyn Tracer> {
     fn clone(&self) -> Self { self.clone_box() }
-}
-
-fn make_player() -> Creature {
-    let head = Part {
-        thought: 3,
-        memory: 5,
-        ..Part::new(
-            "Head",
-            &[PartTag::Head, PartTag::Flesh, PartTag::Vital],
-            20)
-    };
-    let torso = Part::new(
-        "Torso",
-        &[PartTag::Torso, PartTag::Flesh, PartTag::Vital, PartTag::Open],
-        50);
-    let arm_l = Part {
-        cards: IdMap::from_iter(vec![
-            library::card::throw_debris(),
-            library::card::punch(),
-        ]),
-        ..Part::new(
-            "Arm",
-            &[PartTag::Limb, PartTag::Flesh, PartTag::Arm, PartTag::Open],
-            30)
-    };
-    let arm_r = arm_l.clone();
-    let leg_l = Part {
-        cards: IdMap::from_iter(vec![library::card::Walk::card()]),
-        mp: 1,
-        ..Part::new(
-            "Leg",
-            &[PartTag::Limb, PartTag::Flesh, PartTag::Leg, PartTag::Open],
-            30)
-    };
-    let leg_r = leg_l.clone();
-    Creature::new("Player", &[head, torso, arm_l, arm_r, leg_l, leg_r], None)
 }
