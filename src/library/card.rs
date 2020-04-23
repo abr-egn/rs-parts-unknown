@@ -114,6 +114,14 @@ impl card::Behavior for Guard {
     fn target_spec(&self) -> TargetSpec {
         TargetSpec::Part { on_player: true, tags: vec![vec![PartTag::Open]] }
     }
+    fn target_valid(&self, world: &World, target: &Target) -> bool {
+        if !self.target_spec().matches(world, target) { return false; }
+        let part_id = match target {
+            Target::Part { part_id, .. } => *part_id,
+            _ => panic!("invalid target"),
+        };
+        part_id != self.source_part
+    }
     fn apply(&self, world: &mut World, target: &Target) -> Vec<Event> {
         let (target_id, part_id) = match target {
             Target::Part { creature_id, part_id } => (*creature_id, *part_id),
