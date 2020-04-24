@@ -78,7 +78,7 @@ impl TargetSpec {
                 let creature = some_or!(world.creatures().get(*creature_id), return false);
                 let part = some_or!(creature.parts.get(*part_id), return false);
                 for group in tags {
-                    if group.iter().all(|tag| part.tags.contains(tag)) {
+                    if group.iter().all(|tag| part.tags().contains(tag)) {
                         return true;
                     }
                 }

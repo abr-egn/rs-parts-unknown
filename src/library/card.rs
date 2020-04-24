@@ -53,7 +53,7 @@ impl card::Behavior for HitPartBehavior {
         if !self.range.contains(&pos) { return false; }
         let creature = some_or!(world.creatures().get(creature_id), return false);
         let part = some_or!(creature.parts.get(part_id), return false);
-        if !part.tags.contains(&PartTag::Open) { return false; }
+        if !part.tags().contains(&PartTag::Open) { return false; }
         true
     }
     fn apply(&self, world: &mut World, target: &Target) -> Vec<Event> {
@@ -201,7 +201,7 @@ impl Stagger {
         };
         let creature = world.creatures().get(target_id).unwrap();
         let part_ids: Vec<_> = creature.parts.iter().filter_map(|(id, part)| {
-            if part.tags.contains(&PartTag::Broken) { None }
+            if part.tags().contains(&PartTag::Broken) { None }
             else { Some(*id) }
         }).collect();
         (target_id, part_ids)

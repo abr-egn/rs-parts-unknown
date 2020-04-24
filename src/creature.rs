@@ -69,21 +69,21 @@ impl Creature {
 
     pub fn max_ap(&self) -> i32 {
         self.parts.values()
-            .filter(|part| !part.tags.contains(&PartTag::Broken))
+            .filter(|part| !part.tags().contains(&PartTag::Broken))
             .map(|part| part.thought)
             .sum()
     }
 
     pub fn hand_size(&self) -> i32 {
         self.parts.values()
-            .filter(|part| !part.tags.contains(&PartTag::Broken))
+            .filter(|part| !part.tags().contains(&PartTag::Broken))
             .map(|part| part.memory)
             .sum()
     }
 
     pub fn max_mp(&self) -> i32 {
         self.parts.values()
-            .filter(|part| !part.tags.contains(&PartTag::Broken))
+            .filter(|part| !part.tags().contains(&PartTag::Broken))
             .map(|part| part.mp)
             .sum()
     }
@@ -91,7 +91,7 @@ impl Creature {
     pub fn open_parts(&self) -> impl Iterator<Item=(Id<Part>, &Part)> {
         self.parts.iter()
             .map(|(id, p)| (*id, p))
-            .filter(|(_, p)| p.tags.contains(&PartTag::Open))
+            .filter(|(_, p)| p.tags().contains(&PartTag::Open))
     }
 
     pub fn scale_damage_from(&self, damage: i32, _part: Option<Id<Part>>) -> i32 {
@@ -138,7 +138,7 @@ impl Creature {
                 };
 
                 let part = self.parts.get_mut(&id).ok_or(Error::NoSuchPart)?;
-                let was_open = part.tags.contains(&PartTag::Open);
+                let was_open = part.tags().contains(&PartTag::Open);
 
                 let pevs = part.resolve(&scaled_action)?;
 
@@ -148,10 +148,10 @@ impl Creature {
                 let part_broken = pevs.iter().any(|pev| match pev {
                     PartEvent::TagsSet { tags } => tags.contains(&PartTag::Broken),
                     _ => false,
-                }) && part.tags.contains(&PartTag::Broken);
+                }) && part.tags().contains(&PartTag::Broken);
                 out.extend(pevs.into_iter().map(|pev| CreatureEvent::OnPart { id, event: pev }));
                 if part_broken {
-                    if part.tags.contains(&PartTag::Vital) && !self_died {
+                    if part.tags().contains(&PartTag::Vital) && !self_died {
                         self_died = true;
                         out.push(CreatureEvent::Died);
                     }
@@ -170,13 +170,13 @@ impl Creature {
                     if was_open {
                         let ids: Vec<_> = self.parts.iter()
                             .filter_map(|(id, part)| {
-                                if part.tags.contains(&PartTag::Broken) { None }
+                                if part.tags().contains(&PartTag::Broken) { None }
                                 else { Some(*id) }
                             })
                             .collect();
                         if !ids.is_empty() {
                             let ix = thread_rng().gen_range(0, ids.len());
-                            self.parts.get_mut(&ids[ix]).unwrap().tags.insert(PartTag::Open);
+                            self.parts.get_mut(&ids[ix]).unwrap().base_tags.insert(PartTag::Open);
                         }
                     }
                 }
@@ -263,7 +263,7 @@ pub struct Part {
     // Structure
     pub name: String,
     pub cards: IdMap<Card>,
-    pub tags: HashSet<PartTag>,
+    pub base_tags: HashSet<PartTag>,
     pub tag_mods: ModStack<HashSet<PartTag>>,
     // Stats
     pub max_hp: i32,
@@ -283,15 +283,19 @@ impl Part {
         Part {
             name: name.into(),
             cards: IdMap::new(),
-            tags: HashSet::from_iter(tags.iter().cloned()),
+            base_tags: HashSet::from_iter(tags.iter().cloned()),
             tag_mods: ModStack::new(),
             thought: 0, memory: 0, mp: 0,
             max_hp, cur_hp: max_hp,
         }
     }
 
+    pub fn tags(&self) -> HashSet<PartTag> {
+        self.tag_mods.eval(self.base_tags.clone())
+    }
+
     pub fn resolve(&mut self, action: &PartAction) -> Result<Vec<PartEvent>> {
-        if self.tags.contains(&PartTag::Broken) { return Err(Error::BrokenPart); }
+        if self.tags().contains(&PartTag::Broken) { return Err(Error::BrokenPart); }
         use PartAction::*;
         match action {
             Hit { damage } => {
@@ -300,10 +304,10 @@ impl Part {
                 self.cur_hp -= damage;
                 let mut out = vec![PartEvent::ChangeHP { delta: -damage }];
                 if self.cur_hp <= 0 {
-                    if self.tags.remove(&PartTag::Open) {
+                    if self.base_tags.remove(&PartTag::Open) {
                         out.push(PartEvent::TagsCleared { tags: vec![PartTag::Open] });
                     }
-                    if self.tags.insert(PartTag::Broken) {
+                    if self.base_tags.insert(PartTag::Broken) {
                         out.push(PartEvent::TagsSet { tags: vec![PartTag::Broken] });
                     }
                 }
@@ -312,7 +316,7 @@ impl Part {
             SetTags { tags } => {
                 let mut set = vec![];
                 for tag in tags {
-                    if self.tags.insert(*tag) {
+                    if self.base_tags.insert(*tag) {
                         set.push(*tag);
                     }
                 }
@@ -325,7 +329,7 @@ impl Part {
             ClearTags { tags } => {
                 let mut cleared = vec![];
                 for tag in tags {
-                    if self.tags.remove(tag) {
+                    if self.base_tags.remove(tag) {
                         cleared.push(*tag);
                     }
                 }
@@ -336,9 +340,20 @@ impl Part {
                 }
             }
             AddTagMod { m } => {
+                let prev = self.tags();
                 let id = self.tag_mods.add(m.clone());
+                let mut out = vec![PartEvent::TagsModded { id }];
+                let new = self.tags();
+                let added: Vec<_> = new.difference(&prev).cloned().collect();
+                if !added.is_empty() {
+                    out.push(PartEvent::TagsSet { tags: added })
+                }
+                let cleared: Vec<_> = prev.difference(&new).cloned().collect();
+                if !cleared.is_empty() {
+                    out.push(PartEvent::TagsCleared { tags: cleared })
+                }
 
-                unimplemented!()
+                Ok(out)
             }
         }
     }

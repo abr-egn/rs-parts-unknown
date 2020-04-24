@@ -53,7 +53,7 @@ impl Intent {
         }
         // Check part
         let part = creature.parts.get(self.from).ok_or(Error::NoSuchPart)?;
-        if part.tags.contains(&PartTag::Broken) {
+        if part.tags().contains(&PartTag::Broken) {
             return Err(Error::NoSuchPart);
         }
         // Check kind

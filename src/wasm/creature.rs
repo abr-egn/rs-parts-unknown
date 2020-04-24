@@ -82,8 +82,8 @@ impl Part {
             thought: source.thought,
             maxHp: source.max_hp,
             curHp: source.cur_hp,
-            broken: source.tags.contains(&creature::PartTag::Broken),
-            tags: source.tags.iter().cloned().collect(),
+            broken: source.tags().contains(&creature::PartTag::Broken),
+            tags: source.tags().into_iter().collect(),
         }
     }
 }
