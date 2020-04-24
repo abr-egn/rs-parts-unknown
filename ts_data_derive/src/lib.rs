@@ -65,6 +65,14 @@ fn is_skip(attr: &syn::Attribute) -> bool {
     name == "serde" && tokens == "(skip)"
 }
 
+
+fn is_skip_dbg(attr: &syn::Attribute) -> bool {
+    let name = path_name(&attr.path);
+    let tokens = attr.tokens.to_string();
+    println!("is_skip({:?}, {:?})", name, tokens);
+    name == "serde" && tokens == "(skip)"
+}
+
 fn build_enum(buffer: &mut String, name: &syn::Ident, data: &syn::DataEnum) -> Result<(), Error> {
     let all_simple: bool = data.variants.iter()
         .all(|v| v.fields == syn::Fields::Unit);
@@ -74,10 +82,9 @@ fn build_enum(buffer: &mut String, name: &syn::Ident, data: &syn::DataEnum) -> R
     }
     append!(buffer, "export interface {} {{\n", name);
     for v in &data.variants {
-        if v.attrs.iter().any(is_skip) { continue; }
         append!(buffer, "    {}?: ", v.ident);
         match &v.fields {
-            syn::Fields::Unit => append!(buffer, "boolean\n"),
+            syn::Fields::Unit => append!(buffer, "{{}}\n"),
             syn::Fields::Named(n) => {
                 append!(buffer, "{{\n");
                 build_fields(buffer, "        ", n);
@@ -103,6 +110,7 @@ fn build_simple_enum(buffer: &mut String, name: &syn::Ident, data: &syn::DataEnu
 
 fn build_fields(buffer: &mut String, pad: &str, fields: &syn::FieldsNamed) {
     for v in &fields.named {
+        if v.attrs.iter().any(is_skip_dbg) { continue; }
         let ident = v.ident.as_ref().expect("field ident");
         if let Some(ty) = extract_generic("Option", &v.ty) {
             append!(buffer, "{}{}?: {},\n", pad, ident, quote! { #ty });
