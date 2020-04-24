@@ -5,6 +5,7 @@ mod event;
 mod id_map;
 mod library;
 mod map;
+mod mod_stack;
 mod npc;
 mod serde_empty;
 mod wasm;
