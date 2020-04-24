@@ -8,6 +8,7 @@ mod map;
 mod mod_stack;
 mod npc;
 mod serde_empty;
+mod trigger;
 mod wasm;
 mod world;
 

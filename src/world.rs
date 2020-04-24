@@ -12,11 +12,12 @@ use crate::{
     card::{self, Target},
     creature::{Creature, CreatureAction},
     error::{Error, Result},
-    event::{Action, Event, Trigger, TriggerId},
+    event::{Action, Event},
     id_map::{Id, IdMap},
     library,
     map::{Map},
     npc::{Motion},
+    trigger::{Trigger, TriggerId},
 };
 
 #[derive(Debug, Clone)]
@@ -25,13 +26,6 @@ pub struct World {
     player_id: Id<Creature>,
     creatures: IdMap<Creature>,
     triggers: IdMap<Box<dyn Trigger>>,
-    /* TODO: persistent stat changes
-    Example: effect that changes the cost of cards.
-        - It can't just be a mod because that wouldn't be reflected in the UI,
-          and wouldn't work with a simple action test.
-        - Conclusion: stat changes (anything else?) need their own persistent category
-          alongside mods and triggers.
-    */
     pub tracer: Option<Box<dyn Tracer>>,
 }
 
