@@ -99,9 +99,7 @@ impl World {
     // Mutators
 
     pub fn execute(&mut self, action: &Action) -> Vec<Event> {
-        let mut out = vec![];
-        self.execute_(action, &HashSet::new(), &mut out);
-        out
+        self.execute_(action, &HashSet::new())
     }
 
     pub fn execute_all(&mut self, actions: &[Action]) -> Vec<Event> {
@@ -188,6 +186,10 @@ impl World {
                 action: CreatureAction::NewHand,
             }
         ));
+
+        // Player end turn triggers
+        events.push(Event::PlayerTurnEnd);
+        events.extend(self.apply_triggers(&HashSet::new(), &[Event::PlayerTurnEnd]));
         
         // NPC turns
         let mut npc_plays = vec![];
@@ -226,6 +228,10 @@ impl World {
             events.extend(self.refill(*id));
         }
 
+        // NPC end turn triggers
+        events.push(Event::NpcTurnEnd);
+        events.extend(self.apply_triggers(&HashSet::new(), &[Event::NpcTurnEnd]));
+
         events
     }
 
@@ -235,8 +241,8 @@ impl World {
         &mut self,
         action: &Action,
         skip: &HashSet<TriggerId>,
-        out: &mut Vec<Event>,
-    ) {
+    ) -> Vec<Event> {
+        let mut out = vec![];
         self.tracer.as_ref().map(|t| t.start_action(action));
         let events = self.resolve(action).unwrap_or_else(|err|
             vec![Event::Failed {
@@ -246,7 +252,12 @@ impl World {
         );
         self.tracer.as_ref().map(|t| t.resolve_action(&action, &events));
         out.extend(events.clone());
+        out.extend(self.apply_triggers(skip, &events));
+        out
+    }
 
+    fn apply_triggers(&mut self, skip: &HashSet<TriggerId>, events: &[Event]) -> Vec<Event> {
+        let mut out = vec![];
         let mut trigger_ids = self.trigger_order();
         trigger_ids.reverse();
         while let Some(id) = trigger_ids.pop() {
@@ -261,9 +272,10 @@ impl World {
             let mut sub_skip = skip.clone();
             sub_skip.insert(id);
             for act in &added {
-                self.execute_(act, &sub_skip, out);
+                out.extend(self.execute_(act, &sub_skip));
             }
         }
+        out
     }
 
     fn trigger_order(&self) -> Vec<TriggerId> {

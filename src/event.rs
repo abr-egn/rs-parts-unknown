@@ -24,6 +24,10 @@ pub enum Event {
     Failed { action: Action, reason: String },
     CreatureMoved { id: Id<Creature>, from: Hex, to: Hex, },
     OnCreature { id: Id<Creature>, event: CreatureEvent },
+    #[serde(with = "serde_empty")]
+    PlayerTurnEnd,
+    #[serde(with = "serde_empty")]
+    NpcTurnEnd,
 }
 
 impl Event {

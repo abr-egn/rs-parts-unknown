@@ -5,7 +5,7 @@ use std::{
 };
 
 use rand::prelude::*;
-use serde::{Deserialize, Serialize};
+use serde::{Serialize};
 use ts_data_derive::TsData;
 use wasm_bindgen::prelude::wasm_bindgen;
 
