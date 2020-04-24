@@ -90,8 +90,8 @@ impl<T> Id<T> {
     }
     /*
     pub fn value(&self) -> u32 { self.value }
-    pub fn synthesize(value: u32) -> Id<T> { Id::new(value) }
     */
+    pub fn synthesize(value: u32) -> Id<T> { Id::new(value) }
 }
 
 impl<T> fmt::Debug for Id<T> {

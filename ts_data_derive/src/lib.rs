@@ -5,7 +5,7 @@ use quote::{quote, quote_spanned};
 use syn::{
     self,
     parse_macro_input,
-    visit_mut::{VisitMut, visit_derive_input_mut},
+    visit_mut::{self, VisitMut},
 };
 
 macro_rules! append {
@@ -38,7 +38,7 @@ pub fn ts_data_derive(input: TokenStream) -> TokenStream {
 fn derive_impl(ast: syn::DeriveInput) -> Result<String, Error> {
     let mut ast = ast;
     let mut mapper = TypeMapper::new();
-    visit_derive_input_mut(&mut mapper, &mut ast);
+    visit_mut::visit_derive_input_mut(&mut mapper, &mut ast);
     if let Some(e) = mapper.error { return Err(e); }
 
     let mut output: String = String::new();
@@ -59,6 +59,12 @@ struct Error {
     span: proc_macro2::Span,
 }
 
+fn is_skip(attr: &syn::Attribute) -> bool {
+    let name = path_name(&attr.path);
+    let tokens = attr.tokens.to_string();
+    name == "serde" && tokens == "(skip)"
+}
+
 fn build_enum(buffer: &mut String, name: &syn::Ident, data: &syn::DataEnum) -> Result<(), Error> {
     let all_simple: bool = data.variants.iter()
         .all(|v| v.fields == syn::Fields::Unit);
@@ -68,6 +74,7 @@ fn build_enum(buffer: &mut String, name: &syn::Ident, data: &syn::DataEnum) -> R
     }
     append!(buffer, "export interface {} {{\n", name);
     for v in &data.variants {
+        if v.attrs.iter().any(is_skip) { continue; }
         append!(buffer, "    {}?: ", v.ident);
         match &v.fields {
             syn::Fields::Unit => append!(buffer, "boolean\n"),
@@ -214,6 +221,10 @@ impl VisitMut for TypeMapper {
         for s in &mut path.segments {
             self.visit_path_segment_mut(s);
         }
+    }
+    fn visit_field_mut(&mut self, v: &mut syn::Field) {
+        if v.attrs.iter().any(is_skip) { return; }
+        visit_mut::visit_field_mut(self, v);
     }
 }
 

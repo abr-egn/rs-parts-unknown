@@ -10,4 +10,6 @@ export interface Hex {
 export type Direction = "XY" | "XZ" | "YZ" | "YX" | "ZX" | "ZY";
 
 export type Id<_> = number;
+
+export type Mod = void;
 "#;

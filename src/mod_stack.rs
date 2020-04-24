@@ -2,28 +2,28 @@ use crate::{
     id_map::{Id, IdMap},
 };
 
+#[derive(Debug, Clone)]
 pub struct ModStack<T> {
-    pub base: T,
     mods: IdMap<Mod<T>>,
     mod_order: Vec<Id<Mod<T>>>,
 }
 
-pub type Mod<T> = fn(&mut T);
+#[derive(Clone)]
+pub struct Mod<T>(fn(&mut T));
 
-impl<T: Clone> ModStack<T> {
-    pub fn new(base: T) -> Self {
+impl<T> ModStack<T> {
+    pub fn new() -> Self {
         ModStack {
-            base,
             mods: IdMap::new(),
             mod_order: vec![],
         }
     }
 
-    pub fn eval(&self) -> T {
-        let mut value = self.base.clone();
+    pub fn eval(&self, base: T) -> T {
+        let mut value = base;
         for id in &self.mod_order {
             let m = self.mods.get(*id).unwrap();
-            m(&mut value);
+            m.0(&mut value);
         }
         value
     }
@@ -42,4 +42,16 @@ impl<T: Clone> ModStack<T> {
         self.mod_order.remove(ix);
         true
     }
+}
+
+impl<T> std::fmt::Debug for Mod<T> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_tuple("Mod")
+            .field(&(self.0 as * const ()))
+            .finish()
+    }
+}
+
+impl<T> Default for Mod<T> {
+    fn default() -> Self { Mod(|_| { }) }
 }

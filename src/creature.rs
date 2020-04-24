@@ -13,6 +13,7 @@ use crate::{
     card::Card,
     error::{Error, Result},
     id_map::{Id, IdMap},
+    mod_stack::{Mod, ModStack},
     npc::{self, NPC},
     serde_empty,
     some_or,
@@ -232,7 +233,7 @@ impl Creature {
     pub fn npc_mut(&mut self) -> Option<&mut NPC> { self.npc.as_mut() }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, TsData)]
+#[derive(Debug, Clone, Deserialize, Serialize, TsData)]
 pub enum CreatureAction {
     GainAP { ap: i32 },
     SpendAP { ap: i32 },
@@ -263,6 +264,7 @@ pub struct Part {
     pub name: String,
     pub cards: IdMap<Card>,
     pub tags: HashSet<PartTag>,
+    pub tag_mods: ModStack<HashSet<PartTag>>,
     // Stats
     pub max_hp: i32,
     pub cur_hp: i32,
@@ -282,6 +284,7 @@ impl Part {
             name: name.into(),
             cards: IdMap::new(),
             tags: HashSet::from_iter(tags.iter().cloned()),
+            tag_mods: ModStack::new(),
             thought: 0, memory: 0, mp: 0,
             max_hp, cur_hp: max_hp,
         }
@@ -332,15 +335,24 @@ impl Part {
                     return Ok(vec![PartEvent::TagsCleared { tags: cleared }]);
                 }
             }
+            AddTagMod { m } => {
+                let id = self.tag_mods.add(m.clone());
+
+                unimplemented!()
+            }
         }
     }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, TsData)]
+#[derive(Debug, Clone, Deserialize, Serialize, TsData)]
 pub enum PartAction {
     Hit { damage: i32 },
     SetTags { tags: Vec<PartTag> },
     ClearTags { tags: Vec<PartTag> },
+    AddTagMod {
+        #[serde(skip)]
+        m: Mod<HashSet<PartTag>>
+    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, TsData)]
@@ -348,7 +360,14 @@ pub enum PartEvent {
     ChangeHP { delta: i32 },
     TagsSet { tags: Vec<PartTag> },
     TagsCleared { tags: Vec<PartTag> },
+    TagsModded {
+        #[serde(skip)]
+        #[serde(default = "fake_id")]
+        id: Id<Mod<HashSet<PartTag>>>
+    },
 }
+
+fn fake_id() -> Id<Mod<HashSet<PartTag>>> { Id::synthesize(0) }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Deserialize, Serialize, TsData)]
 pub enum PartTag {

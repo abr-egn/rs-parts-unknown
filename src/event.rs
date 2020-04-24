@@ -9,7 +9,7 @@ use crate::{
     serde_empty,
 };
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, TsData)]
+#[derive(Debug, Clone, Deserialize, Serialize, TsData)]
 pub enum Action {
     #[serde(with = "serde_empty")]
     Nothing,
