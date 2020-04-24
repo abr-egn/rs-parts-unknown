@@ -105,13 +105,7 @@ impl IntentKind {
                 let creature = world.creatures().get(source).unwrap();
                 let damage_from = creature.scale_damage_from(*base_damage, Some(part));
                 let damage = player.scale_damage_to(damage_from, Some(*pid));
-                let hit = Action::ToCreature {
-                    id: player_id,
-                    action: CreatureAction::ToPart {
-                        id: *pid,
-                        action: PartAction::Hit { damage },
-                    }
-                };
+                let hit = Action::to_part(player_id, *pid, PartAction::Hit { damage });
                 world.execute(&hit)
             }
         }

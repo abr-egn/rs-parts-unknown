@@ -12,9 +12,11 @@ use wasm_bindgen::prelude::wasm_bindgen;
 use crate::{
     card::Card,
     error::{Error, Result},
+    event::{Action, Event},
     id_map::{Id, IdMap},
     mod_stack::{Mod, ModStack},
     npc::{self, NPC},
+    world::World,
     serde_empty,
     some_or,
 };
@@ -343,19 +345,31 @@ impl Part {
                 let prev = self.tags();
                 let id = self.tag_mods.add(m.clone());
                 let mut out = vec![PartEvent::TagsModded { id }];
-                let new = self.tags();
-                let added: Vec<_> = new.difference(&prev).cloned().collect();
-                if !added.is_empty() {
-                    out.push(PartEvent::TagsSet { tags: added })
-                }
-                let cleared: Vec<_> = prev.difference(&new).cloned().collect();
-                if !cleared.is_empty() {
-                    out.push(PartEvent::TagsCleared { tags: cleared })
-                }
-
+                out.extend(self.mod_delta(prev));
+                Ok(out)
+            }
+            ClearTagMod { id } => {
+                let prev = self.tags();
+                self.tag_mods.remove(*id);
+                let mut out = vec![PartEvent::TagsUnmodded { id: *id }];
+                out.extend(self.mod_delta(prev));
                 Ok(out)
             }
         }
+    }
+
+    fn mod_delta(&self, prev: HashSet<PartTag>) -> Vec<PartEvent> {
+        let mut out = vec![];
+        let new = self.tags();
+        let added: Vec<_> = new.difference(&prev).cloned().collect();
+        if !added.is_empty() {
+            out.push(PartEvent::TagsSet { tags: added })
+        }
+        let cleared: Vec<_> = prev.difference(&new).cloned().collect();
+        if !cleared.is_empty() {
+            out.push(PartEvent::TagsCleared { tags: cleared })
+        }
+        out
     }
 }
 
@@ -366,21 +380,30 @@ pub enum PartAction {
     ClearTags { tags: Vec<PartTag> },
     AddTagMod {
         #[serde(skip)]
-        m: Mod<HashSet<PartTag>>
+        m: TagMod
     },
+    ClearTagMod { id: TagModId, }
 }
 
-pub type TagModId = Id<Mod<HashSet<PartTag>>>;
+pub type TagMod = Mod<HashSet<PartTag>>;
+pub type TagModId = Id<TagMod>;
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, TsData)]
 pub enum PartEvent {
     ChangeHP { delta: i32 },
     TagsSet { tags: Vec<PartTag> },
     TagsCleared { tags: Vec<PartTag> },
-    TagsModded {
-        #[serde(skip)]
-        id: TagModId
-    },
+    TagsModded { id: TagModId },
+    TagsUnmodded { id: TagModId },
+}
+
+impl PartEvent {
+    pub fn tags_modded(&self) -> Option<TagModId> {
+        match self {
+            PartEvent::TagsModded { id } => Some(*id),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, TsData)]
@@ -393,6 +416,23 @@ pub enum PartTag {
     Flesh, Machine,
     // Specialized: shape
     Arm, Leg,
+}
+
+pub trait WorldExt {
+    fn add_mod(&mut self, cid: Id<Creature>, pid: Id<Part>, m: TagMod) -> (TagModId, Vec<Event>);
+}
+
+impl WorldExt for World {
+    fn add_mod(&mut self, cid: Id<Creature>, pid: Id<Part>, m: TagMod) -> (TagModId, Vec<Event>) {
+        let events = self.execute(&Action::to_part(
+            cid, pid,
+            PartAction::AddTagMod { m }
+        ));
+        let mod_id = events[0].on_part()
+            .and_then(|(_, _, event)| event.tags_modded())
+            .unwrap();
+        (mod_id, events)
+    }
 }
 
 /*

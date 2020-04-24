@@ -9,7 +9,7 @@ pub struct ModStack<T> {
 }
 
 #[derive(Clone)]
-pub struct Mod<T>(fn(&mut T));
+pub struct Mod<T>(pub fn(&mut T));
 
 impl<T> ModStack<T> {
     pub fn new() -> Self {

@@ -272,7 +272,7 @@ impl World {
                 None => continue,
                 Some(t) => t,
             };
-            let added: Vec<_> = events.iter().flat_map(|event| trigger.apply(&event)).collect();
+            let added: Vec<_> = events.iter().flat_map(|event| trigger.apply(id, &event)).collect();
             let mut sub_skip = skip.clone();
             sub_skip.insert(id);
             for act in &added {
@@ -302,7 +302,18 @@ impl World {
                 return creature.resolve(&action).map(|cevs| {
                     cevs.into_iter().map(|cev| Event::OnCreature { id, event: cev }).collect()
                 });
-            },
+            }
+            AddTrigger { ref trigger } => {
+                let id = self.triggers.add(trigger.clone());
+                return Ok(vec![Event::TriggerAdded { id }]);
+            }
+            RemoveTrigger { id } => {
+                return Ok(if self.triggers.remove(&id).is_some() {
+                    vec![Event::TriggerRemoved { id }]
+                } else {
+                    vec![]
+                });
+            }
         }
     }
 

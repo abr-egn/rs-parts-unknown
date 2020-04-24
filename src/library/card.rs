@@ -5,10 +5,13 @@ use rand::prelude::*;
 
 use crate::{
     card::{self, Card, Target, TargetSpec},
-    creature::{Creature, CreatureAction, Part, PartAction, PartTag, TagModId},
+    creature::{
+        Creature, CreatureAction, Part, PartAction, PartTag, TagMod, TagModId, WorldExt,
+    },
     event::{Action, Event},
     id_map::Id,
-    trigger::{Trigger, TriggerKind},
+    mod_stack::Mod,
+    trigger::{Trigger, TriggerId, TriggerKind},
     world::World,
     some_or,
 };
@@ -69,13 +72,10 @@ impl card::Behavior for HitPartBehavior {
             id: self.source,
             action: CreatureAction::SpendMP { mp: source_mp },
         }));
-        out.extend(world.execute(&Action::ToCreature {
-            id: creature_id,
-            action: CreatureAction::ToPart {
-                id: part_id,
-                action: PartAction::Hit { damage: self.damage }
-            },
-        }));
+        out.extend(world.execute(&Action::to_part(
+            creature_id, part_id,
+            PartAction::Hit { damage: self.damage }
+        )));
         out
     }
 }
@@ -103,10 +103,37 @@ struct ExpireTagMod {
     mod_: TagModId,
 }
 
+impl ExpireTagMod {
+    fn add(world: &mut World, creature: Id<Creature>, part: Id<Part>, m: TagMod) -> Vec<Event> {
+        let mut out = vec![];
+        let (open_id, open_evs) = world.add_mod(creature, part, m);
+        out.extend(open_evs);
+        out.extend(world.execute(&Action::AddTrigger {
+            trigger: Box::new(ExpireTagMod {
+                creature, part,
+                mod_: open_id,
+            })
+        }));
+        out
+    }
+}
+
 impl Trigger for ExpireTagMod {
     fn name(&self) -> &'static str { "Expire Tag Mod" }
     fn kind(&self) -> TriggerKind { TriggerKind::Expire }
-    fn apply(&mut self, _event: &Event) -> Vec<Action> { vec![] }
+    fn apply(&mut self, this: TriggerId, event: &Event) -> Vec<Action> {
+        match event {
+            Event::NpcTurnEnd => (),
+            _ => return vec![],
+        }
+        vec![
+            Action::to_part(
+                self.creature, self.part,
+                PartAction::ClearTagMod { id: self.mod_ }
+            ),
+            Action::RemoveTrigger { id: this },
+        ]
+    }
 }
 
 pub fn guard() -> Card {
@@ -143,23 +170,14 @@ impl card::Behavior for Guard {
             _ => panic!("invalid target"),
         };
         let mut out = vec![];
-        out.extend(world.execute(&Action::ToCreature {
-            id: self.source_creature,
-            action: CreatureAction::ToPart {
-                id: self.source_part,
-                action: PartAction::SetTags { tags: vec![PartTag::Open] },
-            }
-        }));
-        if Event::is_failure(&out) {
-            return out;
-        }
-        out.extend(world.execute(&Action::ToCreature {
-            id: target_id,
-            action: CreatureAction::ToPart {
-                id: part_id,
-                action: PartAction::ClearTags { tags: vec![PartTag::Open] },
-            }
-        }));
+        out.extend(ExpireTagMod::add(world,
+            self.source_creature, self.source_part,
+            Mod(|tags| { tags.insert(PartTag::Open); })
+        ));
+        out.extend(ExpireTagMod::add(world,
+            target_id, part_id,
+            Mod(|tags| { tags.remove(&PartTag::Open); })
+        ));
         out
     }
 }
@@ -197,13 +215,10 @@ impl card::Behavior for Stagger {
         if part_ids.is_empty() { return vec![]; }
 
         let ix = thread_rng().gen_range(0, part_ids.len());
-        world.execute(&Action::ToCreature{
-            id: target_id,
-            action: CreatureAction::ToPart {
-                id: part_ids[ix],
-                action: PartAction::SetTags { tags: vec![PartTag::Open] }
-            }
-        })
+        world.execute(&Action::to_part(
+            target_id, part_ids[ix],
+            PartAction::SetTags { tags: vec![PartTag::Open] }
+        ))
     }
 }
 
@@ -228,7 +243,7 @@ arms:
     [+] 2 ranged light attack
     [+] 2 defense
 legs:
-    [ ] 2 stagger
+    [+] 2 stagger
 torso:
     [ ] 1 heal
 head:

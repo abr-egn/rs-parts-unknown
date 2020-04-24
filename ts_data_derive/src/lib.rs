@@ -235,13 +235,14 @@ impl<'ast> Visit<'ast> for TranslateType {
             // Native types
             "i32" => { self.push_str("number"); }
             "String" => { self.push_str("string"); }
-            "ModId" | "TriggerId" => { self.push_str("number"); }
             "bool" => { self.push_str("boolean"); }
-            // De-path
+            // Mangle
             "card::Card" => { self.push_str("Card"); }
             "creature::Creature" => { self.push_str("Creature"); }
             "creature::Part" => { self.push_str("Part"); }
             "hex::Direction" => { self.push_str("Direction"); }
+            "TagModId" => { self.push_str("Id<TagMod>"); }
+            "TriggerId" => { self.push_str("Id<Trigger>"); }
             // Pass through
             s if TranslateType::is_passthrough(s) => {
                 self.push_str(s);
