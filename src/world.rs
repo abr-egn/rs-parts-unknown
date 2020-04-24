@@ -275,8 +275,9 @@ impl World {
     }
 
     fn trigger_order(&self) -> Vec<TriggerId> {
-        // TODO: non-arbitrary order
-        self.triggers.keys().cloned().collect()
+        let mut tmp: Vec<_> = self.triggers.iter().collect();
+        tmp.sort_by(|(_, a), (_, b)| a.kind().cmp(&b.kind()));
+        tmp.into_iter().map(|(id, _)| *id).collect()
     }
 
     fn resolve(&mut self, action: &Action) -> Result<Vec<Event>> {
