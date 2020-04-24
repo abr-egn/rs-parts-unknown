@@ -5,9 +5,10 @@ use rand::prelude::*;
 
 use crate::{
     card::{self, Card, Target, TargetSpec},
-    creature::{Creature, CreatureAction, Part, PartAction, PartTag},
+    creature::{Creature, CreatureAction, Part, PartAction, PartTag, TagModId},
     event::{Action, Event},
     id_map::Id,
+    trigger::{Trigger, TriggerKind},
     world::World,
     some_or,
 };
@@ -93,6 +94,19 @@ pub fn punch() -> Card {
         ap_cost: 1,
         start_play: |world, source, part| HitPart { damage: 10, tags: vec![vec![]], melee: true }.behavior(world, source, part),
     }
+}
+
+#[derive(Debug, Clone)]
+struct ExpireTagMod {
+    creature: Id<Creature>,
+    part: Id<Part>,
+    mod_: TagModId,
+}
+
+impl Trigger for ExpireTagMod {
+    fn name(&self) -> &'static str { "Expire Tag Mod" }
+    fn kind(&self) -> TriggerKind { TriggerKind::Expire }
+    fn apply(&mut self, _event: &Event) -> Vec<Action> { vec![] }
 }
 
 pub fn guard() -> Card {

@@ -63,13 +63,6 @@ impl World {
     pub fn creatures(&self) -> &IdMap<Creature> { &self.creatures }
     pub fn triggers(&self) -> &IdMap<Box<dyn Trigger>> { &self.triggers }
 
-    pub fn triggered_by(&self, action: &Action) -> Vec<TriggerId> {
-        self.triggers.iter()
-            .filter(|(_, t)| t.applies(action))
-            .map(|(id, _)| *id)
-            .collect()
-    }
-
     pub fn state(&self) -> GameState {
         let player = self.creatures.get(self.player_id).unwrap();
         if player.dead {
@@ -264,8 +257,7 @@ impl World {
                 None => continue,
                 Some(t) => t,
             };
-            if !trigger.applies(&action) { continue; }
-            let added: Vec<_> = events.iter().flat_map(|event| trigger.apply(&action, &event)).collect();
+            let added: Vec<_> = events.iter().flat_map(|event| trigger.apply(&event)).collect();
             let mut sub_skip = skip.clone();
             sub_skip.insert(id);
             for act in &added {

@@ -17,7 +17,6 @@ use crate::{
         from_js_value, to_js_value,
     },
     world,
-    some_or,
 };
 
 #[wasm_bindgen]
@@ -130,18 +129,6 @@ impl World {
     }
 
     #[wasm_bindgen(skip_typescript)]
-    pub fn triggeredBy(&self, action: JsValue) -> Array /* string[] */ {
-        let action: Action = from_js_value(action);
-        let triggers = self.wrapped.triggered_by(&action);
-        let out = Array::new();
-        for trigger_id in triggers {
-            let t = some_or!(self.wrapped.triggers().get(trigger_id), continue);
-            out.push(&JsValue::from(t.name()));
-        }
-        out
-    }
-
-    #[wasm_bindgen(skip_typescript)]
     pub fn path(&self, from: JsValue, to: JsValue) -> Array /* Hex[] */ {
         let from: Hex = from_js_value(from);
         let to: Hex = from_js_value(to);
@@ -232,7 +219,6 @@ interface World {
     getCreatureRange(id: Id<Creature>): Hex[];
     checkSpendAP(id: Id<Creature>, ap: number): boolean;
     startPlay(creatureId: Id<Creature>, handIx: number): InPlay | undefined;
-    triggeredBy(action: Action): string[];
     path(from: Hex, to: Hex): Hex[];
     state(): GameState;
     simulateMove(to: Hex): Event[];

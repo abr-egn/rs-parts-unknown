@@ -233,7 +233,7 @@ impl Creature {
     pub fn npc_mut(&mut self) -> Option<&mut NPC> { self.npc.as_mut() }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, TsData)]
+#[derive(Debug, Clone, Serialize, TsData)]
 pub enum CreatureAction {
     GainAP { ap: i32 },
     SpendAP { ap: i32 },
@@ -245,7 +245,7 @@ pub enum CreatureAction {
     Discard { part: Id<Part>, card: Id<Card> }
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, TsData)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TsData)]
 pub enum CreatureEvent {
     ChangeAP { delta: i32 },
     ChangeMP { delta: i32 },
@@ -359,7 +359,7 @@ impl Part {
     }
 }
 
-#[derive(Debug, Clone, Deserialize, Serialize, TsData)]
+#[derive(Debug, Clone, Serialize, TsData)]
 pub enum PartAction {
     Hit { damage: i32 },
     SetTags { tags: Vec<PartTag> },
@@ -370,21 +370,20 @@ pub enum PartAction {
     },
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Deserialize, Serialize, TsData)]
+pub type TagModId = Id<Mod<HashSet<PartTag>>>;
+
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, TsData)]
 pub enum PartEvent {
     ChangeHP { delta: i32 },
     TagsSet { tags: Vec<PartTag> },
     TagsCleared { tags: Vec<PartTag> },
     TagsModded {
         #[serde(skip)]
-        #[serde(default = "fake_id")]
-        id: Id<Mod<HashSet<PartTag>>>
+        id: TagModId
     },
 }
 
-fn fake_id() -> Id<Mod<HashSet<PartTag>>> { Id::synthesize(0) }
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Deserialize, Serialize, TsData)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, TsData)]
 pub enum PartTag {
     // State
     Vital, Broken, Open,

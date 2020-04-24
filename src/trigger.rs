@@ -6,8 +6,7 @@ use crate::{
 pub trait Trigger: TriggerClone + std::fmt::Debug + Send {
     fn name(&self) -> &'static str;
     fn kind(&self) -> TriggerKind;
-    fn applies(&self, action: &Action) -> bool;
-    fn apply(&mut self, action: &Action, event: &Event) -> Vec<Action>;
+    fn apply(&mut self, event: &Event) -> Vec<Action>;
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]

@@ -1,5 +1,5 @@
 use hex::Hex;
-use serde::{Deserialize, Serialize};
+use serde::{Serialize};
 use ts_data_derive::TsData;
 use wasm_bindgen::prelude::wasm_bindgen;
 use crate::{
@@ -9,12 +9,11 @@ use crate::{
     serde_empty,
 };
 
-#[derive(Debug, Clone, Deserialize, Serialize, TsData)]
+#[derive(Debug, Clone, Serialize, TsData)]
 pub enum Action {
     #[serde(with = "serde_empty")]
     Nothing,
     MoveCreature { id: Id<Creature>, to: Hex },
-    //HitCreature { id: Id<Creature>, damage: i32 },
     ToCreature { id: Id<Creature>, action: CreatureAction },
 }
 
