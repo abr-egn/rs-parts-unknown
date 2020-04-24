@@ -188,8 +188,7 @@ impl World {
         ));
 
         // Player end turn triggers
-        events.push(Event::PlayerTurnEnd);
-        events.extend(self.apply_triggers(&HashSet::new(), &[Event::PlayerTurnEnd]));
+        events.extend(self.system_event(Event::PlayerTurnEnd));
         
         // NPC turns
         let mut npc_plays = vec![];
@@ -229,8 +228,7 @@ impl World {
         }
 
         // NPC end turn triggers
-        events.push(Event::NpcTurnEnd);
-        events.extend(self.apply_triggers(&HashSet::new(), &[Event::NpcTurnEnd]));
+        events.extend(self.system_event(Event::NpcTurnEnd));
 
         events
     }
@@ -243,7 +241,6 @@ impl World {
         skip: &HashSet<TriggerId>,
     ) -> Vec<Event> {
         let mut out = vec![];
-        self.tracer.as_ref().map(|t| t.start_action(action));
         let events = self.resolve(action).unwrap_or_else(|err|
             vec![Event::Failed {
                 action: action.clone(),
@@ -253,6 +250,13 @@ impl World {
         self.tracer.as_ref().map(|t| t.resolve_action(&action, &events));
         out.extend(events.clone());
         out.extend(self.apply_triggers(skip, &events));
+        out
+    }
+
+    fn system_event(&mut self, event: Event) -> Vec<Event> {
+        let mut out = vec![event.clone()];
+        out.extend(self.apply_triggers(&HashSet::new(), &[event]));
+        self.tracer.as_ref().map(|t| t.system_event(&out));
         out
     }
 
@@ -363,9 +367,8 @@ pub enum GameState {
 }
 
 pub trait Tracer: std::fmt::Debug + TracerClone {
-    fn start_action(&self, action: &Action);
-    fn mod_action(&self, mod_name: &str, new: &Action);
     fn resolve_action(&self, action: &Action, events: &[Event]);
+    fn system_event(&self, events: &[Event]);
 }
 
 pub trait TracerClone {

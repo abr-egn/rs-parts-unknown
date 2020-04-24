@@ -117,14 +117,15 @@ export class Game {
 }
 
 export class ConsoleTracer implements wasm.Tracer {
-    startAction(action: any) {
+    resolveAction(action: wasm.Action, events: [wasm.Event]) {
         console.log("ACTION:", action);
-    }
-    modAction(name: string, new_: any) {
-        console.log(" [%s]", name, " ->", new_);
-    }
-    resolveAction(action: any, events: [wasm.Event]) {
         for (let event of events) {
+            console.log("==>", event);
+        }
+    }
+    systemEvent(events: [wasm.Event]) {
+        console.log("SYSTEM:", events[0]);
+        for (let event of events.slice(1)) {
             console.log("==>", event);
         }
     }
@@ -133,14 +134,11 @@ export class ConsoleTracer implements wasm.Tracer {
 export class BufferTracer implements wasm.Tracer {
     private _buffer: (() => void)[] = [];
     constructor(private _wrapped: wasm.Tracer) {}
-    startAction(action: any) {
-        this._buffer.push(() => this._wrapped.startAction(action));
-    }
-    modAction(name: string, new_: any) {
-        this._buffer.push(() => this._wrapped.modAction(name, new_));
-    }
-    resolveAction(action: any, events: [wasm.Event]) {
+    resolveAction(action: wasm.Action, events: [wasm.Event]) {
         this._buffer.push(() => this._wrapped.resolveAction(action, events));
+    }
+    systemEvent(events: [wasm.Event]) {
+        this._buffer.push(() => this._wrapped.systemEvent(events));
     }
     runBuffer() {
         for (let thunk of this._buffer) {
