@@ -5,12 +5,12 @@ use quote::{quote, quote_spanned};
 use syn::{
     self,
     parse_macro_input,
-    visit_mut::{self, VisitMut},
+    visit::{self, Visit},
 };
 
 macro_rules! append {
-    ($buf:ident, $($args:tt)*) => {
-        $buf.push_str(&format!($($args)*));
+    ($buf:expr, $($args:tt)*) => {
+        ($buf).push_str(&format!($($args)*));
     }
 }
 
@@ -35,12 +35,7 @@ pub fn ts_data_derive(input: TokenStream) -> TokenStream {
     tokens.into()
 }
 
-fn derive_impl(ast: syn::DeriveInput) -> Result<String, Error> {
-    let mut ast = ast;
-    let mut mapper = TypeMapper::new();
-    visit_mut::visit_derive_input_mut(&mut mapper, &mut ast);
-    if let Some(e) = mapper.error { return Err(e); }
-
+fn derive_impl(ast: syn::DeriveInput) -> Result<String, Error> {    
     let mut output: String = String::new();
     append!(output, "\n/* TsData Generated */\n");
     match ast.data {
@@ -65,14 +60,6 @@ fn is_skip(attr: &syn::Attribute) -> bool {
     name == "serde" && tokens == "(skip)"
 }
 
-
-fn is_skip_dbg(attr: &syn::Attribute) -> bool {
-    let name = path_name(&attr.path);
-    let tokens = attr.tokens.to_string();
-    println!("is_skip({:?}, {:?})", name, tokens);
-    name == "serde" && tokens == "(skip)"
-}
-
 fn build_enum(buffer: &mut String, name: &syn::Ident, data: &syn::DataEnum) -> Result<(), Error> {
     let all_simple: bool = data.variants.iter()
         .all(|v| v.fields == syn::Fields::Unit);
@@ -87,7 +74,7 @@ fn build_enum(buffer: &mut String, name: &syn::Ident, data: &syn::DataEnum) -> R
             syn::Fields::Unit => append!(buffer, "{{}}\n"),
             syn::Fields::Named(n) => {
                 append!(buffer, "{{\n");
-                build_fields(buffer, "        ", n);
+                build_fields(buffer, "        ", n)?;
                 append!(buffer, "    }},\n");
             }
             v => return Err(Error {
@@ -108,19 +95,165 @@ fn build_simple_enum(buffer: &mut String, name: &syn::Ident, data: &syn::DataEnu
     append!(buffer, ";");
 }
 
-fn build_fields(buffer: &mut String, pad: &str, fields: &syn::FieldsNamed) {
+fn build_fields(buffer: &mut String, pad: &str, fields: &syn::FieldsNamed) -> Result<(), Error> {
     for v in &fields.named {
-        if v.attrs.iter().any(is_skip_dbg) { continue; }
+        if v.attrs.iter().any(is_skip) { continue; }
         let ident = v.ident.as_ref().expect("field ident");
-        if let Some(ty) = extract_generic("Option", &v.ty) {
-            append!(buffer, "{}{}?: {},\n", pad, ident, quote! { #ty });
-        } else if let Some(ty) = extract_generic("Vec", &v.ty) {
-            append!(buffer, "{}{}: {}[],\n", pad, ident, quote! { #ty });
-        } else if let Some(ty) = extract_generic("Box", &v.ty) {
-            append!(buffer, "{}{}: {},\n", pad, ident, quote! { #ty });
-        } else {
-            let ty = &v.ty;
-            append!(buffer, "{}{}: {},\n", pad, ident, quote! { #ty });
+        let mut trans = TranslateType::new();
+        trans.flag_optional = true;
+        trans.visit_type(&v.ty);
+        if let Some(err) = trans.error {
+            return Err(err);
+        }
+        if trans.out.len() != 1 {
+            return Err(Error {
+                text: format!("Invalid translated type {:?}", trans.out),
+                span: ident.span(),
+            })
+        }
+        append!(buffer, "{}{}", pad, ident);
+        if trans.is_optional {
+            append!(buffer, "?");
+        }
+        append!(buffer, ": {},\n", trans.out[0])
+    }
+    Ok(())
+}
+
+struct TranslateType {
+    out: Vec<String>,
+    flag_optional: bool,
+    is_optional: bool,
+    error: Option<Error>,
+}
+
+impl TranslateType {
+    fn new() -> Self {
+        TranslateType { out: vec![], flag_optional: false, is_optional: false, error: None }
+    }
+    fn is_passthrough(s: &str) -> bool {
+        match s {
+            "Action" => (),
+            "ActionKind" => (),
+            "Card" => (),
+            "Creature" => (),
+            "CreatureAction" => (),
+            "CreatureEvent" => (),
+            "Direction" => (),
+            "Event" => (),
+            "Hex" => (),
+            "Intent" => (),
+            "IntentKind" => (),
+            "Motion" => (),
+            "MotionKind" => (),
+            "NPC" => (),
+            "Part" => (),
+            "PartAction" => (),
+            "PartEvent" => (),
+            "PartTag" => (),
+            "Range" => (),
+            "Space" => (),
+            "Target" => (),
+            "TargetSpec" => (),
+            _ => return false,
+        }
+        true
+    }
+    fn push_str<S: Into<String>>(&mut self, s: S) {
+        self.out.push(s.into());
+    }
+}
+
+impl<'ast> Visit<'ast> for TranslateType {
+    fn visit_path(&mut self, path: &'ast syn::Path) {
+        let name = path_name(path);
+        let span = path.segments.first().expect("first").ident.span();
+        match &name as &str {
+            // Structural translations
+            "Box" => visit::visit_path(self, path),
+            "HashMap" => {
+                let mut tmp = TranslateType::new();
+                visit::visit_path(&mut tmp, path);
+                match &tmp.out as &[String] {
+                    [k, v] => self.out.push(format!("Map<{}, {}>", k, v)),
+                    _ => {
+                        self.error = Some(Error {
+                            text: format!("invalid HashMap args {:?}", &tmp.out),
+                            span,
+                        });
+                        return;
+                    }
+                }
+            }
+            "Id" => {
+                let mut tmp = TranslateType::new();
+                visit::visit_path(&mut tmp, path);
+                match &tmp.out as &[String] {
+                    [s] => self.out.push(format!("Id<{}>", s)),
+                    _ => {
+                        self.error = Some(Error {
+                            text: format!("invalid Id args {:?}", &tmp.out),
+                            span,
+                        });
+                        return;
+                    }
+                }
+            }
+            "Option" => {
+                if self.flag_optional {
+                    self.is_optional = true;
+                    visit::visit_path(self, path);
+                } else {
+                    let mut tmp = TranslateType::new();
+                    visit::visit_path(&mut tmp, path);
+                    match &tmp.out as &[String] {
+                        [s] => self.out.push(format!("{} | undefined", s)),
+                        _ => {
+                            self.error = Some(Error {
+                                text: format!("invalid Option args {:?}", &tmp.out),
+                                span,
+                            });
+                            return;
+                        }
+                    }
+                }
+            }
+            "Vec" => {
+                let mut tmp = TranslateType::new();
+                visit::visit_path(&mut tmp, path);
+                match &tmp.out as &[String] {
+                    [s] => self.out.push(format!("{}[]", s)),
+                    _ => {
+                        self.error = Some(Error {
+                            text: format!("invalid Vec args {:?}", &tmp.out),
+                            span,
+                        });
+                        return;
+                    }
+                }
+            }
+            // Native types
+            "i32" => { self.push_str("number"); }
+            "String" => { self.push_str("string"); }
+            "ModId" | "TriggerId" => { self.push_str("number"); }
+            "bool" => { self.push_str("boolean"); }
+            // De-path
+            "card::Card" => { self.push_str("Card"); }
+            "creature::Creature" => { self.push_str("Creature"); }
+            "creature::Part" => { self.push_str("Part"); }
+            "hex::Direction" => { self.push_str("Direction"); }
+            // Pass through
+            s if TranslateType::is_passthrough(s) => {
+                self.push_str(s);
+            }
+            // Error
+            _ => {
+                self.error = Some(Error {
+                    text: format!("unhandled type {}", name),
+                    span,
+                });
+                return;
+            },
         }
     }
 }
@@ -134,119 +267,9 @@ fn build_struct(buffer: &mut String, name: &syn::Ident, data: &syn::DataStruct) 
             span: name.span(),
         })
     };
-    build_fields(buffer, "    ", fields);
+    build_fields(buffer, "    ", fields)?;
     append!(buffer, "}}");
     Ok(())
-}
-
-fn extract_generic<'a>(name: &str, ty: &'a syn::Type) -> Option<&'a syn::Type> {
-    let path = match ty {
-        syn::Type::Path(p) => &p.path,
-        _ => return None,
-    };
-    if path.segments.len() != 1 {
-        return None;
-    }
-    let segment = &path.segments[0];
-    if segment.ident.to_string() != name {
-        return None;
-    }
-    let args = match &segment.arguments {
-        syn::PathArguments::AngleBracketed(ab) => &ab.args,
-        _ => return None,
-    };
-    if args.len() != 1 {
-        return None;
-    }
-    match &args[0] {
-        syn::GenericArgument::Type(t) => return Some(t),
-        _ => return None,
-    }
-}
-
-struct TypeMapper {
-    error: Option<Error>,
-}
-
-impl TypeMapper {
-    fn new() -> Self { TypeMapper { error: None }}
-}
-
-impl VisitMut for TypeMapper {
-    fn visit_attribute_mut(&mut self, _: &mut syn::Attribute) { }
-    fn visit_path_mut(&mut self, path: &mut syn::Path) {
-        if self.error.is_some() { return; }
-        let name = path_name(path);
-        let span = path.segments.first().expect("first").ident.span();
-        match &name as &str {
-            // Pass through
-            "Action" => (),
-            "ActionKind" => (),
-            "Box" => (),
-            "Card" => (),
-            "Creature" => (),
-            "CreatureAction" => (),
-            "CreatureEvent" => (),
-            "Direction" => (),
-            "Event" => (),
-            "Hex" => (),
-            "Id" => (),
-            "Intent" => (),
-            "IntentKind" => (),
-            "Motion" => (),
-            "MotionKind" => (),
-            "NPC" => (),
-            "Option" => (),
-            "Part" => (),
-            "PartAction" => (),
-            "PartEvent" => (),
-            "PartTag" => (),
-            "Range" => (),
-            "Space" => (),
-            "Target" => (),
-            "TargetSpec" => (),
-            "Vec" => (),
-            // De-path
-            "card::Card" => replace_all(path, "Card"),
-            "creature::Creature" => replace_all(path, "Creature"),
-            "creature::Part" => replace_all(path, "Part"),
-            "hex::Direction" => replace_all(path, "Direction"),
-            // Native types
-            "HashMap" => replace_first(path, "Map"),
-            "i32" => replace_first(path, "number"),
-            "String" => replace_first(path, "string"),
-            "ModId" | "TriggerId" => replace_first(path, "number"),
-            "bool" => replace_first(path, "boolean"),
-
-            _ => {
-                self.error = Some(Error {
-                    text: format!("unhandled type {}", name),
-                    span,
-                });
-                return;
-            },
-        }
-        for s in &mut path.segments {
-            self.visit_path_segment_mut(s);
-        }
-    }
-    fn visit_field_mut(&mut self, v: &mut syn::Field) {
-        if v.attrs.iter().any(is_skip) { return; }
-        visit_mut::visit_field_mut(self, v);
-    }
-}
-
-fn replace_first(path: &mut syn::Path, ident: &str) {
-    path.segments[0].ident = syn::Ident::new(ident, path.segments[0].ident.span());
-}
-
-fn replace_all(path: &mut syn::Path, ident: &str) {
-    let mut segments = syn::punctuated::Punctuated::new();
-    segments.push(syn::PathSegment {
-        ident: syn::Ident::new(ident, path.segments[0].ident.span()),
-        arguments: syn::PathArguments::None,
-    });
-    path.segments = segments;
 }
 
 fn path_name(path: &syn::Path) -> String {
@@ -255,5 +278,6 @@ fn path_name(path: &syn::Path) -> String {
         out.push_str("::");
         out.push_str(&s.ident.to_string())
     }
+    //println!("{:?} / {:?}", out, path.to_token_stream().to_string());
     out
 }
