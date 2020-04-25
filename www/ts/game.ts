@@ -4,10 +4,13 @@ import * as React from "react";
 import * as wasm from "../wasm";
 import {Id} from "../wasm";
 
+import {hexToPixel} from "./draw";
 import {GameBoard} from "./game_board";
 import * as stack from "./stack";
 
+import {FloatText} from "../tsx/float";
 import {Index} from "../tsx/index";
+import { Highlight } from "./highlight";
 
 declare global {
     interface Window {
@@ -28,6 +31,7 @@ export class Game {
     private _stack: stack.Stack;
     private _board: GameBoard;
     private _keys: Map<string, boolean> = new Map();
+    private _float: FloatText.ItemSet = new FloatText.ItemSet();
     constructor() {
         this._onUpdate = this._onUpdate.bind(this);
 
@@ -82,7 +86,7 @@ export class Game {
     // Mutators
 
     async updateWorld(events: wasm.Event[], world: wasm.World, preview: (ev: wasm.Event) => void) {
-        await this._board.animateEvents(events, preview);
+        await this._animateEvents(events, preview);
         this._world.free();
         this._world = world;
         this._board.updateWorld(this._world);
@@ -92,11 +96,41 @@ export class Game {
 
     // Private
 
+    private async _animateEvents(events: wasm.Event[], preview: (ev: wasm.Event) => void) {
+        for (let event of events) {
+            preview(event);
+            let data;
+            if (data = event.CreatureMoved) {
+                await this._board.moveCreatureTo(data.id, hexToPixel(data.to))
+            } else if (data = event.OnCreature) {
+                let ce;
+                if (ce = data.event.OnPart) {
+                    let pe;
+                    if (pe = ce.event.ChangeHP) {
+                        const float = this._board.hpFloat(data.id, ce.id, pe.delta);
+                        float.style!.animationName = "floatLift";
+                        this._float.add(float);
+                        this._onUpdate();
+                        await new Promise(f => setTimeout(f, 2000));
+                        this._float.delete(float);
+                        this._onUpdate();
+                    }
+                }
+            }
+        }
+    }
+
     private _onUpdate() {
+        const floats = this._float.all;
+        const hiFloats = this._stack.data().get(Highlight)?.float;
+        if (hiFloats) {
+            floats.push(...hiFloats);
+        }
         let element = React.createElement(Index, {
             world: this._world,
             data: this._stack.data(),
             intents: this._getIntents(),
+            floats,
         }, null);
         ReactDOM.render(element, document.getElementById("root"));
     }

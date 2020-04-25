@@ -1,14 +1,16 @@
 import {
-    Creature, Event, Hex, Id, Part, Tile, World,
+    Creature, Hex, Id, Part, Tile, World,
 } from "../wasm";
 
 import {
-    Draw, FloatText,
+    Draw,
     hexToPixel, pixelToHex,
 } from "./draw";
 import {Highlight} from "./highlight";
 import {Stack} from "./stack";
 import * as states from "./states";
+
+import {FloatText} from "../tsx/float";
 
 export class GameBoard implements GameBoard.View {
     private readonly _draw: Draw;
@@ -17,7 +19,6 @@ export class GameBoard implements GameBoard.View {
     private _frameWaits: ((value: number) => void)[] = [];
     private _creaturePos: Map<Id<Creature>, DOMPointReadOnly> = new Map();
     private _cache!: WorldCache;
-    private _floatText: Set<FloatText> = new Set();
     constructor(
             canvas: HTMLCanvasElement,
             world: World,
@@ -50,45 +51,17 @@ export class GameBoard implements GameBoard.View {
         }
     }
 
-    async animateEvents(events: Event[], preview: (ev: Event) => void) {
-        for (let event of events) {
-            preview(event);
-            let data;
-            if (data = event.CreatureMoved) {
-                await this._moveCreatureTo(data.id, hexToPixel(data.to))
-            } else if (data = event.OnCreature) {
-                let ce;
-                if (ce = data.event.OnPart) {
-                    let pe;
-                    if (pe = ce.event.ChangeHP) {
-                        const FLOAT_SPEED = 10.0;
-
-                        const float = this.hpFloat(data.id, ce.id, pe.delta);
-                        this._floatText.add(float);
-                        const start = this._tsMillis;
-                        let now = this._tsMillis;
-                        while (now - start < 2000) {
-                            const tmp = await this._nextFrame();
-                            const delta = tmp - now;
-                            now = tmp;
-                            float.pos.y -= FLOAT_SPEED*(delta/1000);
-                        }
-                        this._floatText.delete(float);
-                    }
-                }
-            }
-        }
-    }
-
-    hpFloat(creatureId: Id<Creature>, partId: Id<Part>, delta: number): FloatText {
+    hpFloat(creatureId: Id<Creature>, partId: Id<Part>, delta: number): FloatText.Item {
         const creature = this._cache.creatures.get(creatureId)!;
         const part = creature.parts.get(partId)!;
-        let point = this._creaturePos.get(creatureId)!;
+        let point = this._draw.elementCoords(this._creaturePos.get(creatureId)!);
         const sign = delta < 0 ? "-" : "+";
         return {
             pos: new DOMPoint(point.x, point.y),
             text: `${part.name}: ${sign}${Math.abs(delta)} HP`,
-            style: "#FF0000",
+            style: {
+                color: "#FF0000",
+            },
         };
     }
 
@@ -102,11 +75,7 @@ export class GameBoard implements GameBoard.View {
         return this._draw.elementCoords(hexToPixel(hex));
     }
 
-    private _nextFrame(): Promise<DOMHighResTimeStamp> {
-        return new Promise((resolve) => this._frameWaits.push(resolve));
-    }
-
-    private async _moveCreatureTo(id: number, dest: DOMPointReadOnly) {
+    async moveCreatureTo(id: number, dest: DOMPointReadOnly) {
         const MOVE_SPEED = 2.0;
 
         let start = this._creaturePos.get(id);
@@ -122,6 +91,10 @@ export class GameBoard implements GameBoard.View {
             let y = start.y + (dest.y - start.y)*progress;
             this._creaturePos.set(id, new DOMPointReadOnly(x, y));
         }
+    }
+
+    private _nextFrame(): Promise<DOMHighResTimeStamp> {
+        return new Promise((resolve) => this._frameWaits.push(resolve));
     }
 
     private _frame(tsMillis: DOMHighResTimeStamp) {
@@ -156,10 +129,6 @@ export class GameBoard implements GameBoard.View {
 
         this._drawHighlight(this._data.get(Highlight));
 
-        for (let float of this._floatText) {
-            this._draw.floatText(float);
-        }
-
         for (let resolve of this._frameWaits) {
             resolve(this._tsMillis);
         }
@@ -178,9 +147,6 @@ export class GameBoard implements GameBoard.View {
         }
         for (let hex of hi.throb) {
             this._draw.throb(hex, this._tsMillis);
-        }
-        for (let float of hi.float) {
-            this._draw.floatText(float);
         }
     }
 
@@ -218,7 +184,7 @@ export namespace GameBoard {
 
     export interface View {
         hexCoords(hex: Hex): DOMPointReadOnly;
-        hpFloat(creatureId: Id<Creature>, partId: Id<Part>, delta: number): FloatText;    
+        hpFloat(creatureId: Id<Creature>, partId: Id<Part>, delta: number, inElement?: boolean): FloatText.Item;
     }
 }
 

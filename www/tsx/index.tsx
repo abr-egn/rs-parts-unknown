@@ -1,12 +1,12 @@
 import * as React from "react";
 
 import * as wasm from "../wasm";
-import {Id} from "../wasm";
 
 import {Stack} from "../ts/stack";
 import * as states from "../ts/states";
 
 import {CreatureStats, CreatureIntent} from "./creature";
+import {FloatText} from "./float";
 import {PlayerControls} from "./player";
 import {TargetPart} from "./target";
 
@@ -17,6 +17,7 @@ export function Index(props: {
     world: wasm.World,
     data: Stack.DataView,
     intents: [wasm.Creature, DOMPointReadOnly][],
+    floats: FloatText.ItemId[],
 }): JSX.Element {
     const world = props.world;
 
@@ -32,17 +33,20 @@ export function Index(props: {
             <CreatureIntent key={creature.id} creature={creature} coords={point}></CreatureIntent>);
     }
 
+    let floats: JSX.Element[] = props.floats.map((ft) => {
+        return <FloatText key={ft.id} item={ft}></FloatText>;
+    });
+
     return (
     <StackData.Provider value={props.data}>
-    <WorldContext.Provider value={props.world}>
-        <div>
+        <WorldContext.Provider value={props.world}>
             <div className="topleft"><PlayerControls/></div>
             <div className="topright">{creatures}</div>
             {intents}
+            {floats}
             <TargetPart/>
             <GameOver/>
-        </div>
-    </WorldContext.Provider>
+        </WorldContext.Provider>
     </StackData.Provider>);
 }
 

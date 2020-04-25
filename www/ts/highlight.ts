@@ -1,8 +1,10 @@
 import * as wasm from "../wasm";
 import {Hex, Id} from "../wasm";
-import {FloatText} from "./draw";
 import {Stack} from "./stack";
 
+import {FloatText} from "../tsx/float";
+
+// TODO: split stat preview out of this
 export class Highlight {
     [Stack.Datum] = true;
 
@@ -10,23 +12,23 @@ export class Highlight {
     range: wasm.Boundary[] = [];
 
     private _stats: StatMap = new Map();
-    private _float: FloatText[] = [];
+    private _float: FloatText.ItemSet = new FloatText.ItemSet();
     private _throb: Hex[] = [];
 
     get stats(): Readonly<StatMap> { return this._stats; }
-    get float(): Readonly<FloatText[]> { return this._float; }
+    get float(): Readonly<FloatText.ItemId[]> { return this._float.all }
     get throb(): Readonly<Hex[]> { return this._throb; }
-    
+
     setEvents(events: Readonly<wasm.Event[]>) {
         this._stats = new Map();
-        this._float = [];
+        this._float = new FloatText.ItemSet();
         this._throb = [];
         for (let event of events) {
-            this.addEvents(event);
+            this.addEvent(event);
         }
     }
 
-    addEvents(event: Readonly<wasm.Event>, statOnly?: boolean) {
+    addEvent(event: Readonly<wasm.Event>, statOnly?: boolean) {
         let ev;
         if (ev = event.OnCreature) {
             let oc;
@@ -39,7 +41,7 @@ export class Highlight {
                 if (op = oc.event.ChangeHP) {
                     this._addHpDelta(ev.id, oc.id, op.delta);
                     if (!statOnly) {
-                        this._float.push(window.game.board.hpFloat(ev.id, oc.id, op.delta));
+                        this._float.add(window.game.board.hpFloat(ev.id, oc.id, op.delta, true));
                     }
                 }
             }

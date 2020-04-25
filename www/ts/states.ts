@@ -286,7 +286,7 @@ export class Update extends State {
         const preview = (ev: wasm.Event) => {
             this.update((draft) => {
                 let hi = draft.build(Highlight);
-                hi.addEvents(ev, true);
+                hi.addEvent(ev, true);
             });
         };
         this.update((draft) => {

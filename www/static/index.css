@@ -72,6 +72,13 @@ div.topright {
 				  1px 1px 2px #000,
 				  1px -1px 0 #000,
                   -1px -1px 0 #000;
+    animation-duration: 2s;
+    animation-timing-function: linear;
+    animation-fill-mode: forwards;
+}
+
+@keyframes floatLift {
+    100% {transform: translate(-50%, -50%) translate(0px, -50px)}
 }
 
 .partHighlight {

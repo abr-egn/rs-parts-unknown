@@ -9,21 +9,6 @@ export class Draw {
         this._ctx.translate(canvas.width / 2, canvas.height / 2);
     }
 
-    // TODO: replace this with css-animated translate
-    floatText(float: FloatText) {
-        this._ctx.save();
-
-        this._ctx.translate(float.pos.x, float.pos.y);
-        this._ctx.font = "16px serif";
-        this._ctx.textAlign = "center";
-
-        this._ctx.fillStyle = float.style;
-        this._ctx.filter = "drop-shadow(-1px 1px 2px black) drop-shadow(1px 1px 2px black) drop-shadow(1px -1px 0 black) drop-shadow(-1px -1px 0 black)";
-        this._ctx.fillText(float.text, 0, 0);
-
-        this._ctx.restore();
-    }
-
     tile(hex: Hex, tile: Tile) {
         this._ctx.save();
 
@@ -151,12 +136,6 @@ export class Draw {
         const measure = this._ctx.measureText(text);
         return measure.actualBoundingBoxAscent + measure.actualBoundingBoxDescent;
     }
-}
-
-export interface FloatText {
-    text: string,
-    pos: DOMPoint,
-    style: string,
 }
 
 const HEX_SIZE = 30;
