@@ -196,14 +196,16 @@ impl Creature {
                     });
                     self.discard.push(card);
                 }
-                let uhand: usize = self.hand_size().try_into().unwrap();
-                if self.draw.len() < uhand {
-                    out.push(CreatureEvent::DeckRecycled);
-                    self.draw.append(&mut self.discard);
-                    self.draw.shuffle(&mut rand::thread_rng());
-                }
-                let udraw = std::cmp::min(self.draw.len(), uhand);
-                for _ in 0..udraw {
+                for _ in 0..self.hand_size() {
+                    if self.draw.is_empty() {
+                        if self.discard.is_empty() {
+                            // TODO: flag failure
+                            return Ok(out);
+                        }
+                        out.push(CreatureEvent::DeckRecycled);
+                        self.draw.append(&mut self.discard);
+                        self.draw.shuffle(&mut rand::thread_rng());
+                    }
                     let card = some_or!(self.draw.pop(), break);
                     out.push(CreatureEvent::Drew { part: card.0, card: card.1 });
                     self.hand.push(card);

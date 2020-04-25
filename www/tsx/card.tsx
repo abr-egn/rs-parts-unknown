@@ -9,7 +9,7 @@ import {WorldContext} from "./index";
 
 export function CardList(props: {
     active: boolean,
-    hand: wasm.Card[],
+    cards: wasm.Card[],
     partHighlight?: Id<wasm.Part>,
     setPartHighlight: (part: Id<wasm.Part> | undefined) => void,
 }): JSX.Element {
@@ -31,7 +31,7 @@ export function CardList(props: {
         props.setPartHighlight(undefined);
     }
   
-    const list = props.hand.map((card, ix) => {
+    const list = props.cards.map((card, ix) => {
         const playable = props.active && canPlay(card);
         let onClick = undefined;
         const classes = [];
@@ -55,8 +55,5 @@ export function CardList(props: {
             </li>
         );
     });
-    return (<div>
-        Hand:
-        <ul>{list}</ul>
-    </div>);
+    return <ul>{list}</ul>;
   }

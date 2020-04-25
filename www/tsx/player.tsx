@@ -36,12 +36,33 @@ export function PlayerControls(props: {}): JSX.Element {
             partHighlight={partHighlight}
             setPartHighlight={setPartHighlight}
         />
-        <CardList
-            active={hasAp && baseActive}
-            hand={player.hand}
-            partHighlight={partHighlight}
-            setPartHighlight={setPartHighlight}
-        />
+        <div>
+            Hand:
+            <CardList
+                active={hasAp && baseActive}
+                cards={player.hand}
+                partHighlight={partHighlight}
+                setPartHighlight={setPartHighlight}
+            />
+        </div>
+        <div>
+            Draw:
+            <CardList
+                active={false}
+                cards={player.draw}
+                partHighlight={partHighlight}
+                setPartHighlight={setPartHighlight}
+            />
+        </div>
+        <div>
+            Discard:
+            <CardList
+                active={false}
+                cards={player.discard}
+                partHighlight={partHighlight}
+                setPartHighlight={setPartHighlight}
+            />
+        </div>
         {inPlay && <div>Playing: {play?.card.name}</div>}
         {baseActive && <EndTurnButton/>}
         {baseActive && hasMp && <button onClick={movePlayer}>Move</button>}
