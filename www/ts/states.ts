@@ -3,8 +3,8 @@ import {Id, Hex} from "../wasm";
 
 import {partToTarget, creatureToTarget} from "./extra";
 import {Highlight} from "./highlight";
+import { Preview } from "./preview";
 import {Stack, State} from "./stack";
-import { StatPreview } from "./stat_preview";
 
 export class Base extends State {
     onActivated() {
@@ -124,7 +124,7 @@ export class PlayCard extends State {
                 const target = creatureToTarget(window.game.creatureAt(hex)!);
                 const events = this._inPlay!.simulate(world, target);
                 this.update((draft) => {
-                    draft.build(Highlight).setEvents(events);
+                    draft.build(Preview).setEvents(events);
                 });
             }
         }
@@ -136,7 +136,7 @@ export class PlayCard extends State {
 
     onTileExited(hex: Hex) {
         this.update((draft) => {
-            draft.build(Highlight).setEvents([]);
+            draft.build(Preview).setEvents([]);
         });
     }
 
@@ -231,14 +231,12 @@ export class TargetPart extends State {
                 const target = partToTarget(part);
                 const events = this._inPlay.simulate(window.game.world, target);
                 this.update((draft) => {
-                    draft.build(Highlight).setEvents(events);
-                    draft.build(StatPreview).setEvents(events);
+                    draft.build(Preview).setEvents(events);
                 });
             },
             onHoverLeave: () => {
                 this.update((draft) => {
-                    draft.build(Highlight).setEvents([]);
-                    draft.build(StatPreview).setEvents([]);
+                    draft.build(Preview).setEvents([]);
                 });
             },
         };
@@ -288,12 +286,11 @@ export class Update extends State {
     async onPushed() {
         const preview = (ev: wasm.Event) => {
             this.update((draft) => {
-                let prev = draft.build(StatPreview);
-                prev.addEvent(ev);
+                draft.build(Preview).addEvent(ev, true);
             });
         };
         this.update((draft) => {
-            draft.set(StatPreview);
+            draft.set(Preview);
         });
         await window.game.updateWorld(this._events, this._nextWorld, preview);
         let state: wasm.GameState;
@@ -336,8 +333,7 @@ export class MovePlayer extends State {
         const world = window.game.world;
         const events = world.simulateMove(hex);
         this.update((draft) => {
-            const hi = draft.build(Highlight);
-            hi.setEvents(events);
+            draft.build(Preview).setEvents(events);
         });
     }
     onTileClicked(hex: Hex) {

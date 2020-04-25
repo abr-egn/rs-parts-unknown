@@ -7,6 +7,7 @@ import {
     hexToPixel, pixelToHex,
 } from "./draw";
 import {Highlight} from "./highlight";
+import { Preview } from "./preview";
 import {Stack} from "./stack";
 import * as states from "./states";
 
@@ -128,6 +129,7 @@ export class GameBoard implements GameBoard.View {
         }
 
         this._drawHighlight(this._data.get(Highlight));
+        this._drawPreview(this._data.get(Preview));
 
         for (let resolve of this._frameWaits) {
             resolve(this._tsMillis);
@@ -145,7 +147,11 @@ export class GameBoard implements GameBoard.View {
         for (let hex of hi.hexes) {
             this._draw.focusedHex(hex);
         }
-        for (let hex of hi.throb) {
+    }
+
+    private _drawPreview(prev: Readonly<Preview> | undefined) {
+        if (!prev) { return; }
+        for (let hex of prev.throb) {
             this._draw.throb(hex, this._tsMillis);
         }
     }

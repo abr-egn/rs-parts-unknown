@@ -2,13 +2,11 @@ import * as ReactDOM from "react-dom";
 import * as React from "react";
 
 import * as wasm from "../wasm";
-import {Id} from "../wasm";
 
 import {hexToPixel} from "./draw";
 import {GameBoard} from "./game_board";
-import {Highlight} from "./highlight";
+import {Preview} from "./preview";
 import * as stack from "./stack";
-import {StatPreview} from "./stat_preview";
 
 import {FloatText} from "../tsx/float";
 import {Index} from "../tsx/index";
@@ -124,9 +122,9 @@ export class Game {
 
     private _onUpdate() {
         const floats = this._float.all;
-        const hiFloats = this._stack.data().get(Highlight)?.float;
-        if (hiFloats) {
-            floats.push(...hiFloats);
+        const prevFloats = this._stack.data().get(Preview)?.float;
+        if (prevFloats) {
+            floats.push(...prevFloats);
         }
         let element = React.createElement(Index, {
             world: this._world,
