@@ -89,6 +89,10 @@ div.topright {
     border: 1px solid white;
 }
 
+.partFocused {
+    border: 1px solid blue;
+}
+
 .partTargetMenu {
     position: absolute;
     border: 1px solid white;

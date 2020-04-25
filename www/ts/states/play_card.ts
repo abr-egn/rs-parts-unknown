@@ -39,7 +39,7 @@ export class PlayCardState extends State {
         }
         const range = this._inPlay.range(world);
         this.update((draft) => {
-            draft.set(PlayCardState.UI, card);
+            draft.set(PlayCardState.UI, card, (target) => this._playOnTarget(target), () => this._inPlay);
             const hi = draft.build(Highlight);
             hi.hexes = [];
             hi.range = wasm.findBoundary(range);
@@ -123,8 +123,8 @@ export class PlayCardState extends State {
         } else if (match = spec.Creature) {
             let creature = window.game.creatureAt(hex);
             if (!creature) { return false; }
-            if (creature.id == world.playerId) { return false; }
-            return true;
+            const target = creatureToTarget(creature);
+            return this._inPlay!.targetValid(world, target);
         }
         return false;
     }
@@ -146,8 +146,14 @@ export class PlayCardState extends State {
 export namespace PlayCardState {
     export class UI {
         [Stack.Datum] = true;
-        updating: boolean = false;
-        constructor (public card: wasm.Card) {}
+        constructor (
+            public card: wasm.Card,
+            public playOnTarget: (target: wasm.Target) => void,
+            private _getInPlay: () => wasm.InPlay | undefined,
+        ) {}
+        get inPlay(): wasm.InPlay | undefined {
+            return this._getInPlay();
+        }
     }
     export class ToUpdate {
         [Stack.Datum] = true;

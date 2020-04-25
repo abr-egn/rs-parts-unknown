@@ -1,12 +1,13 @@
+import {produce} from "immer";
 import * as React from "react";
 
+import {creatureToTarget, partToTarget} from "../ts/extra";
+import {Preview} from "../ts/preview";
+import {Stack} from "../ts/stack";
+import {BaseState} from "../ts/states/base";
+import {PlayCardState} from "../ts/states/play_card";
 import * as wasm from "../wasm";
 import {Id} from "../wasm";
-
-import {Preview} from "../ts/preview";
-
-import {BaseState} from "../ts/states/base";
-
 import {StackData, WorldContext} from "./index";
 
 
@@ -15,34 +16,78 @@ export function CreatureStats(props: {
     partHighlight?: Id<wasm.Part>,
     setPartHighlight?: (part: Id<wasm.Part> | undefined) => void,
 }): JSX.Element {
+    const world = React.useContext(WorldContext);
     const data = React.useContext(StackData);
     const stats = data.get(Preview)?.stats.get(props.creature.id);
     const base = data.get(BaseState.UI);
-    const focused = Boolean(base?.hovered.has(props.creature.id));
+    const [hovered, setHovered] = React.useState(false);
+    const [partHovered, setPartHovered] = React.useState(new Set<Id<wasm.Part>>());
+    const focused = Boolean(base?.hovered.has(props.creature.id)) || hovered;
 
-    const onPartEnter = (part: Id<wasm.Part>, event: React.MouseEvent) => {
+    let canTarget = false;
+    let partTarget: Map<Id<wasm.Part>, wasm.Target> = new Map();
+    const playState = data.get(PlayCardState.UI);
+    const inPlay = playState?.inPlay;
+    if (data.get(Stack.Active)?.is(PlayCardState) && inPlay) {
+        const target = creatureToTarget(props.creature);
+        canTarget = inPlay.targetValid(world, target);
+        for (let part of props.creature.parts.values()) {
+            const target = partToTarget(part);
+            if (inPlay.targetValid(world, target)) {
+                partTarget.set(part.id, target);
+            }
+        }
+    }
+    
+    const onCreatureEnter = () => {
+        if (canTarget) { setHovered(true); }
+    };
+    const onCreatureLeave = () => {
+        if (canTarget) { setHovered(false); }
+    };
+
+    const onPartEnter = (part: wasm.Part) => {
         if (props.setPartHighlight) {
-            props.setPartHighlight(part);
+            props.setPartHighlight(part.id);
+        }
+        if (partTarget.get(part.id)) {
+            setPartHovered(produce(partHovered, (draft) => {
+                draft.add(part.id);
+            }));
         }
     };
-    const onPartLeave = (part: Id<wasm.Part>, event: React.MouseEvent) => {
+    const onPartLeave = (part: wasm.Part) => {
         if (props.setPartHighlight) {
             props.setPartHighlight(undefined);
         }
+        if (partTarget.get(part.id)) {
+            setPartHovered(produce(partHovered, (draft) => {
+                draft.delete(part.id);
+            }));
+        }
     };
+    const onPartClick = (part: wasm.Part) => {
+        const target = partTarget.get(part.id);
+        if (target && playState) {
+            playState.playOnTarget(target);
+        }
+    }
 
-    let sorted = Array.from(props.creature.parts);
-    sorted.sort(([id_a, _p_a], [id_b, _p_b]) => id_a - id_b);
+    let sorted = Array.from(props.creature.parts.values());
+    sorted.sort((a, b) => a.id - b.id);
     let parts = [];
-    for (let [id, part] of sorted) {
+    for (let part of sorted) {
         let classNames = [];
-        if (id == props.partHighlight) {
+        if (part.id == props.partHighlight) {
             classNames.push("partHighlight");
         }
         if (part.tags.includes("Open")) {
             classNames.push("open");
         }
-        let hpDelta = stats?.hpDelta.get(id) || 0;
+        if (partHovered.has(part.id)) {
+            classNames.push("partFocused");
+        }
+        let hpDelta = stats?.hpDelta.get(part.id) || 0;
         const hpStyle: React.CSSProperties = {};
         if (hpDelta < 0) {
             hpStyle.color = "red";
@@ -51,9 +96,10 @@ export function CreatureStats(props: {
         }
         parts.push(
             <li
-                key={id}
-                onMouseEnter={(ev) => onPartEnter(id, ev)}
-                onMouseLeave={(ev) => onPartLeave(id, ev)}
+                key={part.id}
+                onMouseEnter={() => onPartEnter(part)}
+                onMouseLeave={() => onPartLeave(part)}
+                onMouseDown={() => onPartClick(part)}
                 className={classNames.join(" ")}
                 >
                 {part.name}<br/>
@@ -77,7 +123,12 @@ export function CreatureStats(props: {
         mpStyle.color = "green";
     }
 
-    return (<div className={focused?"focusedBox":"uibox"}>
+    return (
+    <div
+        className={focused?"focusedBox":"uibox"}
+        onMouseEnter={onCreatureEnter}
+        onMouseLeave={onCreatureLeave}
+    >
         <div>{props.creature.name}</div>
         <div style={apStyle}>AP: {props.creature.curAp + apDelta}</div>
         <div style={mpStyle}>MP: {props.creature.curMp + mpDelta}</div>

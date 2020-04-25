@@ -171,6 +171,10 @@ export namespace Stack {
         set<C extends Constructor>(key: C, ...args: ConstructorParameters<C>) {
             this._chunks.set(key, new key(...args));
         }
+
+        delete<C extends Constructor>(key: C) {
+            this._chunks.delete(key);
+        }
     }
 
     export class Active {
