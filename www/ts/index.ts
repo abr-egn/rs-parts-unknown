@@ -1,13 +1,13 @@
 import {enableAllPlugins} from "immer";
 
 import {Game} from "./game";
-import {Base} from "./states";
+import {BaseState} from "./states/base";
 
 enableAllPlugins();
 
 function main() {
     const game = new Game();
-    game.stack.push(new Base());
+    game.stack.push(new BaseState());
 }
 
 main();

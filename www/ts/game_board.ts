@@ -7,9 +7,11 @@ import {
     hexToPixel, pixelToHex,
 } from "./draw";
 import {Highlight} from "./highlight";
-import { Preview } from "./preview";
+import {Preview} from "./preview";
 import {Stack} from "./stack";
-import * as states from "./states";
+
+import {BaseState} from "./states/base";
+import {UpdateState} from "./states/update";
 
 import {FloatText} from "../tsx/float";
 
@@ -115,8 +117,8 @@ export class GameBoard implements GameBoard.View {
             this._draw.creature(text, pos);
         }
 
-        if (!this._data.get(Stack.Active)?.is(states.Update)) {
-            const selected = this._data.get(states.Base.UI)?.selected || [];
+        if (!this._data.get(Stack.Active)?.is(UpdateState)) {
+            const selected = this._data.get(BaseState.UI)?.selected || [];
             for (let [id, bounds] of selected) {
                 for (let bound of bounds) {
                     this._draw.boundary(bound);

@@ -3,7 +3,7 @@ import * as React from "react";
 import * as wasm from "../wasm";
 
 import {Stack} from "../ts/stack";
-import * as states from "../ts/states";
+import {GameOverState} from "../ts/states/game_over";
 
 import {CreatureStats, CreatureIntent} from "./creature";
 import {FloatText} from "./float";
@@ -52,7 +52,7 @@ export function Index(props: {
 
 function GameOver(props: {}): JSX.Element | null {
     const data = React.useContext(StackData);
-    const state = data.get(states.GameOver.UI)?.state;
+    const state = data.get(GameOverState.UI)?.state;
     if (!state) { return null; }
     let text: string;
     switch (state) {

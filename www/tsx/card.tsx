@@ -3,7 +3,7 @@ import * as React from "react";
 import * as wasm from "../wasm";
 import {Id} from "../wasm";
 
-import * as states from "../ts/states";
+import {PlayCardState} from "../ts/states/play_card";
 
 import {WorldContext} from "./index";
 
@@ -16,7 +16,7 @@ export function CardList(props: {
     const world = React.useContext(WorldContext);
 
     const startPlay = (creatureId: Id<wasm.Creature>, ix: number) => {
-        window.game.stack.push(new states.PlayCard(creatureId, ix));
+        window.game.stack.push(new PlayCardState(creatureId, ix));
     };
     const canPlay = (card: wasm.Card): boolean => {
         return world.checkSpendAP(card.creatureId, card.apCost);

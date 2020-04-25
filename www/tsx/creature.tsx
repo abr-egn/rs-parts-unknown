@@ -3,8 +3,9 @@ import * as React from "react";
 import * as wasm from "../wasm";
 import {Id} from "../wasm";
 
-import { Preview } from "../ts/preview";
-import * as states from "../ts/states";
+import {Preview} from "../ts/preview";
+
+import {BaseState} from "../ts/states/base";
 
 import {StackData, WorldContext} from "./index";
 
@@ -16,7 +17,7 @@ export function CreatureStats(props: {
 }): JSX.Element {
     const data = React.useContext(StackData);
     const stats = data.get(Preview)?.stats.get(props.creature.id);
-    const base = data.get(states.Base.UI);
+    const base = data.get(BaseState.UI);
     const focused = Boolean(base?.hovered.has(props.creature.id));
 
     const onPartEnter = (part: Id<wasm.Part>, event: React.MouseEvent) => {

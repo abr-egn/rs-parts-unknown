@@ -1,14 +1,12 @@
 import * as React from "react";
 
 import * as wasm from "../wasm";
-
-import * as states from "../ts/states";
-
+import {TargetPartState} from "../ts/states/target_part";
 import {StackData} from "./index";
 
 export function TargetPart(props: {}): JSX.Element | null {
     const data = React.useContext(StackData);
-    const target = data.get(states.TargetPart.UI);
+    const target = data.get(TargetPartState.UI);
     if (!target) { return null; }
 
     const point = window.game.board.hexCoords(target.hex);
@@ -29,7 +27,7 @@ export function TargetPart(props: {}): JSX.Element | null {
 export function PartMenuItem(props: {
     part: wasm.Part,
     valid: boolean,
-    callbacks: states.TargetPart.Callbacks,
+    callbacks: TargetPartState.Callbacks,
 }): JSX.Element {
     let onMouseDown = undefined;
     let onMouseEnter = undefined;
