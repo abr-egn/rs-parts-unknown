@@ -27,10 +27,10 @@ export function Index(props: {
     }
 
     let intents: JSX.Element[] = [];
-    //if (!props.data.get(Stack.Active)?.is(states.Update)) {
+    if (!props.data.get(UpdateState.UI)?.isEndTurn) {
         intents = props.intents.map(([creature, point]) =>
             <CreatureIntent key={creature.id} creature={creature} coords={point}></CreatureIntent>);
-    //}
+    }
 
     const floats: FloatText.ItemId[] = [];
     const prevFloats = props.data.get(Preview)?.float;

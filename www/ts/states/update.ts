@@ -9,11 +9,13 @@ export class UpdateState extends State {
     constructor(
         private _events: wasm.Event[],
         private _nextWorld: wasm.World,
+        private _isEndTurn?: boolean,
     ) { super(); }
 
     async onPushed() {
         this.update((draft) => {
-            draft.set(Preview);
+            draft.set(Preview);  // clear preview state
+            draft.build(UpdateState.UI).isEndTurn = Boolean(this._isEndTurn);
         });
         for (let event of this._events) {
             await this._animateEvent(event);
@@ -62,5 +64,6 @@ export namespace UpdateState {
     export class UI {
         [Stack.Datum] = true;
         float: FloatText.ItemSet = new FloatText.ItemSet();
+        isEndTurn: boolean = false;
     }
 }
