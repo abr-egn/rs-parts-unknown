@@ -227,6 +227,7 @@ impl Creature {
                 part.cards.keys()
                     .map(move |&cid| (id, cid))
             ).collect();
+        self.draw.shuffle(&mut thread_rng());
         self.hand = vec![];
         self.discard = vec![];
     }
