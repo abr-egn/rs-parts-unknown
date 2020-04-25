@@ -3,10 +3,11 @@ import * as React from "react";
 import * as wasm from "../wasm";
 import {Id} from "../wasm";
 
-import {Highlight} from "../ts/highlight";
+import { StatPreview } from "../ts/stat_preview";
 import * as states from "../ts/states";
 
 import {StackData, WorldContext} from "./index";
+
 
 export function CreatureStats(props: {
     creature: wasm.Creature,
@@ -14,7 +15,7 @@ export function CreatureStats(props: {
     setPartHighlight?: (part: Id<wasm.Part> | undefined) => void,
 }): JSX.Element {
     const data = React.useContext(StackData);
-    const stats = data.get(Highlight)?.stats.get(props.creature.id);
+    const stats = data.get(StatPreview)?.stats.get(props.creature.id);
     const base = data.get(states.Base.UI);
     const focused = Boolean(base?.hovered.has(props.creature.id));
 

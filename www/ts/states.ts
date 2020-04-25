@@ -4,6 +4,7 @@ import {Id, Hex} from "../wasm";
 import {partToTarget, creatureToTarget} from "./extra";
 import {Highlight} from "./highlight";
 import {Stack, State} from "./stack";
+import { StatPreview } from "./stat_preview";
 
 export class Base extends State {
     onActivated() {
@@ -231,11 +232,13 @@ export class TargetPart extends State {
                 const events = this._inPlay.simulate(window.game.world, target);
                 this.update((draft) => {
                     draft.build(Highlight).setEvents(events);
+                    draft.build(StatPreview).setEvents(events);
                 });
             },
             onHoverLeave: () => {
                 this.update((draft) => {
                     draft.build(Highlight).setEvents([]);
+                    draft.build(StatPreview).setEvents([]);
                 });
             },
         };
@@ -285,12 +288,12 @@ export class Update extends State {
     async onPushed() {
         const preview = (ev: wasm.Event) => {
             this.update((draft) => {
-                let hi = draft.build(Highlight);
-                hi.addEvent(ev, true);
+                let prev = draft.build(StatPreview);
+                prev.addEvent(ev);
             });
         };
         this.update((draft) => {
-            draft.build(Highlight).setEvents([]);
+            draft.set(StatPreview);
         });
         await window.game.updateWorld(this._events, this._nextWorld, preview);
         let state: wasm.GameState;

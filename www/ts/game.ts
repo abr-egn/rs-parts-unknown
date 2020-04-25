@@ -6,11 +6,13 @@ import {Id} from "../wasm";
 
 import {hexToPixel} from "./draw";
 import {GameBoard} from "./game_board";
+import {Highlight} from "./highlight";
 import * as stack from "./stack";
+import {StatPreview} from "./stat_preview";
 
 import {FloatText} from "../tsx/float";
 import {Index} from "../tsx/index";
-import { Highlight } from "./highlight";
+
 
 declare global {
     interface Window {
