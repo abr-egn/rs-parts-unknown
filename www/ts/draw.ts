@@ -9,6 +9,7 @@ export class Draw {
         this._ctx.translate(canvas.width / 2, canvas.height / 2);
     }
 
+    // TODO: replace this with css-animated translate
     floatText(float: FloatText) {
         this._ctx.save();
 
