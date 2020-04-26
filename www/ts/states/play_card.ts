@@ -75,6 +75,10 @@ export class PlayCardState extends State {
     }
 
     onActivated(data?: any) {
+        this.update(draft => {
+            // If we're coming back from a TargetPartState, throbbing may be erroneously preserved
+            draft.build(Highlight).throb.clear();
+        });
         if (!data) { return; }
         if (data instanceof TargetPartState.Select) {
             const target = partToTarget(data.part);
