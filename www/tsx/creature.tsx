@@ -17,7 +17,7 @@ export function CreatureStats(props: {
     sorted.sort((a, b) => a.id - b.id);
     let parts = [];
     for (let part of sorted) {
-        const highlight = data.get(Highlight)?.parts.get(part.creatureId)?.has(part.id);
+        const highlight = data.get(Highlight)?.static.parts.get(part.creatureId)?.has(part.id);
         let classNames = [];
         if (part.tags.includes("Open")) {
             classNames.push("partOpen");
@@ -61,7 +61,7 @@ export function CreatureStats(props: {
         mpStyle.color = "green";
     }
 
-    const highlight = data.get(Highlight)?.creatures.has(props.creature.id);
+    const highlight = data.get(Highlight)?.static.creatures.has(props.creature.id);
     return (
     <div
         className={highlight?"highlightBox":"uibox"}

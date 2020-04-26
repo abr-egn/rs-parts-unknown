@@ -21,10 +21,10 @@ export class BaseState extends State {
             };
             focus.part = {
                 onEnter: ([cid, pid]) => this.update(draft => {
-                    draft.build(Highlight).mutPartsFor(cid).inc(pid);
+                    draft.build(Highlight).static.mutPartsFor(cid).inc(pid);
                 }),
                 onLeave: ([cid, pid]) => this.update(draft => {
-                    draft.build(Highlight).mutPartsFor(cid).dec(pid);
+                    draft.build(Highlight).static.mutPartsFor(cid).dec(pid);
                 }),
             }
             let ui = draft.get(BaseState.UI);
@@ -77,20 +77,20 @@ export class BaseState extends State {
     private _selectCreature(draft: Stack.Data, id: Id<wasm.Creature>) {
         const ui = draft.build(BaseState.UI);
         const highlight = draft.build(Highlight);
-        if (!highlight.creatures.has(id) || !ui.range.has(id)) {
+        if (!highlight.static.creatures.has(id) || !ui.range.has(id)) {
             let range = window.game.world.getCreatureRange(id);
             let bounds = wasm.findBoundary(range);
             ui.range.set(id, bounds);
         }
-        highlight.creatures.inc(id);
+        highlight.static.creatures.inc(id);
         this._buildRange(draft);
     }
 
     private _unselectCreature(draft: Stack.Data, id: Id<wasm.Creature>) {
         const ui = draft.build(BaseState.UI);
         const highlight = draft.build(Highlight);
-        highlight.creatures.dec(id);
-        if (!highlight.creatures.has(id)) {
+        highlight.static.creatures.dec(id);
+        if (!highlight.static.creatures.has(id)) {
             ui.range.delete(id);
         }
         this._buildRange(draft);
@@ -101,7 +101,7 @@ export class BaseState extends State {
         if (!ui) { return; }
         const totalSelected: wasm.Boundary[] = [];
         const highlight = draft.build(Highlight);
-        for (let id of highlight.creatures.all() || []) {
+        for (let id of highlight.static.creatures.all() || []) {
             let sel = ui.range.get(id) || [];
             totalSelected.push(...sel);
         }

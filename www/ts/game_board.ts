@@ -134,30 +134,31 @@ export class GameBoard implements GameBoard.View {
         for (let bound of hi.range) {
             this._draw.boundary(bound);
         }
-        const allHi: Map<string, Hex> = new Map();
-        for (let id of hi.creatures.all()) {
+        for (let hex of this._highlightHexes(hi.static)) {
+            this._draw.highlightHex(hex);
+        }
+        for (let hex of this._highlightHexes(hi.throb)) {
+            this._draw.throb(hex, this._tsMillis);
+        }
+    }
+
+    private _highlightHexes(tracker: Readonly<Highlight.Tracker>): Hex[] {
+        const all: Map<string, Hex> = new Map();
+        for (let id of tracker.creatures.all()) {
             const hex = this._cache.creatureHex.get(id);
             if (hex) {
-                allHi.set(JSON.stringify(hex), hex);
+                all.set(JSON.stringify(hex), hex);
             }
         }
-        for (let entry of hi.parts) {
+        for (let entry of tracker.parts) {
             const [cid, parts] = entry;
             const hex = this._cache.creatureHex.get(cid);
             if (!hex) { continue; }
             if (parts.all().length > 0) {
-                allHi.set(JSON.stringify(hex), hex);
+                all.set(JSON.stringify(hex), hex);
             }
         }
-        for (let hex of allHi.values()) {
-            this._draw.highlightHex(hex);
-        }
-        for (let id of hi.throb.creatures.all()) {
-            const hex = this._cache.creatureHex.get(id);
-            if (hex) {
-                this._draw.throb(hex, this._tsMillis);
-            }
-        }
+        return Array.from(all.values());
     }
 
     private _drawPreview(prev: Readonly<Preview> | undefined) {

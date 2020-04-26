@@ -10,20 +10,9 @@ export class Highlight {
     [Stack.Datum] = true;
     [immerable] = true;
 
-    throb: Highlight.Tracker = new Highlight.Tracker();
+    static = new Highlight.Tracker();
+    throb = new Highlight.Tracker();
     range: wasm.Boundary[] = [];
-
-    creatures: CountMap<Id<wasm.Creature>> = new CountMap();
-    parts: Map<Id<wasm.Creature>, CountMap<Id<wasm.Part>>> = new Map();
-
-    mutPartsFor(cid: Id<wasm.Creature>): CountMap<Id<wasm.Part>> {
-        let out = this.parts.get(cid);
-        if (!out) {
-            out = new CountMap();
-            this.parts.set(cid, out);
-        }
-        return out;
-    }
 }
 export namespace Highlight {
     export class Tracker {

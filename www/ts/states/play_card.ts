@@ -61,10 +61,10 @@ export class PlayCardState extends State {
             hi.throb.clear();
             hi.range = wasm.findBoundary(range);
             for (let creature of targetCreatures) {
-                hi.creatures.inc(creature.id);
+                hi.static.creatures.inc(creature.id);
             }
             for (let part of targetParts) {
-                hi.mutPartsFor(part.creatureId).inc(part.id);
+                hi.static.mutPartsFor(part.creatureId).inc(part.id);
             }
 
             const focus = draft.build(Focus);
@@ -220,12 +220,12 @@ export class PlayCardState extends State {
         return {
             onEnter: ([cid, pid]) => this.update(draft => {
                 if (valid(cid, pid)) {
-                    draft.build(Highlight).mutPartsFor(cid).inc(pid);
+                    draft.build(Highlight).static.mutPartsFor(cid).inc(pid);
                 }
             }),
             onLeave: ([cid, pid]) => this.update(draft => {
                 if (valid(cid, pid)) {
-                    draft.build(Highlight).mutPartsFor(cid).dec(pid);
+                    draft.build(Highlight).static.mutPartsFor(cid).dec(pid);
                 }
             }),
             onClick: ([cid, pid]) => {

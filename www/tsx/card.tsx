@@ -42,7 +42,7 @@ export function CardList(props: {
         } else {
             classes.push("invalidTarget");
         }
-        if (highlight?.parts.get(card.creatureId)?.has(card.partId)) {
+        if (highlight?.static.parts.get(card.creatureId)?.has(card.partId)) {
             classes.push("partHover");
         }
         return (
