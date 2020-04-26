@@ -65,13 +65,13 @@ export class Preview {
     }
 
     private _getStats(id: Id<wasm.Creature>): Preview.Stats {
-        let c = this.stats.get(id);
+        let c = this._stats.get(id);
         if (!c) {
             c = {
                 statDelta: new Map(),
                 hpDelta: new Map(),
             };
-            this.stats.set(id, c);
+            this._stats.set(id, c);
         }
         return c;
     }
