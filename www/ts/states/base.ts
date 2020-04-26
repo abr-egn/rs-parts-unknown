@@ -29,12 +29,6 @@ export class BaseState extends State {
             if (!ui) { return; }
             for (let id of ui.clicked.keys()) {
                 this._selectCreature(draft, id);
-                /*
-                let range = window.game.world.getCreatureRange(id);
-                let bounds = wasm.findBoundary(range);
-                ui.range.set(id, bounds);
-                draft.build(Highlight).creatures.inc(id);
-                */
             }
         });
     }
@@ -87,7 +81,6 @@ export class BaseState extends State {
             ui.range.set(id, bounds);
         }
         highlight.creatures.inc(id);
-        console.log("select", id, "count", highlight.creatures._data.get(id));
         this._buildRange(draft);
     }
 
@@ -95,9 +88,7 @@ export class BaseState extends State {
         const ui = draft.build(BaseState.UI);
         const highlight = draft.build(Highlight);
         highlight.creatures.dec(id);
-        console.log("unselect", id, "count", highlight.creatures._data.get(id));
         if (!highlight.creatures.has(id)) {
-            console.log("delete range");
             ui.range.delete(id);
         }
         this._buildRange(draft);

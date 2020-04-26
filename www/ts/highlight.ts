@@ -27,7 +27,7 @@ export class Highlight {
 class CountMap<K> {
     [immerable] = true;
 
-    /*private */_data: Map<K, number> = new Map();
+    private _data: Map<K, number> = new Map();
 
     inc(key: K) {
         let n = this._data.get(key);
