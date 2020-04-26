@@ -6,6 +6,12 @@ import {Preview} from "../ts/preview";
 import * as wasm from "../wasm";
 import {StackData, WorldContext} from "./index";
 
+/*
+declare const phantom: unique symbol;
+type Foo<T> = number & { [phantom]?: T }
+function bar(f: Foo<number>): void {}
+function baz(f: Foo<string>): void { bar(f) }
+*/
 
 export function CreatureStats(props: {
     creature: wasm.Creature,
@@ -18,7 +24,7 @@ export function CreatureStats(props: {
     sorted.sort((a, b) => a.id - b.id);
     let parts = [];
     for (let part of sorted) {
-        const highlight = data.get(Highlight)?.parts.has(part.id);
+        const highlight = data.get(Highlight)?.parts.get(part.creatureId)?.has(part.id);
         let classNames = [];
         if (part.tags.includes("Open")) {
             classNames.push("partOpen");
@@ -36,9 +42,9 @@ export function CreatureStats(props: {
         parts.push(
             <li
                 key={part.id}
-                onMouseEnter={() => focus?.part.onEnter?.(part.id)}
-                onMouseLeave={() => focus?.part.onLeave?.(part.id)}
-                onMouseDown={() => focus?.part.onClick?.(part.id)}
+                onMouseEnter={() => focus?.part.onEnter?.([part.creatureId, part.id])}
+                onMouseLeave={() => focus?.part.onLeave?.([part.creatureId, part.id])}
+                onMouseDown={() => focus?.part.onClick?.([part.creatureId, part.id])}
                 className={classNames.join(" ")}
                 >
                 {part.name}<br/>

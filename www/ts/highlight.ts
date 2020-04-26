@@ -12,7 +12,16 @@ export class Highlight {
     throb: Hex[] = [];
     range: wasm.Boundary[] = [];
     creatures: CountMap<Id<wasm.Creature>> = new CountMap();
-    parts: CountMap<Id<wasm.Part>> = new CountMap();
+    parts: Map<Id<wasm.Creature>, CountMap<Id<wasm.Part>>> = new Map();
+
+    mutPartsFor(cid: Id<wasm.Creature>): CountMap<Id<wasm.Part>> {
+        let out = this.parts.get(cid);
+        if (!out) {
+            out = new CountMap();
+            this.parts.set(cid, out);
+        }
+        return out;
+    }
 }
 
 class CountMap<K> {

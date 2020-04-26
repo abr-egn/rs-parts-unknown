@@ -9,7 +9,10 @@ export interface Hex {
 
 export type Direction = "XY" | "XZ" | "YZ" | "YX" | "ZX" | "ZY";
 
-export type Id<_> = number;
+// This makes Id<T> be nominal rather than structural; without it,
+// Id<foo> would be treated as equal to Id<bar>.
+declare const phantom: unique symbol;
+export type Id<T> = number & { [phantom]?: T }
 
 export type TagMod = {};
 

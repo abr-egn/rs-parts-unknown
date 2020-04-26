@@ -26,10 +26,10 @@ export function CardList(props: {
         return `(${card.creatureId},${card.partId},${card.id})`;
     };
     const onCardEnter = (card: wasm.Card, event: React.MouseEvent) => {
-        focus?.part?.onEnter?.(card.partId);
+        focus?.part?.onEnter?.([card.creatureId, card.partId]);
     };
     const onCardLeave = (card: wasm.Card, event: React.MouseEvent) => {
-        focus?.part?.onLeave?.(card.partId);
+        focus?.part?.onLeave?.([card.creatureId, card.partId]);
     }
   
     const list = props.cards.map((card, ix) => {
@@ -42,7 +42,7 @@ export function CardList(props: {
         } else {
             classes.push("invalidTarget");
         }
-        if (highlight?.parts.has(card.partId)) {
+        if (highlight?.parts.get(card.creatureId)?.has(card.partId)) {
             classes.push("partHover");
         }
         return (

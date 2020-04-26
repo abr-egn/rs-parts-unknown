@@ -18,11 +18,11 @@ export class BaseState extends State {
                 onClick: (id) => this._selectCreature(id),
             };
             focus.part = {
-                onEnter: (id) => this.update(draft => {
-                    draft.build(Highlight).parts.inc(id);
+                onEnter: ([cid, pid]) => this.update(draft => {
+                    draft.build(Highlight).mutPartsFor(cid).inc(pid);
                 }),
-                onLeave: (id) => this.update(draft => {
-                    draft.build(Highlight).parts.dec(id);
+                onLeave: ([cid, pid]) => this.update(draft => {
+                    draft.build(Highlight).mutPartsFor(cid).dec(pid);
                 }),
             }
         })
