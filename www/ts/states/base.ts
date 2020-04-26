@@ -114,6 +114,7 @@ export class BaseState extends State {
         for (let id of ui.clicked.values() || []) {
             this._unselectCreature(draft, id);
         }
+        ui.clicked.clear();
     }
 
     private _clickCreature(id: Id<wasm.Creature>) {
