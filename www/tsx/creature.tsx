@@ -18,7 +18,7 @@ export function CreatureStats(props: {
     sorted.sort((a, b) => a.id - b.id);
     let parts = [];
     for (let part of sorted) {
-        let classNames = [];
+        let classNames = ["part"];
         if (part.tags.includes("Open")) {
             classNames.push("partOpen");
         }

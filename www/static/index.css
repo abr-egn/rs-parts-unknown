@@ -83,6 +83,10 @@ div.topright {
     border: 1px solid black;
 }
 
+.part {
+    border: 1px solid black;
+}
+
 /* Modifiers */
 
 .playable:hover {
