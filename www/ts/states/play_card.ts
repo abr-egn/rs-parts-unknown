@@ -46,10 +46,28 @@ export class PlayCardState extends State {
             hi.range = wasm.findBoundary(range);
 
             const focus = draft.build(Focus);
+            const validCreature = (id: Id<wasm.Creature>) => {
+                const target = { Creature: { id } };
+                if (!this._inPlay?.targetValid(window.game.world, target)) {
+                    return undefined;
+                }
+                return target;
+            };
             focus.creature = {
-                onEnter: (id) => {},
-                onLeave: (id) => {},
-                onClick: (id) => {},
+                onEnter: (id) => {
+                    if (validCreature(id)) {
+                        draft.build(Highlight).creatures.inc(id);
+                    }
+                },
+                onLeave: (id) => {
+                    if (validCreature(id)) {
+                        draft.build(Highlight).creatures.dec(id);
+                    }
+                },
+                onClick: (id) => {
+                    const target = validCreature(id);
+                    if (target) { this._playOnTarget(target); }
+                },
             };
             const validPart = (cid: Id<wasm.Creature>, pid: Id<wasm.Part>) => {
                 const target = {
