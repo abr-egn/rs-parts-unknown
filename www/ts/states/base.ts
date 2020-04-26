@@ -1,11 +1,21 @@
 import * as wasm from "../../wasm";
 import {Id, Hex} from "../../wasm";
+import {Focus} from "../focus";
 import {Highlight} from "../highlight";
 import {Stack, State} from "../stack";
 
 export class BaseState extends State {
     onActivated() {
         this.update((draft) => {
+            draft.build(Focus).creature = {
+                onEnter: (id) => this.update(draft => {
+                    draft.build(Highlight).creatures.inc(id);
+                }),
+                onLeave: (id) => this.update(draft => {
+                    draft.build(Highlight).creatures.dec(id);
+                }),
+                onClick: (id) => this._selectCreature(id),
+            };
             let ui = draft.get(BaseState.UI);
             if (!ui) { return; }
             for (let id of ui.selected.keys()) {
@@ -41,24 +51,7 @@ export class BaseState extends State {
         if (tile.creature == undefined) {
             this.update((draft) => { this._clearSelection(draft); });
         } else {
-            const shift = window.game.key("ShiftLeft") || window.game.key("ShiftRight");
-            this.update((draft) => {
-                let ui = draft.build(BaseState.UI);
-                if (!shift) {
-                    this._clearSelection(draft);
-                }
-                const id: Id<wasm.Creature> = tile!.creature!;
-                const highlight = draft.build(Highlight);
-                if (ui.selected.has(id)) {
-                    ui.selected.delete(id);
-                    highlight.creatures.dec(id);
-                } else {
-                    let range = world.getCreatureRange(id);
-                    let bounds = wasm.findBoundary(range);
-                    ui.selected.set(id, bounds);
-                    highlight.creatures.inc(id);
-                }
-            });
+            this._selectCreature(tile.creature);
         }
     }
     private _clearSelection(draft: Stack.Data) {
@@ -68,6 +61,25 @@ export class BaseState extends State {
             draft.build(Highlight).creatures.dec(id);
         }
         ui.selected.clear();
+    }
+    private _selectCreature(id: Id<wasm.Creature>) {
+        const shift = window.game.key("ShiftLeft") || window.game.key("ShiftRight");
+        this.update((draft) => {
+            let ui = draft.build(BaseState.UI);
+            if (!shift) {
+                this._clearSelection(draft);
+            }
+            const highlight = draft.build(Highlight);
+            if (ui.selected.has(id)) {
+                ui.selected.delete(id);
+                highlight.creatures.dec(id);
+            } else {
+                let range = window.game.world.getCreatureRange(id);
+                let bounds = wasm.findBoundary(range);
+                ui.selected.set(id, bounds);
+                highlight.creatures.inc(id);
+            }
+        });
     }
 }
 export namespace BaseState {

@@ -1,42 +1,18 @@
-import {produce} from "immer";
 import * as React from "react";
 
+import {Focus} from "../ts/focus";
+import {Highlight} from "../ts/highlight";
 import {Preview} from "../ts/preview";
-import {PlayCardState} from "../ts/states/play_card";
 import * as wasm from "../wasm";
-import {Id} from "../wasm";
 import {StackData, WorldContext} from "./index";
-import { Highlight } from "../ts/highlight";
 
 
 export function CreatureStats(props: {
     creature: wasm.Creature,
-    partHover?: Id<wasm.Part>,
-    setPartHover?: (part: Id<wasm.Part> | undefined) => void,
 }): JSX.Element {
     const data = React.useContext(StackData);
     const stats = data.get(Preview)?.stats.get(props.creature.id);
-    const playState = data.get(PlayCardState.UI);
-    
-    const onCreatureEnter = () => {
-        //if (canTarget) { setHovered(true); }
-    };
-    const onCreatureLeave = () => {
-        //if (canTarget) { setHovered(false); }
-    };
-
-    const onPartEnter = (part: wasm.Part) => {
-        if (props.setPartHover) {
-            props.setPartHover(part.id);
-        }
-    };
-    const onPartLeave = (part: wasm.Part) => {
-        if (props.setPartHover) {
-            props.setPartHover(undefined);
-        }
-    };
-    const onPartClick = (part: wasm.Part) => {
-    }
+    const focus = data.get(Focus);
 
     let sorted = Array.from(props.creature.parts.values());
     sorted.sort((a, b) => a.id - b.id);
@@ -44,9 +20,6 @@ export function CreatureStats(props: {
     for (let part of sorted) {
         const highlight = data.get(Highlight)?.parts.has(part.id);
         let classNames = [];
-        if (part.id == props.partHover) {
-            classNames.push("partHover");
-        }
         if (part.tags.includes("Open")) {
             classNames.push("partOpen");
         }
@@ -63,9 +36,9 @@ export function CreatureStats(props: {
         parts.push(
             <li
                 key={part.id}
-                onMouseEnter={() => onPartEnter(part)}
-                onMouseLeave={() => onPartLeave(part)}
-                onMouseDown={() => onPartClick(part)}
+                onMouseEnter={() => focus?.part.onEnter?.(part.id)}
+                onMouseLeave={() => focus?.part.onLeave?.(part.id)}
+                onMouseDown={() => focus?.part.onClick?.(part.id)}
                 className={classNames.join(" ")}
                 >
                 {part.name}<br/>
@@ -93,8 +66,9 @@ export function CreatureStats(props: {
     return (
     <div
         className={highlight?"highlightBox":"uibox"}
-        onMouseEnter={onCreatureEnter}
-        onMouseLeave={onCreatureLeave}
+        onMouseEnter={() => focus?.creature?.onEnter?.(props.creature.id)}
+        onMouseLeave={() => focus?.creature?.onLeave?.(props.creature.id)}
+        onMouseDown={() => focus?.creature?.onClick?.(props.creature.id)}
     >
         <div>{props.creature.name}</div>
         <div style={apStyle}>AP: {props.creature.curAp + apDelta}</div>

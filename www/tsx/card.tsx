@@ -1,19 +1,20 @@
 import * as React from "react";
 
+import {Focus} from "../ts/focus";
+import {Highlight} from "../ts/highlight";
+import {PlayCardState} from "../ts/states/play_card";
 import * as wasm from "../wasm";
 import {Id} from "../wasm";
-
-import {PlayCardState} from "../ts/states/play_card";
-
-import {WorldContext} from "./index";
+import {StackData, WorldContext} from "./index";
 
 export function CardList(props: {
     active: boolean,
     cards: wasm.Card[],
-    partHover?: Id<wasm.Part>,
-    setPartHover: (part: Id<wasm.Part> | undefined) => void,
 }): JSX.Element {
     const world = React.useContext(WorldContext);
+    const data = React.useContext(StackData);
+    const focus = data.get(Focus);
+    const highlight = data.get(Highlight);
 
     const startPlay = (creatureId: Id<wasm.Creature>, ix: number) => {
         window.game.stack.push(new PlayCardState(creatureId, ix));
@@ -25,10 +26,10 @@ export function CardList(props: {
         return `(${card.creatureId},${card.partId},${card.id})`;
     };
     const onCardEnter = (card: wasm.Card, event: React.MouseEvent) => {
-        props.setPartHover(card.partId);
+        focus?.part?.onEnter?.(card.partId);
     };
     const onCardLeave = (card: wasm.Card, event: React.MouseEvent) => {
-        props.setPartHover(undefined);
+        focus?.part?.onLeave?.(card.partId);
     }
   
     const list = props.cards.map((card, ix) => {
@@ -41,7 +42,7 @@ export function CardList(props: {
         } else {
             classes.push("invalidTarget");
         }
-        if (card.partId == props.partHover) {
+        if (highlight?.parts.has(card.partId)) {
             classes.push("partHover");
         }
         return (

@@ -25,7 +25,6 @@ export function PlayerControls(props: {}): JSX.Element {
 
     const cancelPlay = () => window.game.stack.pop();
     const movePlayer = () => window.game.stack.push(new MovePlayerState());
-    const [partHover, setPartHover] = React.useState(undefined as (undefined | (() => Id<wasm.Part>)))
 
     const hasAp = player.curAp > 0;
     const hasMp = player.curMp > 0;
@@ -37,16 +36,12 @@ export function PlayerControls(props: {}): JSX.Element {
     return (<div>
         <CreatureStats
             creature={player}
-            partHover={partHover}
-            setPartHover={setPartHover}
         />
         <div>
             Hand:
             <CardList
                 active={hasAp && baseActive}
                 cards={player.hand}
-                partHover={partHover}
-                setPartHover={setPartHover}
             />
         </div>
         {inPlay && <div>Playing: {play?.card.name}</div>}
