@@ -10,7 +10,7 @@ export class Highlight {
     [Stack.Datum] = true;
     [immerable] = true;
 
-    throb: FocusTracker = new FocusTracker();
+    throb: Highlight.Tracker = new Highlight.Tracker();
     range: wasm.Boundary[] = [];
 
     creatures: CountMap<Id<wasm.Creature>> = new CountMap();
@@ -25,27 +25,30 @@ export class Highlight {
         return out;
     }
 }
-
-class FocusTracker {
-    [immerable] = true;
-
-    creatures: CountMap<Id<wasm.Creature>> = new CountMap();
-    parts: Map<Id<wasm.Creature>, CountMap<Id<wasm.Part>>> = new Map();
-
-    mutPartsFor(cid: Id<wasm.Creature>): CountMap<Id<wasm.Part>> {
-        let out = this.parts.get(cid);
-        if (!out) {
-            out = new CountMap();
-            this.parts.set(cid, out);
+export namespace Highlight {
+    export class Tracker {
+        [immerable] = true;
+    
+        creatures: CountMap<Id<wasm.Creature>> = new CountMap();
+        parts: Map<Id<wasm.Creature>, CountMap<Id<wasm.Part>>> = new Map();
+    
+        mutPartsFor(cid: Id<wasm.Creature>): CountMap<Id<wasm.Part>> {
+            let out = this.parts.get(cid);
+            if (!out) {
+                out = new CountMap();
+                this.parts.set(cid, out);
+            }
+            return out;
         }
-        return out;
-    }
-
-    clear() {
-        this.creatures.clear();
-        this.parts.clear();
+    
+        clear() {
+            this.creatures.clear();
+            this.parts.clear();
+        }
     }
 }
+
+
 
 class CountMap<K> {
     [immerable] = true;

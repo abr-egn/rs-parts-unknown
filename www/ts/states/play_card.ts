@@ -44,7 +44,8 @@ export class PlayCardState extends State {
         const targetCreatures: wasm.Creature[] = [];
         const targetParts: wasm.Part[] = [];
         for (let creature of world.getCreatures()) {
-            if (this._canTargetCreature(creature)) {
+            const target = creatureToTarget(creature);
+            if (this._inPlay.targetValid(world, target)) {
                 targetCreatures.push(creature);
             }
             for (let part of creature.parts.values()) {
