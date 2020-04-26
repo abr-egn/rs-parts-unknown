@@ -27,15 +27,17 @@ export class Highlight {
 class CountMap<K> {
     [immerable] = true;
 
-    private _data: Map<K, number> = new Map();
+    /*private */_data: Map<K, number> = new Map();
 
     inc(key: K) {
-        let n = this._data.get(key) || 0;
-        this._data.set(key, n+1);
+        let n = this._data.get(key);
+        console.log("inc", key, n);
+        this._data.set(key, (n || 0)+1);
     }
     dec(key: K) {
         let n = this._data.get(key) || 0;
-        if (n == 1) {
+        console.log("dec", key, n);
+        if (n <= 1) {
             this._data.delete(key);
         } else {
             this._data.set(key, n-1);

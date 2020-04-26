@@ -69,13 +69,14 @@ export class BaseState extends State {
         console.log("Tile:", hex, tile);
         if (!tile) { return; }
         if (tile.creature == undefined) {
-            this.update((draft) => { this._clearSelection(draft); });
+            this.update((draft) => { this._clearClicked(draft); });
         } else {
             this._clickCreature(tile.creature);
         }
     }
 
     private _selectCreature(draft: Stack.Data, id: Id<wasm.Creature>) {
+        console.log("select", id);
         const ui = draft.build(BaseState.UI);
         const highlight = draft.build(Highlight);
         if (!highlight.creatures.has(id) || !ui.range.has(id)) {
@@ -84,14 +85,18 @@ export class BaseState extends State {
             ui.range.set(id, bounds);
         }
         highlight.creatures.inc(id);
+        console.log("highlight count", highlight.creatures._data.get(id));
         this._buildRange(draft);
     }
 
     private _unselectCreature(draft: Stack.Data, id: Id<wasm.Creature>) {
+        console.log("unselect", id);
         const ui = draft.build(BaseState.UI);
         const highlight = draft.build(Highlight);
         highlight.creatures.dec(id);
+        console.log("highlight count", highlight.creatures._data.get(id));
         if (!highlight.creatures.has(id)) {
+            console.log("delete range");
             ui.range.delete(id);
         }
         this._buildRange(draft);
@@ -109,13 +114,12 @@ export class BaseState extends State {
         highlight.range = totalSelected;
     }
 
-    private _clearSelection(draft: Stack.Data) {
+    private _clearClicked(draft: Stack.Data) {
         const ui = draft.get(BaseState.UI);
         if (!ui) { return; }
-        for (let id of ui.range.keys() || []) {
-            draft.build(Highlight).creatures.dec(id);
+        for (let id of ui.clicked.values() || []) {
+            this._unselectCreature(draft, id);
         }
-        ui.range.clear();
     }
 
     private _clickCreature(id: Id<wasm.Creature>) {
@@ -123,7 +127,7 @@ export class BaseState extends State {
         this.update((draft) => {
             let ui = draft.build(BaseState.UI);
             if (!shift) {
-                this._clearSelection(draft);
+                this._clearClicked(draft);
             }
             if (ui.clicked.has(id)) {
                 ui.clicked.delete(id);
