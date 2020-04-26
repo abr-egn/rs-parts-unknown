@@ -37,8 +37,8 @@ export function PlayerControls(props: {}): JSX.Element {
     return (<div>
         <CreatureStats
             creature={player}
-            partHighlight={partHighlight}
-            setPartHighlight={setPartHighlight}
+            partHover={partHighlight}
+            setPartHover={setPartHighlight}
         />
         <div>
             Hand:

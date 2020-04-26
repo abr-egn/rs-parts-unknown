@@ -33,7 +33,7 @@ div.topright {
     padding: 5px;
 }
 
-.focusedBox {
+.highlightBox {
     border: 1px solid blue;
     margin: 5px;
     padding: 5px;
@@ -81,15 +81,15 @@ div.topright {
     100% {transform: translate(-50%, -50%) translate(0px, -50px)}
 }
 
-.partHighlight {
+.partHover {
     font-weight: bold;
 }
 
-.open {
+.partOpen {
     border: 1px solid white;
 }
 
-.partFocused {
+.partHighlight {
     border: 1px solid blue;
 }
 

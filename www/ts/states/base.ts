@@ -1,6 +1,6 @@
 import * as wasm from "../../wasm";
 import {Id, Hex} from "../../wasm";
-
+import {Highlight} from "../highlight";
 import {Stack, State} from "../stack";
 
 export class BaseState extends State {
@@ -20,7 +20,7 @@ export class BaseState extends State {
         if (tile?.creature != undefined) {
             const id = tile.creature;
             this.update((draft) => {
-                draft.build(BaseState.UI).hovered.add(id);
+                draft.build(Highlight).creatures.add(id);
             });
         }
     }
@@ -29,7 +29,7 @@ export class BaseState extends State {
         if (tile?.creature != undefined) {
             const id = tile.creature;
             this.update((draft) => {
-                draft.build(BaseState.UI).hovered.delete(id);
+                draft.build(Highlight).creatures.delete(id);
             });
         }
     }
@@ -63,6 +63,5 @@ export namespace BaseState {
     export class UI {
         [Stack.Datum] = true;
         selected: Map<Id<wasm.Creature>, wasm.Boundary[]> = new Map();
-        hovered: Set<Id<wasm.Creature>> = new Set();
     }
 }
