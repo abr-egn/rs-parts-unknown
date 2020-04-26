@@ -12,18 +12,21 @@ export function CreatureStats(props: {
     const data = React.useContext(StackData);
     const stats = data.get(Preview)?.stats.get(props.creature.id);
     const focus = data.get(Focus);
+    const highlight = data.get(Highlight);
 
     let sorted = Array.from(props.creature.parts.values());
     sorted.sort((a, b) => a.id - b.id);
     let parts = [];
     for (let part of sorted) {
-        const highlight = data.get(Highlight)?.static.parts.get(part.creatureId)?.has(part.id);
         let classNames = [];
         if (part.tags.includes("Open")) {
             classNames.push("partOpen");
         }
-        if (highlight) {
-            classNames.push("partHighlight");
+        if (highlight?.static.parts.get(part.creatureId)?.has(part.id)) {
+            classNames.push("highlight");
+        }
+        if (highlight?.throb.parts.get(part.creatureId)?.has(part.id)) {
+            classNames.push("throb");
         }
         let hpDelta = stats?.hpDelta.get(part.id) || 0;
         const hpStyle: React.CSSProperties = {};
@@ -61,10 +64,16 @@ export function CreatureStats(props: {
         mpStyle.color = "green";
     }
 
-    const highlight = data.get(Highlight)?.static.creatures.has(props.creature.id);
+    let className = "uibox";
+    if (highlight?.static.creatures.has(props.creature.id)) {
+        className = className + " highlight";
+    }
+    if (highlight?.throb.creatures.has(props.creature.id)) {
+        className = className + " throb";
+    }
     return (
     <div
-        className={highlight?"highlightBox":"uibox"}
+        className={className}
         onMouseEnter={() => focus?.creature?.onEnter?.(props.creature.id)}
         onMouseLeave={() => focus?.creature?.onLeave?.(props.creature.id)}
         onMouseDown={() => focus?.creature?.onClick?.(props.creature.id)}

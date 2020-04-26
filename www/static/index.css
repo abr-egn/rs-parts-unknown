@@ -1,3 +1,5 @@
+/* Base Styles */
+
 #mainCanvas {
     background-color: black;
 }
@@ -7,12 +9,6 @@ body {
     background-color: red;
     margin: 0;
     padding: 0;
-}
-
-#canvas {
-    position: absolute;
-    width: 100%;
-    height: 100%;
 }
 
 div.topleft {
@@ -29,12 +25,6 @@ div.topright {
 
 .uibox {
     border: 1px solid white;
-    margin: 5px;
-    padding: 5px;
-}
-
-.highlightBox {
-    border: 1px solid blue;
     margin: 5px;
     padding: 5px;
 }
@@ -81,18 +71,6 @@ div.topright {
     100% {transform: translate(-50%, -50%) translate(0px, -50px)}
 }
 
-.partHover {
-    font-weight: bold;
-}
-
-.partOpen {
-    border: 1px solid white;
-}
-
-.partHighlight {
-    border: 1px solid blue;
-}
-
 .partTargetMenu {
     position: absolute;
     border: 1px solid white;
@@ -101,6 +79,8 @@ div.topright {
     padding: 5px;
 }
 
+/* Modifiers */
+
 .invalidTarget {
     color: gray;
 }
@@ -108,4 +88,27 @@ div.topright {
 .validTarget:hover {
     background-color: rgba(0, 0, 127, 0.5);
     cursor: default;
+}
+
+.partHover {
+    font-weight: bold;
+}
+
+.partOpen {
+    border: 1px solid white;
+}
+
+.highlight {
+    border: 1px solid blue;
+}
+
+.throb {
+    border: 1px solid #A0A0FF;
+    animation-name: throbble;
+    animation-duration: 0.8s;
+    animation-iteration-count: infinite;
+}
+
+@keyframes throbble {
+    0% { border: 1px solid blue; }
 }
