@@ -6,13 +6,6 @@ import {Preview} from "../ts/preview";
 import * as wasm from "../wasm";
 import {StackData, WorldContext} from "./index";
 
-/*
-declare const phantom: unique symbol;
-type Foo<T> = number & { [phantom]?: T }
-function bar(f: Foo<number>): void {}
-function baz(f: Foo<string>): void { bar(f) }
-*/
-
 export function CreatureStats(props: {
     creature: wasm.Creature,
 }): JSX.Element {

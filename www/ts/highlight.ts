@@ -44,7 +44,12 @@ class CountMap<K> {
     has(key: K): boolean {
         return Boolean(this._data.get(key));
     }
-    all(): IterableIterator<K> {
-        return this._data.keys();
+    all(): K[] {
+        const out = [];
+        for (let entry of this._data.entries()) {
+            const [k, v] = entry;
+            if (v > 0) { out.push(k); }
+        }
+        return out;
     }
 }

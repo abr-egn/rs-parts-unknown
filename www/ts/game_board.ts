@@ -118,15 +118,6 @@ export class GameBoard implements GameBoard.View {
             this._draw.creature(text, pos);
         }
 
-        if (!this._data.get(Stack.Active)?.is(UpdateState)) {
-            const selected = this._data.get(BaseState.UI)?.selected || [];
-            for (let [id, bounds] of selected) {
-                for (let bound of bounds) {
-                    this._draw.boundary(bound);
-                }
-            }
-        }
-
         this._drawHighlight(this._data.get(Highlight));
         this._drawPreview(this._data.get(Preview));
 
