@@ -140,8 +140,11 @@ export class GameBoard implements GameBoard.View {
                 this._draw.highlightHex(hex);
             }
         }
-        for (let hex of hi.throb) {
-            this._draw.throb(hex, this._tsMillis);
+        for (let id of hi.throb.creatures.all()) {
+            const hex = this._cache.creatureHex.get(id);
+            if (hex) {
+                this._draw.throb(hex, this._tsMillis);
+            }
         }
     }
 

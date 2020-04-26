@@ -4,13 +4,15 @@ import * as wasm from "../../wasm";
 import {Id} from "../../wasm";
 import {Hex} from "../../wasm";
 import {Stack} from "../stack";
+import { Focus } from "./focus";
 
 export class Highlight {
     [Stack.Datum] = true;
     [immerable] = true;
 
-    throb: Hex[] = [];
+    throb: FocusTracker = new FocusTracker();
     range: wasm.Boundary[] = [];
+
     creatures: CountMap<Id<wasm.Creature>> = new CountMap();
     parts: Map<Id<wasm.Creature>, CountMap<Id<wasm.Part>>> = new Map();
 
@@ -21,6 +23,27 @@ export class Highlight {
             this.parts.set(cid, out);
         }
         return out;
+    }
+}
+
+class FocusTracker {
+    [immerable] = true;
+
+    creatures: CountMap<Id<wasm.Creature>> = new CountMap();
+    parts: Map<Id<wasm.Creature>, CountMap<Id<wasm.Part>>> = new Map();
+
+    mutPartsFor(cid: Id<wasm.Creature>): CountMap<Id<wasm.Part>> {
+        let out = this.parts.get(cid);
+        if (!out) {
+            out = new CountMap();
+            this.parts.set(cid, out);
+        }
+        return out;
+    }
+
+    clear() {
+        this.creatures.clear();
+        this.parts.clear();
     }
 }
 
@@ -40,6 +63,9 @@ class CountMap<K> {
         } else {
             this._data.set(key, n-1);
         }
+    }
+    clear() {
+        this._data.clear();
     }
     has(key: K): boolean {
         return Boolean(this._data.get(key));

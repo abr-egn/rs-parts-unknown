@@ -21,9 +21,9 @@ export function Index(props: {
     const world = props.world;
 
     const creatures = [];
-    for (let id of world.getCreatureIds()) {
-        if (id == world.playerId) { continue; }
-        creatures.push(<CreatureStats key={id} creature={world.getCreature(id)!}/>);
+    for (let creature of world.getCreatures()) {
+        if (creature.id == world.playerId) { continue; }
+        creatures.push(<CreatureStats key={creature.id} creature={creature}/>);
     }
 
     let intents: JSX.Element[] = [];

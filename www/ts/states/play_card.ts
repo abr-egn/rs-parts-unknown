@@ -41,11 +41,30 @@ export class PlayCardState extends State {
             return;
         }
         const range = this._inPlay.range(world);
+        const targetCreatures: wasm.Creature[] = [];
+        const targetParts: wasm.Part[] = [];
+        for (let creature of world.getCreatures()) {
+            if (this._canTargetCreature(creature)) {
+                targetCreatures.push(creature);
+            }
+            for (let part of creature.parts.values()) {
+                const target = partToTarget(part);
+                if (this._inPlay.targetValid(world, target)) {
+                    targetParts.push(part);
+                }
+            }
+        }
         this.update((draft) => {
             draft.set(PlayCardState.UI, card, (target) => this._playOnTarget(target), () => this._inPlay);
             const hi = draft.build(Highlight);
-            hi.throb = [];
+            hi.throb.clear();
             hi.range = wasm.findBoundary(range);
+            for (let creature of targetCreatures) {
+                hi.creatures.inc(creature.id);
+            }
+            for (let part of targetParts) {
+                hi.mutPartsFor(part.creatureId).inc(part.id);
+            }
 
             const focus = draft.build(Focus);
             
@@ -69,27 +88,28 @@ export class PlayCardState extends State {
 
     onTileEntered(hex: Hex) {
         const world = window.game.world;
-        
-        const throb: Hex[] = [];
-        if (this._canTarget(hex)) {
-            throb.push(hex);
-            const spec = this._inPlay!.getTargetSpec();
-            if (spec.Creature) {
-                const target = creatureToTarget(window.game.creatureAt(hex)!);
-                const events = this._inPlay!.simulate(world, target);
-                this.update((draft) => {
-                    draft.build(Preview).setEvents(events);
-                });
-            }
+        const creature = window.game.creatureAt(hex);
+        if (!creature) { return; }  // TODO: hex targeting
+        if (!this._canTargetCreature(creature)) { return; }
+
+        const events: wasm.Event[] = [];
+        const spec = this._inPlay!.getTargetSpec();
+        if (spec.Creature) {
+            const target = creatureToTarget(window.game.creatureAt(hex)!);
+            events.push(...this._inPlay!.simulate(world, target));
         }
-        this.update((draft) => {
-            const hi = draft.build(Highlight);
-            hi.throb = throb;
+        this.update(draft => {
+            draft.build(Highlight).throb.creatures.inc(creature.id);
+            if (events) { draft.build(Preview).setEvents(events); }
         });
     }
 
     onTileExited(hex: Hex) {
+        const creature = window.game.creatureAt(hex);
         this.update((draft) => {
+            if (creature) {
+                draft.build(Highlight).throb.creatures.dec(creature.id);
+            }
             draft.build(Preview).setEvents([]);
         });
     }
@@ -112,12 +132,17 @@ export class PlayCardState extends State {
     }
 
     private _canTarget(hex: Hex): boolean {
+        const creature = window.game.creatureAt(hex);
+        if (creature && this._canTargetCreature(creature)) { return true; }
+        // TODO: hex targeting
+        return false;
+    }
+
+    private _canTargetCreature(creature: wasm.Creature): boolean {
         const world = window.game.world;
         const spec = this._inPlay!.getTargetSpec();
         let match;
         if (match = spec.Part) {
-            let creature = window.game.creatureAt(hex);
-            if (!creature) { return false; }
             let found = false;
             for (let part of creature.parts.values()) {
                 const target = partToTarget(part);
@@ -128,8 +153,6 @@ export class PlayCardState extends State {
             }
             return found;
         } else if (match = spec.Creature) {
-            let creature = window.game.creatureAt(hex);
-            if (!creature) { return false; }
             const target = creatureToTarget(creature);
             return this._inPlay!.targetValid(world, target);
         }
@@ -162,14 +185,14 @@ export class PlayCardState extends State {
             onEnter: (id) => {
                 if (valid(id)) {
                     this.update(draft => {
-                        draft.build(Highlight).creatures.inc(id);
+                        draft.build(Highlight).throb.creatures.inc(id);
                     });
                 }
             },
             onLeave: (id) => {
                 if (valid(id)) {
                     this.update(draft => {
-                        draft.build(Highlight).creatures.dec(id);
+                        draft.build(Highlight).throb.creatures.dec(id);
                     });
                 }
             },
