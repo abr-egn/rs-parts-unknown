@@ -188,9 +188,12 @@ export class PlayCardState extends State {
         };
         return {
             onEnter: (id) => {
-                if (valid(id)) {
+                const target = valid(id);
+                if (target) {
                     this.update(draft => {
                         draft.build(Highlight).throb.creatures.inc(id);
+                        const events = this._inPlay!.simulate(window.game.world, target);
+                        draft.build(Preview).setEvents(events);
                     });
                 }
             },
@@ -198,6 +201,7 @@ export class PlayCardState extends State {
                 if (valid(id)) {
                     this.update(draft => {
                         draft.build(Highlight).throb.creatures.dec(id);
+                        draft.build(Preview).setEvents([]);
                     });
                 }
             },
@@ -209,6 +213,7 @@ export class PlayCardState extends State {
     }
 
     private _partFocus(): Focus.Handler<[Id<wasm.Creature>, Id<wasm.Part>]> {
+        const world = window.game.world;
         const valid = (cid: Id<wasm.Creature>, pid: Id<wasm.Part>) => {
             const target = {
                 Part: {
@@ -216,20 +221,24 @@ export class PlayCardState extends State {
                     part_id: pid,
                 }
             };
-            if (!this._inPlay?.targetValid(window.game.world, target)) {
+            if (!this._inPlay?.targetValid(world, target)) {
                 return undefined;
             }
             return target;
         };
         return {
             onEnter: ([cid, pid]) => this.update(draft => {
-                if (valid(cid, pid)) {
+                const target = valid(cid, pid);
+                if (target) {
                     draft.build(Highlight).throb.mutPartsFor(cid).inc(pid);
+                    const events = this._inPlay!.simulate(window.game.world, target);
+                    draft.build(Preview).setEvents(events);
                 }
             }),
             onLeave: ([cid, pid]) => this.update(draft => {
                 if (valid(cid, pid)) {
                     draft.build(Highlight).throb.mutPartsFor(cid).dec(pid);
+                    draft.build(Preview).setEvents([]);
                 }
             }),
             onClick: ([cid, pid]) => {
