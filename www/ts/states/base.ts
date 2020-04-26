@@ -27,11 +27,14 @@ export class BaseState extends State {
             }
             let ui = draft.get(BaseState.UI);
             if (!ui) { return; }
-            for (let id of ui.range.keys()) {
+            for (let id of ui.clicked.keys()) {
+                this._selectCreature(draft, id);
+                /*
                 let range = window.game.world.getCreatureRange(id);
                 let bounds = wasm.findBoundary(range);
                 ui.range.set(id, bounds);
                 draft.build(Highlight).creatures.inc(id);
+                */
             }
         });
     }
@@ -76,7 +79,6 @@ export class BaseState extends State {
     }
 
     private _selectCreature(draft: Stack.Data, id: Id<wasm.Creature>) {
-        console.log("select", id);
         const ui = draft.build(BaseState.UI);
         const highlight = draft.build(Highlight);
         if (!highlight.creatures.has(id) || !ui.range.has(id)) {
@@ -85,16 +87,15 @@ export class BaseState extends State {
             ui.range.set(id, bounds);
         }
         highlight.creatures.inc(id);
-        console.log("highlight count", highlight.creatures._data.get(id));
+        console.log("select", id, "count", highlight.creatures._data.get(id));
         this._buildRange(draft);
     }
 
     private _unselectCreature(draft: Stack.Data, id: Id<wasm.Creature>) {
-        console.log("unselect", id);
         const ui = draft.build(BaseState.UI);
         const highlight = draft.build(Highlight);
         highlight.creatures.dec(id);
-        console.log("highlight count", highlight.creatures._data.get(id));
+        console.log("unselect", id, "count", highlight.creatures._data.get(id));
         if (!highlight.creatures.has(id)) {
             console.log("delete range");
             ui.range.delete(id);
@@ -123,12 +124,8 @@ export class BaseState extends State {
     }
 
     private _clickCreature(id: Id<wasm.Creature>) {
-        const shift = window.game.key("ShiftLeft") || window.game.key("ShiftRight");
         this.update((draft) => {
             let ui = draft.build(BaseState.UI);
-            if (!shift) {
-                this._clearClicked(draft);
-            }
             if (ui.clicked.has(id)) {
                 ui.clicked.delete(id);
                 this._unselectCreature(draft, id);

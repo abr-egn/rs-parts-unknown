@@ -31,12 +31,10 @@ class CountMap<K> {
 
     inc(key: K) {
         let n = this._data.get(key);
-        console.log("inc", key, n);
         this._data.set(key, (n || 0)+1);
     }
     dec(key: K) {
         let n = this._data.get(key) || 0;
-        console.log("dec", key, n);
         if (n <= 1) {
             this._data.delete(key);
         } else {
