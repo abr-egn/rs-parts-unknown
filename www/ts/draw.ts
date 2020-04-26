@@ -54,7 +54,7 @@ export class Draw {
         this._ctx.restore();
     }
 
-    focusedHex(hex: Hex) {
+    highlightHex(hex: Hex) {
         this._ctx.save();
 
         this._pathHex(hex, HEX_SIZE);

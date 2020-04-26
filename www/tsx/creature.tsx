@@ -89,7 +89,7 @@ export function CreatureStats(props: {
         mpStyle.color = "green";
     }
 
-    const highlight = data.get(Highlight)?.creatures.get(props.creature.id);
+    const highlight = data.get(Highlight)?.creatures.has(props.creature.id);
     return (
     <div
         className={highlight?"highlightBox":"uibox"}

@@ -124,10 +124,6 @@ export class GameBoard implements GameBoard.View {
                 for (let bound of bounds) {
                     this._draw.boundary(bound);
                 }
-                const hex = this._cache.creatureHex.get(id);
-                if (hex) {
-                    this._draw.focusedHex(hex);
-                }
             }
         }
 
@@ -148,7 +144,13 @@ export class GameBoard implements GameBoard.View {
             this._draw.boundary(bound);
         }
         for (let hex of hi.hexes) {
-            this._draw.focusedHex(hex);
+            this._draw.highlightHex(hex);
+        }
+        for (let id of hi.creatures.all()) {
+            const hex = this._cache.creatureHex.get(id);
+            if (hex) {
+                this._draw.highlightHex(hex);
+            }
         }
     }
 

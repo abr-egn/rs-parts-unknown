@@ -39,24 +39,35 @@ export class BaseState extends State {
         console.log("Tile:", hex, tile);
         if (!tile) { return; }
         if (tile.creature == undefined) {
-            this.update((draft) => { draft.get(BaseState.UI)?.selected.clear(); });
+            this.update((draft) => { this._clearSelection(draft); });
         } else {
             const shift = window.game.key("ShiftLeft") || window.game.key("ShiftRight");
             this.update((draft) => {
                 let ui = draft.build(BaseState.UI);
                 if (!shift) {
-                    ui.selected.clear();
+                    this._clearSelection(draft);
                 }
                 const id: Id<wasm.Creature> = tile!.creature!;
+                const highlight = draft.build(Highlight);
                 if (ui.selected.has(id)) {
                     ui.selected.delete(id);
+                    highlight.creatures.dec(id);
                 } else {
                     let range = world.getCreatureRange(id);
                     let bounds = wasm.findBoundary(range);
                     ui.selected.set(id, bounds);
+                    highlight.creatures.inc(id);
                 }
             });
         }
+    }
+    private _clearSelection(draft: Stack.Data) {
+        const ui = draft.get(BaseState.UI);
+        if (!ui) { return; }
+        for (let id of ui.selected.keys() || []) {
+            draft.build(Highlight).creatures.dec(id);
+        }
+        ui.selected.clear();
     }
 }
 export namespace BaseState {
