@@ -33,7 +33,7 @@ export function PartMenuItem(props: {
     const id: [wasm.Id<wasm.Creature>, wasm.Id<wasm.Part>] = [props.part.creatureId, props.part.id];
     return (
         <div
-            className={props.valid?"validTarget":"invalidTarget"}
+            className={props.valid?"playable":"unplayable"}
             onMouseDown={() => focus?.part.onClick?.(id)}
             onMouseEnter={() => focus?.part.onEnter?.(id)}
             onMouseLeave={() => focus?.part.onLeave?.(id)}

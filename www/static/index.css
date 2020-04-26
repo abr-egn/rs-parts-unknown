@@ -79,19 +79,22 @@ div.topright {
     padding: 5px;
 }
 
-/* Modifiers */
-
-.invalidTarget {
-    color: gray;
+.card {
+    border: 1px solid black;
 }
 
-.validTarget:hover {
-    background-color: rgba(0, 0, 127, 0.5);
+/* Modifiers */
+
+.playable:hover {
+    border: 1px solid #A0A0FF;
+    animation-name: throbble;
+    animation-duration: 0.8s;
+    animation-iteration-count: infinite;
     cursor: default;
 }
 
-.partHover {
-    font-weight: bold;
+.unplayable {
+    color: gray;
 }
 
 .partOpen {

@@ -35,15 +35,15 @@ export function CardList(props: {
     const list = props.cards.map((card, ix) => {
         const playable = props.active && canPlay(card);
         let onClick = undefined;
-        const classes = [];
+        const classes = ["card"];
         if (playable) {
-            classes.push("validTarget");
+            classes.push("playable");
             onClick = () => startPlay(card.creatureId, ix);
+            if (highlight?.static.parts.get(card.creatureId)?.has(card.partId)) {
+                classes.push("highlight");
+            }
         } else {
-            classes.push("invalidTarget");
-        }
-        if (highlight?.static.parts.get(card.creatureId)?.has(card.partId)) {
-            classes.push("partHover");
+            classes.push("unplayable");
         }
         return (
             <li key={cardKey(card)}
