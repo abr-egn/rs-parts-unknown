@@ -101,6 +101,10 @@ div.topright {
     color: gray;
 }
 
+.unplayable.highlight {
+    border: 1px solid gray;
+}
+
 .partOpen {
     border: 1px solid white;
 }

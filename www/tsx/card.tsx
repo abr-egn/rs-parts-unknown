@@ -44,6 +44,9 @@ export function CardList(props: {
             }
         } else {
             classes.push("unplayable");
+            if (highlight?.throb.parts.get(card.creatureId)?.has(card.partId)) {
+                classes.push("highlight");
+            }
         }
         return (
             <li key={cardKey(card)}
