@@ -2,6 +2,7 @@ import * as wasm from "../../wasm";
 import {Id, Hex} from "../../wasm";
 
 import {partToTarget, creatureToTarget} from "../extra";
+import {Focus} from "../focus";
 import {Highlight} from "../highlight";
 import {Preview} from "../preview";
 import {Stack, State} from "../stack";
@@ -43,7 +44,50 @@ export class PlayCardState extends State {
             const hi = draft.build(Highlight);
             hi.throb = [];
             hi.range = wasm.findBoundary(range);
+
+            const focus = draft.build(Focus);
+            focus.creature = {
+                onEnter: (id) => {},
+                onLeave: (id) => {},
+                onClick: (id) => {},
+            };
+            const validPart = (cid: Id<wasm.Creature>, pid: Id<wasm.Part>) => {
+                const target = {
+                    Part: {
+                        creature_id: cid,
+                        part_id: pid,
+                    }
+                };
+                if (!this._inPlay?.targetValid(window.game.world, target)) {
+                    return undefined;
+                }
+                return target;
+            };
+            focus.part = {
+                onEnter: ([cid, pid]) => this.update(draft => {
+                    if (validPart(cid, pid)) {
+                        draft.build(Highlight).mutPartsFor(cid).inc(pid);
+                    }
+                }),
+                onLeave: ([cid, pid]) => this.update(draft => {
+                    if (validPart(cid, pid)) {
+                        draft.build(Highlight).mutPartsFor(cid).dec(pid);
+                    }
+                }),
+                onClick: ([cid, pid]) => {
+                    const target = validPart(cid, pid);
+                    if (target) { this._playOnTarget(target); }
+                },
+            }
         });
+    }
+
+    onActivated(data?: any) {
+        if (!data) { return; }
+        if (data instanceof TargetPartState.Select) {
+            const target = partToTarget(data.part);
+            this._playOnTarget(target);
+        }
     }
 
     onPopped() {
@@ -93,14 +137,6 @@ export class PlayCardState extends State {
             this._playOnTarget(target);
         } else {
             throw "Unknown target spec!";
-        }
-    }
-
-    onActivated(data?: any) {
-        if (!data) { return; }
-        if (data instanceof TargetPartState.Select) {
-            const target = partToTarget(data.part);
-            this._playOnTarget(target);
         }
     }
 
