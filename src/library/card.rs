@@ -13,7 +13,6 @@ use crate::{
     mod_stack::Mod,
     trigger::{Trigger, TriggerId, TriggerKind},
     world::World,
-    some_or,
 };
 
 struct HitPart {
@@ -47,18 +46,9 @@ struct HitPartBehavior {
 impl card::Behavior for HitPartBehavior {
     fn range(&self, _world: &World) -> Vec<Hex> { self.range.iter().cloned().collect() }
     fn target_spec(&self) -> TargetSpec { TargetSpec::Part { on_player: false, tags: self.tags.clone() } }
-    fn target_valid(&self, world: &World, target: &Target) -> bool {
-        if !self.target_spec().matches(world, target) { return false; }
-        let (creature_id, part_id) = if let Target::Part { creature_id, part_id } = target {
-            (*creature_id, *part_id)
-        } else { return false; };
-        if creature_id == self.source { return false; }
-        let pos = some_or!(world.map().creatures().get(&creature_id), return false);
-        if !self.range.contains(&pos) { return false; }
-        let creature = some_or!(world.creatures().get(creature_id), return false);
-        let part = some_or!(creature.parts.get(part_id), return false);
-        if !part.tags().contains(&PartTag::Open) { return false; }
-        true
+    fn target_check(&self, _world: &World, target: &Target) -> bool {
+        let (creature_id, _) = target.part().unwrap();
+        creature_id != self.source
     }
     fn apply(&self, world: &mut World, target: &Target) -> Vec<Event> {
         let (creature_id, part_id) = match target {
@@ -84,7 +74,7 @@ pub fn throw_debris() -> Card {
     Card {
         name: "Throw Debris".into(),
         ap_cost: 1,
-        start_play: |world, source, part| HitPart { damage: 5, tags: vec![vec![]], melee: false }.behavior(world, source, part),
+        start_play: |world, source, part| HitPart { damage: 5, tags: vec![vec![PartTag::Open]], melee: false }.behavior(world, source, part),
     }
 }
 
@@ -92,7 +82,7 @@ pub fn punch() -> Card {
     Card {
         name: "Punch".into(),
         ap_cost: 1,
-        start_play: |world, source, part| HitPart { damage: 10, tags: vec![vec![]], melee: true }.behavior(world, source, part),
+        start_play: |world, source, part| HitPart { damage: 10, tags: vec![vec![PartTag::Open]], melee: true }.behavior(world, source, part),
     }
 }
 
@@ -166,12 +156,8 @@ impl card::Behavior for Guard {
     fn target_spec(&self) -> TargetSpec {
         TargetSpec::Part { on_player: true, tags: vec![vec![PartTag::Open]] }
     }
-    fn target_valid(&self, world: &World, target: &Target) -> bool {
-        if !self.target_spec().matches(world, target) { return false; }
-        let part_id = match target {
-            Target::Part { part_id, .. } => *part_id,
-            _ => panic!("invalid target"),
-        };
+    fn target_check(&self, _world: &World, target: &Target) -> bool {
+        let (_, part_id) = target.part().unwrap();
         part_id != self.source_part
     }
     fn apply(&self, world: &mut World, target: &Target) -> Vec<Event> {
@@ -213,8 +199,7 @@ impl card::Behavior for Stagger {
     fn target_spec(&self) -> TargetSpec {
         TargetSpec::Creature
     }
-    fn target_valid(&self, world: &World, target: &Target) -> bool {
-        if !self.target_spec().matches(world, target) { return false; }
+    fn target_check(&self, world: &World, target: &Target) -> bool {
         let (_, part_ids) = Stagger::target_parts(world, target);
         !part_ids.is_empty()
     }

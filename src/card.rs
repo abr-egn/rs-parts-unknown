@@ -43,18 +43,28 @@ impl std::fmt::Debug for Card {
 
 // TODO: power scaling
 pub trait Behavior: BehaviorClone {
-    fn range(&self, _world: &World) -> Vec<Hex>;
+    fn range(&self, world: &World) -> Vec<Hex>;
     // TODO: allow for multiple targets
     fn target_spec(&self) -> TargetSpec;
-    fn target_valid(&self, world: &World, target: &Target) -> bool {
-        self.target_spec().matches(world, target)
-    }
+    fn target_check(&self, world: &World, target: &Target) -> bool;
     fn simulate(&self, world: &World, target: &Target) -> Vec<Event> {
         let mut tmp = world.clone();
         tmp.tracer = None;
         self.apply(&mut tmp, target)
     }
     fn apply(&self, world: &mut World, target: &Target) -> Vec<Event>;
+}
+
+impl dyn Behavior {
+    pub fn target_valid(&self, world: &World, target: &Target) -> bool {
+        if !self.target_spec().matches(world, target) { return false; }
+        let range = self.range(world);
+        if !range.is_empty() {
+            let pos = some_or!(target.hex(world), return false);
+            if !range.contains(&pos) { return false; }
+        }
+        self.target_check(world, target)
+    }
 }
 
 // TODO: multiple targets
@@ -96,6 +106,30 @@ pub enum Target {
     None,
     Part { creature_id: Id<Creature>, part_id: Id<Part> },
     Creature { id: Id<Creature> },
+}
+
+impl Target {
+    pub fn hex(&self, world: &World) -> Option<Hex> {
+        match self {
+            Target::None => None,
+            Target::Part { creature_id: id, .. } |
+            Target::Creature { id } => {
+                world.map().creatures().get(id).cloned()
+            }
+        }
+    }
+    pub fn part(&self) -> Option<(Id<Creature>, Id<Part>)> {
+        match self {
+            Target::Part { creature_id, part_id } => Some((*creature_id, *part_id)),
+            _ => None
+        }
+    }
+    pub fn creature(&self) -> Option<Id<Creature>> {
+        match self {
+            Target::Creature { id } => Some(*id),
+            _ => None
+        }
+    }
 }
 
 pub trait BehaviorClone {
