@@ -20,7 +20,7 @@ export class BaseState extends State {
         if (tile?.creature != undefined) {
             const id = tile.creature;
             this.update((draft) => {
-                draft.build(Highlight).creatures.add(id);
+                draft.build(Highlight).creatures.inc(id);
             });
         }
     }
@@ -29,7 +29,7 @@ export class BaseState extends State {
         if (tile?.creature != undefined) {
             const id = tile.creature;
             this.update((draft) => {
-                draft.build(Highlight).creatures.delete(id);
+                draft.build(Highlight).creatures.dec(id);
             });
         }
     }
