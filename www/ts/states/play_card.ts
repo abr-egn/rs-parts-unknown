@@ -75,14 +75,10 @@ export class PlayCardState extends State {
     }
 
     onActivated(data?: any) {
-        this.update(draft => {
-            // If we're coming back from a TargetPartState, throbbing may be erroneously preserved
-            draft.build(Highlight).throb.clear();
-        });
         if (!data) { return; }
         if (data instanceof TargetPartState.Select) {
-            const target = partToTarget(data.part);
-            this._playOnTarget(target);
+            const target = this._partTarget(data.cid, data.pid);
+            if (target) { this._playOnTarget(target); }
         }
     }
 
@@ -125,6 +121,7 @@ export class PlayCardState extends State {
         if (spec.Part) {
             let creature = window.game.creatureAt(hex);
             if (!creature) { return; }
+            this.update(draft => { draft.build(Highlight).throb.clear(); })
             window.game.stack.push(new TargetPartState(this._inPlay!, hex, creature));
         } else if (spec.Creature) {
             let creature = window.game.creatureAt(hex);
@@ -214,21 +211,9 @@ export class PlayCardState extends State {
 
     private _partFocus(): Focus.Handler<[Id<wasm.Creature>, Id<wasm.Part>]> {
         const world = window.game.world;
-        const valid = (cid: Id<wasm.Creature>, pid: Id<wasm.Part>) => {
-            const target = {
-                Part: {
-                    creature_id: cid,
-                    part_id: pid,
-                }
-            };
-            if (!this._inPlay?.targetValid(world, target)) {
-                return undefined;
-            }
-            return target;
-        };
         return {
             onEnter: ([cid, pid]) => this.update(draft => {
-                const target = valid(cid, pid);
+                const target = this._partTarget(cid, pid);
                 if (target) {
                     draft.build(Highlight).throb.mutPartsFor(cid).inc(pid);
                     const events = this._inPlay!.simulate(window.game.world, target);
@@ -236,17 +221,30 @@ export class PlayCardState extends State {
                 }
             }),
             onLeave: ([cid, pid]) => this.update(draft => {
-                if (valid(cid, pid)) {
+                if (this._partTarget(cid, pid)) {
                     draft.build(Highlight).throb.mutPartsFor(cid).dec(pid);
                     draft.build(Preview).setEvents([]);
                 }
             }),
             onClick: ([cid, pid]) => {
-                const target = valid(cid, pid);
+                const target = this._partTarget(cid, pid);
                 if (target) { this._playOnTarget(target); }
             },
         };
     }
+
+    private _partTarget(cid: Id<wasm.Creature>, pid: Id<wasm.Part>): wasm.Target | undefined {
+        const target = {
+            Part: {
+                creature_id: cid,
+                part_id: pid,
+            }
+        };
+        if (!this._inPlay?.targetValid(window.game.world, target)) {
+            return undefined;
+        }
+        return target;
+    };
 }
 export namespace PlayCardState {
     export class UI {

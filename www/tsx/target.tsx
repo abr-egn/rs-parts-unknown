@@ -1,6 +1,7 @@
 import * as React from "react";
 
 import * as wasm from "../wasm";
+import {Focus} from "../ts/stack/focus";
 import {TargetPartState} from "../ts/states/target_part";
 import {StackData} from "./index";
 
@@ -19,7 +20,6 @@ export function TargetPart(props: {}): JSX.Element | null {
             key={part.id}
             part={part}
             valid={valid}
-            callbacks={target.callbacks}
         ></PartMenuItem>);
     return <div className="partTargetMenu" style={style}>{parts}</div>;
 }
@@ -27,22 +27,16 @@ export function TargetPart(props: {}): JSX.Element | null {
 export function PartMenuItem(props: {
     part: wasm.Part,
     valid: boolean,
-    callbacks: TargetPartState.Callbacks,
 }): JSX.Element {
-    let onMouseDown = undefined;
-    let onMouseEnter = undefined;
-    let onMouseLeave = undefined;
-    if (props.valid) {
-        onMouseDown = () => props.callbacks.onSelect(props.part);
-        onMouseEnter = () => props.callbacks.onHoverEnter(props.part);
-        onMouseLeave = props.callbacks.onHoverLeave;
-    }
+    const data = React.useContext(StackData);
+    const focus = data.get(Focus);
+    const id: [wasm.Id<wasm.Creature>, wasm.Id<wasm.Part>] = [props.part.creatureId, props.part.id];
     return (
         <div
             className={props.valid?"validTarget":"invalidTarget"}
-            onMouseDown={onMouseDown}
-            onMouseEnter={onMouseEnter}
-            onMouseLeave={onMouseLeave}
+            onMouseDown={() => focus?.part.onClick?.(id)}
+            onMouseEnter={() => focus?.part.onEnter?.(id)}
+            onMouseLeave={() => focus?.part.onLeave?.(id)}
             >
             {props.part.name}
         </div>
