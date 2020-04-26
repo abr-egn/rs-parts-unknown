@@ -2,9 +2,7 @@ import {immerable} from "immer";
 
 import * as wasm from "../../wasm";
 import {Id} from "../../wasm";
-import {Hex} from "../../wasm";
 import {Stack} from "../stack";
-import { Focus } from "./focus";
 
 export class Highlight {
     [Stack.Datum] = true;

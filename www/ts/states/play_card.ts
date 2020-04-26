@@ -220,12 +220,12 @@ export class PlayCardState extends State {
         return {
             onEnter: ([cid, pid]) => this.update(draft => {
                 if (valid(cid, pid)) {
-                    draft.build(Highlight).static.mutPartsFor(cid).inc(pid);
+                    draft.build(Highlight).throb.mutPartsFor(cid).inc(pid);
                 }
             }),
             onLeave: ([cid, pid]) => this.update(draft => {
                 if (valid(cid, pid)) {
-                    draft.build(Highlight).static.mutPartsFor(cid).dec(pid);
+                    draft.build(Highlight).throb.mutPartsFor(cid).dec(pid);
                 }
             }),
             onClick: ([cid, pid]) => {
