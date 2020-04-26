@@ -1,3 +1,5 @@
+import {immerable} from "immer";
+
 import {FloatText} from "../../tsx/float";
 import * as wasm from "../../wasm";
 import {hexToPixel} from "../draw";
@@ -63,6 +65,7 @@ export class UpdateState extends State {
 export namespace UpdateState {
     export class UI {
         [Stack.Datum] = true;
+        [immerable] = true;
         float: FloatText.ItemSet = new FloatText.ItemSet();
         isEndTurn: boolean = false;
     }

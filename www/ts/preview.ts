@@ -1,3 +1,5 @@
+import {immerable} from "immer";
+
 import * as wasm from "../wasm";
 import {Hex, Id} from "../wasm";
 import {Stack} from "./stack";
@@ -6,6 +8,7 @@ import {FloatText} from "../tsx/float";
 
 export class Preview {
     [Stack.Datum] = true;
+    [immerable] = true;
 
     private _stats: StatMap = new Map();
     private _float: FloatText.ItemSet = new FloatText.ItemSet();
@@ -14,6 +17,7 @@ export class Preview {
     get float(): Readonly<FloatText.ItemId[]> { return this._float.all }
     get throb(): Readonly<Hex[]> { return this._throb; }
     get stats(): Readonly<StatMap> { return this._stats; }
+    set stats(v) {}  // Work around immer bug: https://github.com/immerjs/immer/pull/558
 
     setEvents(events: Readonly<wasm.Event[]>) {
         this._stats = new Map();

@@ -1,6 +1,7 @@
+import {immerable} from "immer";
+
 import * as wasm from "../../wasm";
 import {Hex} from "../../wasm";
-
 import {partToTarget} from "../extra";
 import {Preview} from "../preview";
 import {Stack, State} from "../stack";
@@ -50,6 +51,8 @@ export class TargetPartState extends State {
 export namespace TargetPartState {
     export class UI {
         [Stack.Datum] = true;
+        [immerable] = true;
+
         constructor(
             public hex: Hex,
             public targets: [wasm.Part, boolean][],

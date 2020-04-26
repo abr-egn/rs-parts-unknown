@@ -1,3 +1,5 @@
+import {immerable} from "immer";
+
 import * as wasm from "../../wasm";
 
 import {Stack, State} from "../stack";
@@ -11,6 +13,7 @@ export class GameOverState extends State {
 export namespace GameOverState {
     export class UI {
         [Stack.Datum] = true;
+        [immerable] = true;
         constructor(public state: wasm.GameState) { }
     }
 }

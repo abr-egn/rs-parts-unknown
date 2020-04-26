@@ -1,3 +1,5 @@
+import {immerable} from "immer";
+
 import * as wasm from "../../wasm";
 import {Id, Hex} from "../../wasm";
 
@@ -212,6 +214,8 @@ export class PlayCardState extends State {
 export namespace PlayCardState {
     export class UI {
         [Stack.Datum] = true;
+        [immerable] = true;
+
         constructor (
             public card: wasm.Card,
             public playOnTarget: (target: wasm.Target) => void,
@@ -223,5 +227,6 @@ export namespace PlayCardState {
     }
     export class ToUpdate {
         [Stack.Datum] = true;
+        [immerable] = true;
     }
 }

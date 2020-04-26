@@ -143,7 +143,10 @@ export class Stack {
 export namespace Stack {
     export const Datum = Symbol();
     
-    type Constructor = new (...args: any[]) => {[Stack.Datum]: boolean};
+    type Constructor = new (...args: any[]) => {
+        [Stack.Datum]: boolean;
+        [immerable]: boolean;
+    };
 
     export interface DataView {
         get<C extends Constructor>(key: C): Readonly<InstanceType<C>> | undefined;
@@ -179,6 +182,7 @@ export namespace Stack {
 
     export class Active {
         [Stack.Datum] = true;
+        [immerable] = true;
     
         constructor(public state: State) {}
         is(c: new (...args: any[]) => any): boolean {

@@ -1,3 +1,5 @@
+import {immerable} from "immer";
+
 import * as wasm from "../../wasm";
 import {Id, Hex} from "../../wasm";
 import {Focus} from "../focus";
@@ -130,6 +132,7 @@ export class BaseState extends State {
 export namespace BaseState {
     export class UI {
         [Stack.Datum] = true;
+        [immerable] = true;
         range: Map<Id<wasm.Creature>, wasm.Boundary[]> = new Map();
         clicked: Set<Id<wasm.Creature>> = new Set();
     }
