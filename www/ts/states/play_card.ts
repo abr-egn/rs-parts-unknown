@@ -41,7 +41,7 @@ export class PlayCardState extends State {
         this.update((draft) => {
             draft.set(PlayCardState.UI, card, (target) => this._playOnTarget(target), () => this._inPlay);
             const hi = draft.build(Highlight);
-            hi.hexes = [];
+            hi.throb = [];
             hi.range = wasm.findBoundary(range);
         });
     }
@@ -55,9 +55,9 @@ export class PlayCardState extends State {
         // TODO: allow target selection via stat block UI.  Somehow.
         const world = window.game.world;
         
-        const hiHexes: Hex[] = [];
+        const throb: Hex[] = [];
         if (this._canTarget(hex)) {
-            hiHexes.push(hex);
+            throb.push(hex);
             const spec = this._inPlay!.getTargetSpec();
             if (spec.Creature) {
                 const target = creatureToTarget(window.game.creatureAt(hex)!);
@@ -69,7 +69,7 @@ export class PlayCardState extends State {
         }
         this.update((draft) => {
             const hi = draft.build(Highlight);
-            hi.hexes = hiHexes;
+            hi.throb = throb;
         });
     }
 

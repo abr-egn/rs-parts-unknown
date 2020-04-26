@@ -9,7 +9,7 @@ export class Highlight {
     [Stack.Datum] = true;
     [immerable] = true;
 
-    hexes: Hex[] = [];
+    throb: Hex[] = [];
     range: wasm.Boundary[] = [];
     creatures: CountMap<Id<wasm.Creature>> = new CountMap();
     parts: CountMap<Id<wasm.Part>> = new CountMap();

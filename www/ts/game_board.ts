@@ -143,14 +143,14 @@ export class GameBoard implements GameBoard.View {
         for (let bound of hi.range) {
             this._draw.boundary(bound);
         }
-        for (let hex of hi.hexes) {
-            this._draw.highlightHex(hex);
-        }
         for (let id of hi.creatures.all()) {
             const hex = this._cache.creatureHex.get(id);
             if (hex) {
                 this._draw.highlightHex(hex);
             }
+        }
+        for (let hex of hi.throb) {
+            this._draw.throb(hex, this._tsMillis);
         }
     }
 
