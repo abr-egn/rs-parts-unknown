@@ -5,9 +5,10 @@ import {Highlight} from "../highlight";
 import {Stack, State} from "../stack";
 
 export class BaseState extends State {
-    onActivated() {
-        this.update((draft) => {
-            draft.build(Focus).creature = {
+    onPushed() {
+        this.update(draft => {
+            const focus = draft.build(Focus);
+            focus.creature = {
                 onEnter: (id) => this.update(draft => {
                     draft.build(Highlight).creatures.inc(id);
                 }),
@@ -16,6 +17,18 @@ export class BaseState extends State {
                 }),
                 onClick: (id) => this._selectCreature(id),
             };
+            focus.part = {
+                onEnter: (id) => this.update(draft => {
+                    draft.build(Highlight).parts.inc(id);
+                }),
+                onLeave: (id) => this.update(draft => {
+                    draft.build(Highlight).parts.dec(id);
+                }),
+            }
+        })
+    }
+    onActivated() {
+        this.update((draft) => {
             let ui = draft.get(BaseState.UI);
             if (!ui) { return; }
             for (let id of ui.selected.keys()) {
