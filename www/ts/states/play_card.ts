@@ -4,9 +4,9 @@ import * as wasm from "../../wasm";
 import {Id, Hex} from "../../wasm";
 
 import {partToTarget, creatureToTarget} from "../extra";
-import {Focus} from "../focus";
-import {Highlight} from "../highlight";
-import {Preview} from "../preview";
+import {Focus} from "../stack/focus";
+import {Highlight} from "../stack/highlight";
+import {Preview} from "../stack/preview";
 import {Stack, State} from "../stack";
 
 import {TargetPartState} from "./target_part";

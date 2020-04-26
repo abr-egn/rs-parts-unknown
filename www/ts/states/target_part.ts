@@ -3,7 +3,7 @@ import {immerable} from "immer";
 import * as wasm from "../../wasm";
 import {Hex} from "../../wasm";
 import {partToTarget} from "../extra";
-import {Preview} from "../preview";
+import {Preview} from "../stack/preview";
 import {Stack, State} from "../stack";
 
 export class TargetPartState extends State {

@@ -2,8 +2,8 @@ import {immerable} from "immer";
 
 import * as wasm from "../../wasm";
 import {Id, Hex} from "../../wasm";
-import {Focus} from "../focus";
-import {Highlight} from "../highlight";
+import {Focus} from "../stack/focus";
+import {Highlight} from "../stack/highlight";
 import {Stack, State} from "../stack";
 
 export class BaseState extends State {

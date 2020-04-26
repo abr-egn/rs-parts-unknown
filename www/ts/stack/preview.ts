@@ -1,10 +1,10 @@
 import {immerable} from "immer";
 
-import * as wasm from "../wasm";
-import {Hex, Id} from "../wasm";
-import {Stack} from "./stack";
+import * as wasm from "../../wasm";
+import {Hex, Id} from "../../wasm";
+import {Stack} from "../stack";
 
-import {FloatText} from "../tsx/float";
+import {FloatText} from "../../tsx/float";
 
 export class Preview {
     [Stack.Datum] = true;

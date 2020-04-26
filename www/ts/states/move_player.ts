@@ -1,8 +1,8 @@
 import * as wasm from "../../wasm";
 import {Hex} from "../../wasm";
 
-import {Highlight} from "../highlight";
-import {Preview} from "../preview";
+import {Highlight} from "../stack/highlight";
+import {Preview} from "../stack/preview";
 import {State} from "../stack";
 
 import {UpdateState} from "./update";

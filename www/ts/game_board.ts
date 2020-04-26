@@ -6,8 +6,8 @@ import {
     Draw,
     hexToPixel, pixelToHex,
 } from "./draw";
-import {Highlight} from "./highlight";
-import {Preview} from "./preview";
+import {Highlight} from "./stack/highlight";
+import {Preview} from "./stack/preview";
 import {Stack} from "./stack";
 
 import {BaseState} from "./states/base";

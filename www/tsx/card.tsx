@@ -1,7 +1,7 @@
 import * as React from "react";
 
-import {Focus} from "../ts/focus";
-import {Highlight} from "../ts/highlight";
+import {Focus} from "../ts/stack/focus";
+import {Highlight} from "../ts/stack/highlight";
 import {PlayCardState} from "../ts/states/play_card";
 import * as wasm from "../wasm";
 import {Id} from "../wasm";

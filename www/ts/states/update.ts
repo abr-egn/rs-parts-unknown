@@ -3,7 +3,7 @@ import {immerable} from "immer";
 import {FloatText} from "../../tsx/float";
 import * as wasm from "../../wasm";
 import {hexToPixel} from "../draw";
-import {Preview} from "../preview";
+import {Preview} from "../stack/preview";
 import {Stack, State} from "../stack";
 import {GameOverState} from "./game_over";
 
