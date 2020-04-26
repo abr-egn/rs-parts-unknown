@@ -10,8 +10,8 @@ import {WorldContext} from "./index";
 export function CardList(props: {
     active: boolean,
     cards: wasm.Card[],
-    partHighlight?: Id<wasm.Part>,
-    setPartHighlight: (part: Id<wasm.Part> | undefined) => void,
+    partHover?: Id<wasm.Part>,
+    setPartHover: (part: Id<wasm.Part> | undefined) => void,
 }): JSX.Element {
     const world = React.useContext(WorldContext);
 
@@ -25,10 +25,10 @@ export function CardList(props: {
         return `(${card.creatureId},${card.partId},${card.id})`;
     };
     const onCardEnter = (card: wasm.Card, event: React.MouseEvent) => {
-        props.setPartHighlight(card.partId);
+        props.setPartHover(card.partId);
     };
     const onCardLeave = (card: wasm.Card, event: React.MouseEvent) => {
-        props.setPartHighlight(undefined);
+        props.setPartHover(undefined);
     }
   
     const list = props.cards.map((card, ix) => {
@@ -41,8 +41,8 @@ export function CardList(props: {
         } else {
             classes.push("invalidTarget");
         }
-        if (card.partId == props.partHighlight) {
-            classes.push("partHighlight");
+        if (card.partId == props.partHover) {
+            classes.push("partHover");
         }
         return (
             <li key={cardKey(card)}
