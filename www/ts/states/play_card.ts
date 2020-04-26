@@ -46,57 +46,9 @@ export class PlayCardState extends State {
             hi.range = wasm.findBoundary(range);
 
             const focus = draft.build(Focus);
-            const validCreature = (id: Id<wasm.Creature>) => {
-                const target = { Creature: { id } };
-                if (!this._inPlay?.targetValid(window.game.world, target)) {
-                    return undefined;
-                }
-                return target;
-            };
-            focus.creature = {
-                onEnter: (id) => {
-                    if (validCreature(id)) {
-                        draft.build(Highlight).creatures.inc(id);
-                    }
-                },
-                onLeave: (id) => {
-                    if (validCreature(id)) {
-                        draft.build(Highlight).creatures.dec(id);
-                    }
-                },
-                onClick: (id) => {
-                    const target = validCreature(id);
-                    if (target) { this._playOnTarget(target); }
-                },
-            };
-            const validPart = (cid: Id<wasm.Creature>, pid: Id<wasm.Part>) => {
-                const target = {
-                    Part: {
-                        creature_id: cid,
-                        part_id: pid,
-                    }
-                };
-                if (!this._inPlay?.targetValid(window.game.world, target)) {
-                    return undefined;
-                }
-                return target;
-            };
-            focus.part = {
-                onEnter: ([cid, pid]) => this.update(draft => {
-                    if (validPart(cid, pid)) {
-                        draft.build(Highlight).mutPartsFor(cid).inc(pid);
-                    }
-                }),
-                onLeave: ([cid, pid]) => this.update(draft => {
-                    if (validPart(cid, pid)) {
-                        draft.build(Highlight).mutPartsFor(cid).dec(pid);
-                    }
-                }),
-                onClick: ([cid, pid]) => {
-                    const target = validPart(cid, pid);
-                    if (target) { this._playOnTarget(target); }
-                },
-            }
+            
+            focus.creature = this._creatureFocus();
+            focus.part = this._partFocus();
         });
     }
 
@@ -114,7 +66,6 @@ export class PlayCardState extends State {
     }
 
     onTileEntered(hex: Hex) {
-        // TODO: allow target selection via stat block UI.  Somehow.
         const world = window.game.world;
         
         const throb: Hex[] = [];
@@ -195,6 +146,67 @@ export class PlayCardState extends State {
         // doesn't flicker for a frame.
         this.update((draft) => { draft.build(PlayCardState.ToUpdate); });
         window.game.stack.swap(new UpdateState(events, nextWorld));
+    }
+
+    private _creatureFocus(): Focus.Handler<Id<wasm.Creature>> {
+        const valid = (id: Id<wasm.Creature>) => {
+            const target = { Creature: { id } };
+            if (!this._inPlay?.targetValid(window.game.world, target)) {
+                return undefined;
+            }
+            return target;
+        };
+        return {
+            onEnter: (id) => {
+                if (valid(id)) {
+                    this.update(draft => {
+                        draft.build(Highlight).creatures.inc(id);
+                    });
+                }
+            },
+            onLeave: (id) => {
+                if (valid(id)) {
+                    this.update(draft => {
+                        draft.build(Highlight).creatures.dec(id);
+                    });
+                }
+            },
+            onClick: (id) => {
+                const target = valid(id);
+                if (target) { this._playOnTarget(target); }
+            },
+        };
+    }
+
+    private _partFocus(): Focus.Handler<[Id<wasm.Creature>, Id<wasm.Part>]> {
+        const valid = (cid: Id<wasm.Creature>, pid: Id<wasm.Part>) => {
+            const target = {
+                Part: {
+                    creature_id: cid,
+                    part_id: pid,
+                }
+            };
+            if (!this._inPlay?.targetValid(window.game.world, target)) {
+                return undefined;
+            }
+            return target;
+        };
+        return {
+            onEnter: ([cid, pid]) => this.update(draft => {
+                if (valid(cid, pid)) {
+                    draft.build(Highlight).mutPartsFor(cid).inc(pid);
+                }
+            }),
+            onLeave: ([cid, pid]) => this.update(draft => {
+                if (valid(cid, pid)) {
+                    draft.build(Highlight).mutPartsFor(cid).dec(pid);
+                }
+            }),
+            onClick: ([cid, pid]) => {
+                const target = valid(cid, pid);
+                if (target) { this._playOnTarget(target); }
+            },
+        };
     }
 }
 export namespace PlayCardState {
