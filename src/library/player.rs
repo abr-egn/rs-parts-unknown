@@ -16,10 +16,13 @@ pub fn player() -> Creature {
             &[PartTag::Head, PartTag::Flesh, PartTag::Vital, PartTag::Open],
             20)
     };
-    let torso = Part::new(
-        "Torso",
-        &[PartTag::Torso, PartTag::Flesh, PartTag::Vital, PartTag::Open],
-        50);
+    let torso = Part {
+        cards: IdMap::from_iter(vec![library::card::heal()]),
+        ..Part::new(
+            "Torso",
+            &[PartTag::Torso, PartTag::Flesh, PartTag::Vital, PartTag::Open],
+            50)
+    };
     let arm_l = Part {
         cards: IdMap::from_iter(vec![
             library::card::throw_debris(),

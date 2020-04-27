@@ -229,10 +229,17 @@ impl Stagger {
     }
 }
 
-/*
+pub fn heal() -> Card {
+    Card {
+        name: "Heal".into(),
+        ap_cost: 2,
+        start_play: |_, _, _| Box::new(Heal { amount: 5 })
+    }
+}
+
 #[derive(Debug, Clone)]
 struct Heal {
-    source: Id<Creature>,
+    amount: i32,
 }
 
 impl card::Behavior for Heal {
@@ -244,11 +251,10 @@ impl card::Behavior for Heal {
     fn apply(&self, world: &mut World, target: &Target) -> Vec<Event> {
         let (cid, pid) = target.part().unwrap();
         world.execute(&Action::to_part(cid, pid,
-            PartAction::
+            PartAction::Heal { hp: self.amount }
         ))
     }
 }
-*/
 
 /* 10 cards:
 arms:

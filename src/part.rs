@@ -59,7 +59,7 @@ impl Part {
         match action {
             Hit { damage } => {
                 let damage = std::cmp::min(self.cur_hp, *damage);
-                if damage <= 0 { return Ok(vec![]); }
+                if damage <= 0 { return Ok(vec![]); }  // TODO: fail?
                 self.cur_hp -= damage;
                 let mut out = vec![PartEvent::ChangeHP { delta: -damage }];
                 if self.cur_hp <= 0 {
@@ -112,6 +112,12 @@ impl Part {
                 out.extend(self.mod_delta(prev));
                 Ok(out)
             }
+            Heal { hp } => {
+                let hp = std::cmp::min(*hp, self.max_hp - self.cur_hp);
+                if hp <= 0 { return Ok(vec![]) }  // TODO: fail?
+                self.cur_hp += hp;
+                Ok(vec![PartEvent::ChangeHP { delta: hp }])
+            }
         }
     }
 
@@ -139,7 +145,8 @@ pub enum PartAction {
         #[serde(skip)]
         m: TagMod
     },
-    ClearTagMod { id: TagModId, }
+    ClearTagMod { id: TagModId, },
+    Heal { hp: i32 },
 }
 
 pub type TagMod = Mod<HashSet<PartTag>>;
