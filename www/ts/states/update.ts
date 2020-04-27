@@ -49,6 +49,7 @@ export class UpdateState extends State {
             float.style!.animationName = "floatLift";
             window.game.addFloat(float);
             setTimeout(() => window.game.deleteFloat(float), 2000);
+            await new Promise(f => setTimeout(f, 500));
         }
     }
 }
