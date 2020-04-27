@@ -67,6 +67,12 @@ div.topright {
     animation-fill-mode: forwards;
 }
 
+.attackIcon {
+    width: 20;
+    height: 20;
+    vertical-align: middle;
+}
+
 @keyframes floatLift {
     100% {transform: translate(-50%, -50%) translate(0px, -50px)}
 }

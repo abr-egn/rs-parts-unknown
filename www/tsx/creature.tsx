@@ -96,16 +96,20 @@ export function CreatureIntent(props: {
         left: props.coords.x,
         bottom: height - props.coords.y,
     };
-    let intentStr = "???";
+    let intentElt: JSX.Element | null = <span>???</span>;
     let intent;
     if (!npc.intent) {
-        intentStr = "";
+        intentElt = null;
     } else if (intent = npc.intent?.kind.Attack) {
         let damage_from = world.scaleDamageFrom(intent.base_damage, props.creature.id, npc.intent.from);
         let damage = world.scaleDamageTo(damage_from, world.playerId, undefined);
-        intentStr = `${intent.range} Attack: ${damage}`;
+        let intentIcon;
+        switch (intent.range) {
+            case "Melee": intentIcon = "icons/punch.svg";
+        }
+        intentElt = <span><img src={intentIcon} className="attackIcon"></img>{damage}</span>
     }
     return (<div className="intent" style={style}>
-        {npc.motion}<br/>{intentStr}
+        {npc.motion}<br/>{intentElt}
     </div>);
 }
