@@ -11,6 +11,7 @@ use crate::{
     event::{Action, Event},
     id_map::Id,
     map::Tile,
+    part,
     wasm::{
         creature::Creature,
         in_play::InPlay,
@@ -154,7 +155,7 @@ impl World {
     #[wasm_bindgen(skip_typescript)]
     pub fn scaleDamageTo(&self, damage: i32, to: JsValue, part: JsValue) -> i32 {
         let to: Id<creature::Creature> = from_js_value(to);
-        let part: Option<Id<creature::Part>> = if part.is_undefined() { None } else { Some(from_js_value(part)) };
+        let part: Option<Id<part::Part>> = if part.is_undefined() { None } else { Some(from_js_value(part)) };
         let creature = self.wrapped.creatures().get(to).unwrap();
         creature.scale_damage_to(damage, part)
     }
@@ -162,7 +163,7 @@ impl World {
     #[wasm_bindgen(skip_typescript)]
     pub fn scaleDamageFrom(&self, damage: i32, to: JsValue, part: JsValue) -> i32 {
         let to: Id<creature::Creature> = from_js_value(to);
-        let part: Option<Id<creature::Part>> = if part.is_undefined() { None } else { Some(from_js_value(part)) };
+        let part: Option<Id<part::Part>> = if part.is_undefined() { None } else { Some(from_js_value(part)) };
         let creature = self.wrapped.creatures().get(to).unwrap();
         creature.scale_damage_from(damage, part)
     }

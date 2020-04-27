@@ -5,9 +5,10 @@ use ts_data_derive::TsData;
 use wasm_bindgen::prelude::*;
 
 use crate::{
-    card, creature::{self, PartTag},
+    card, creature,
     id_map::Id,
     npc::{self, Intent, Motion},
+    part::{self, PartTag},
     wasm::{
         to_js_value,
         card::Card,
@@ -19,7 +20,7 @@ use crate::{
 pub struct Creature {
     id: Id<creature::Creature>,
     name: String,
-    parts: HashMap<Id<creature::Part>, Part>,
+    parts: HashMap<Id<part::Part>, Part>,
     curAp: i32,
     curMp: i32,
     dead: bool,
@@ -58,7 +59,7 @@ impl Creature {
 #[derive(Serialize, TsData)]
 #[allow(non_snake_case)]
 pub struct Part {
-    id: Id<creature::Part>,
+    id: Id<part::Part>,
     creatureId: Id<creature::Creature>,
     name: String,
     cards: HashMap<Id<card::Card>, Card>,
@@ -72,9 +73,9 @@ pub struct Part {
 #[allow(non_snake_case)]
 impl Part {
     fn new(
-        id: Id<creature::Part>,
+        id: Id<part::Part>,
         creatureId: Id<creature::Creature>,
-        source: &creature::Part,
+        source: &part::Part,
     ) -> Self {
         let cards = source.cards.iter()
             .map(|(&card_id, card)| (card_id, Card::new(card_id, id, creatureId, card)))
@@ -85,7 +86,7 @@ impl Part {
             thought: source.thought,
             maxHp: source.max_hp,
             curHp: source.cur_hp,
-            broken: source.tags().contains(&creature::PartTag::Broken),
+            broken: source.tags().contains(&PartTag::Broken),
             tags: source.tags().into_iter().collect(),
         }
     }

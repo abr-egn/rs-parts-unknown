@@ -239,8 +239,8 @@ impl<'ast> Visit<'ast> for TranslateType {
             // Mangle
             "card::Card" => { self.push_str("Card"); }
             "creature::Creature" => { self.push_str("Creature"); }
-            "creature::Part" => { self.push_str("Part"); }
             "hex::Direction" => { self.push_str("Direction"); }
+            "part::Part" => { self.push_str("Part"); }
             "TagModId" => { self.push_str("Id<TagMod>"); }
             "TriggerId" => { self.push_str("Id<Trigger>"); }
             // Pass through

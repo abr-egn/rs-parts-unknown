@@ -5,12 +5,11 @@ use rand::prelude::*;
 
 use crate::{
     card::{self, Card, Target, TargetSpec},
-    creature::{
-        Creature, CreatureAction, Part, PartAction, PartTag, TagMod, TagModId, WorldExt,
-    },
+    creature::{Creature, CreatureAction},
     event::{Action, Event},
     id_map::Id,
     mod_stack::Mod,
+    part::{Part, PartAction, PartTag, TagMod, TagModId, WorldExt},
     trigger::{Trigger, TriggerId, TriggerKind},
     world::World,
 };
@@ -161,10 +160,7 @@ impl card::Behavior for Guard {
         part_id != self.source_part
     }
     fn apply(&self, world: &mut World, target: &Target) -> Vec<Event> {
-        let (target_id, part_id) = match target {
-            Target::Part { creature_id, part_id } => (*creature_id, *part_id),
-            _ => panic!("invalid target"),
-        };
+        let (target_id, part_id) = target.part().unwrap();
         let mut out = vec![];
         out.extend(ExpireTagMod::add(world,
             self.source_creature, self.source_part,
@@ -232,6 +228,27 @@ impl Stagger {
         (target_id, part_ids)
     }
 }
+
+/*
+#[derive(Debug, Clone)]
+struct Heal {
+    source: Id<Creature>,
+}
+
+impl card::Behavior for Heal {
+    fn range(&self, _world: &World) -> Vec<Hex> { vec![] }
+    fn target_spec(&self) -> TargetSpec {
+        TargetSpec::Part { on_player: true, tags: vec![vec![PartTag::Flesh]] }
+    }
+    fn target_check(&self, _world: &World, _target: &Target) -> bool { true }
+    fn apply(&self, world: &mut World, target: &Target) -> Vec<Event> {
+        let (cid, pid) = target.part().unwrap();
+        world.execute(&Action::to_part(cid, pid,
+            PartAction::
+        ))
+    }
+}
+*/
 
 /* 10 cards:
 arms:

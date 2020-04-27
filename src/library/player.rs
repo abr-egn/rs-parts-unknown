@@ -1,9 +1,10 @@
 use std::iter::FromIterator;
 
 use crate::{
-    creature::{Creature, Part, PartTag,},
+    creature::{Creature},
     id_map::IdMap,
     library,
+    part::{Part, PartTag},
 };
 
 pub fn player() -> Creature {

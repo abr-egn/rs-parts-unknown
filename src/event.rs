@@ -2,10 +2,12 @@ use hex::Hex;
 use serde::{Serialize};
 use ts_data_derive::TsData;
 use wasm_bindgen::prelude::wasm_bindgen;
+
 use crate::{
-    creature::{Creature, CreatureAction, CreatureEvent, Part, PartAction, PartEvent},
+    creature::{Creature, CreatureAction, CreatureEvent},
     error::Error,
     id_map::Id,
+    part::{Part, PartAction, PartEvent},
     serde_empty,
     trigger::{Trigger, TriggerId},
 };

@@ -1,7 +1,8 @@
 use crate::{
-    creature::{Creature, Part, PartTag},
+    creature::{Creature},
     id_map::{Id, IdMap},
     npc,
+    part::{Part, PartTag},
     world::World,
 };
 
