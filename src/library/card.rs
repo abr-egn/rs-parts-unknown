@@ -143,7 +143,6 @@ pub fn guard() -> Card {
     }
 }
 
-// TODO: this should only last 1 turn
 #[derive(Debug, Clone)]
 struct Guard {
     source_creature: Id<Creature>,
@@ -199,9 +198,9 @@ impl card::Behavior for Stagger {
         let (_, part_ids) = Stagger::target_parts(world, target);
         !part_ids.is_empty()
     }
-    fn simulate(&self, _world: &World, _target: &Target) -> Vec<Event> {
-        // TODO: some kind of cosmetic event
-        vec![]
+    fn simulate(&self, _world: &World, target: &Target) -> Vec<Event> {
+        let creature_id = target.creature().unwrap();
+        vec![Event::FloatText { on: creature_id, text: "Stagger!".into() }]
     }
     fn apply(&self, world: &mut World, target: &Target) -> Vec<Event> {
         let (target_id, part_ids) = Stagger::target_parts(world, target);
@@ -268,5 +267,3 @@ torso:
 head:
     [ ] 1 utility (draw, ?)
 */
-
-//pub fn jab

@@ -1,10 +1,12 @@
 import * as React from "react";
 import * as ReactDOM from "react-dom";
 
+import {FloatText} from "../tsx/float";
 import {Index} from "../tsx/index";
 import * as wasm from "../wasm";
 import {GameBoard} from "./game_board";
 import * as stack from "./stack";
+import {Preview} from "./stack/preview";
 
 declare global {
     interface Window {
@@ -25,6 +27,7 @@ export class Game {
     private _stack: stack.Stack;
     private _board: GameBoard;
     private _keys: Map<string, boolean> = new Map();
+    private _floats: FloatText.ItemSet = new FloatText.ItemSet();
     constructor() {
         this._onUpdate = this._onUpdate.bind(this);
 
@@ -85,6 +88,16 @@ export class Game {
         this._onUpdate();
     }
 
+    addFloat(float: FloatText.Item) {
+        this._floats.add(float);
+        this._onUpdate();
+    }
+
+    deleteFloat(float: FloatText.Item) {
+        this._floats.delete(float);
+        this._onUpdate();
+    }
+
     // Private
 
     private _onUpdate() {
@@ -92,6 +105,7 @@ export class Game {
             world: this._world,
             data: this._stack.data(),
             intents: this._getIntents(),
+            floats: this._getFloats(),
         }, null);
         ReactDOM.render(element, document.getElementById("root"));
     }
@@ -105,6 +119,15 @@ export class Game {
             intents.push([creature, point]);
         }
         return intents;
+    }
+
+    private _getFloats(): FloatText.ItemId[] {
+        const data = this._stack.data();
+        const floats: FloatText.ItemId[] = [];
+        const prevFloats = data.get(Preview)?.float;
+        if (prevFloats) { floats.push(...prevFloats); }
+        floats.push(...this._floats.all);
+        return floats;
     }
 }
 

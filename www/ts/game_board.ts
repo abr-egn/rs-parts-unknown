@@ -10,9 +10,6 @@ import {Highlight} from "./stack/highlight";
 import {Preview} from "./stack/preview";
 import {Stack} from "./stack";
 
-import {BaseState} from "./states/base";
-import {UpdateState} from "./states/update";
-
 import {FloatText} from "../tsx/float";
 
 export class GameBoard implements GameBoard.View {
@@ -202,7 +199,8 @@ export namespace GameBoard {
 
     export interface View {
         hexCoords(hex: Hex): DOMPointReadOnly;
-        hpFloat(creatureId: Id<Creature>, partId: Id<Part>, delta: number, inElement?: boolean): FloatText.Item;
+        hpFloat(creatureId: Id<Creature>, partId: Id<Part>, delta: number): FloatText.Item;
+        creatureCoords(id: Id<Creature>): DOMPointReadOnly | undefined;
         // TODO: some way to only expose this to UpdateState?
         moveCreatureTo(id: number, dest: DOMPointReadOnly): Promise<void>;
     }

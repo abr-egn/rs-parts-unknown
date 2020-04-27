@@ -50,6 +50,7 @@ pub enum Event {
     PlayerTurnEnd,
     #[serde(with = "serde_empty")]
     NpcTurnEnd,
+    FloatText { on: Id<Creature>, text: String },
 }
 
 impl Event {

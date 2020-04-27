@@ -38,27 +38,17 @@ export class UpdateState extends State {
     private async _animateEvent(event: wasm.Event) {
         const board = window.game.board;
         this.update((draft) => {
-            draft.build(Preview).addEvent(event, true);
+            draft.build(Preview).addStats(event);
         });
         let data;
         if (data = event.CreatureMoved) {
             await board.moveCreatureTo(data.id, hexToPixel(data.to))
-        } else if (data = event.OnCreature) {
-            let ce;
-            if (ce = data.event.OnPart) {
-                let pe;
-                if (pe = ce.event.ChangeHP) {
-                    const float = board.hpFloat(data.id, ce.id, pe.delta);
-                    float.style!.animationName = "floatLift";
-                    this.update((draft) => {
-                        draft.build(UpdateState.UI).float.add(float);
-                    });
-                    await new Promise(f => setTimeout(f, 2000));
-                    this.update((draft) => {
-                        draft.build(UpdateState.UI).float.delete(float);
-                    });
-                }
-            }
+        }
+        const float = Preview.float(event);
+        if (float) {
+            float.style!.animationName = "floatLift";
+            window.game.addFloat(float);
+            setTimeout(() => window.game.deleteFloat(float), 2000);
         }
     }
 }
@@ -66,7 +56,7 @@ export namespace UpdateState {
     export class UI {
         [Stack.Datum] = true;
         [immerable] = true;
-        float: FloatText.ItemSet = new FloatText.ItemSet();
+        //float: FloatText.ItemSet = new FloatText.ItemSet();
         isEndTurn: boolean = false;
     }
 }

@@ -24,11 +24,16 @@ export class Preview {
         this._float = new FloatText.ItemSet();
         this._throb = [];
         for (let event of events) {
-            this.addEvent(event);
+            this.addStats(event);
+            const float = Preview.float(event);
+            if (float) {
+                this._float.add(float);
+            }
+            this._addOther(event);
         }
     }
 
-    addEvent(event: Readonly<wasm.Event>, statOnly?: boolean) {
+    addStats(event: Readonly<wasm.Event>) {
         let ev;
         if (ev = event.OnCreature) {
             let oc;
@@ -40,15 +45,15 @@ export class Preview {
                 let op;
                 if (op = oc.event.ChangeHP) {
                     this._addHpDelta(ev.id, oc.id, op.delta);
-                    if (!statOnly) {
-                        this._float.add(window.game.board.hpFloat(ev.id, oc.id, op.delta, true));
-                    }
                 }
             }
-        } else if (ev = event.CreatureMoved) {
-            if (!statOnly) {
-                this._throb.push(ev.from, ev.to);
-            }
+        }
+    }
+
+    private _addOther(event: Readonly<wasm.Event>) {
+        let ev;
+        if (ev = event.CreatureMoved) {
+            this._throb.push(ev.from, ev.to);
         }
     }
 
@@ -81,6 +86,25 @@ export namespace Preview {
     export interface Stats {
         statDelta: Map<Stat, number>,
         hpDelta: Map<Id<wasm.Part>, number>,
+    }
+    export function float(event: Readonly<wasm.Event>): FloatText.Item | undefined {
+        let ev;
+        if (ev = event.OnCreature) {
+            let oc;
+            if (oc = ev.event.OnPart) {
+                let op;
+                if (op = oc.event.ChangeHP) {
+                    return window.game.board.hpFloat(ev.id, oc.id, op.delta);
+                }
+            }
+        } else if (ev = event.FloatText) {
+            let pos = window.game.board.creatureCoords(ev.on);
+            if (pos) {
+                return {
+                    pos, text: ev.text, style: {}
+                };
+            }
+        }
     }
 }
 
