@@ -264,7 +264,7 @@ arms:
 legs:
     [+] 2 stagger
 torso:
-    [ ] 1 heal
+    [+] 1 heal
 head:
     [ ] 1 utility (draw, ?)
 */
