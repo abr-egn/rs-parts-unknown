@@ -8,56 +8,46 @@ use crate::{
     event::{Action, Event},
     id_map::Id,
     part::{Part, PartAction, PartTag},
+    serde_empty,
     world::World,
 };
 
 #[derive(Debug, Clone)]
 pub struct NPC {
-    pub next_motion: Option<Motion>,
-    pub next_action: Option<Intent>,
+    pub intent: Intent,
     pub behavior: Box<dyn Behavior>,
 }
 
 impl NPC {
-    pub fn new(behavior: Box<dyn Behavior>) -> Self {
-        NPC { next_motion: None, next_action: None, behavior }
-    }
     pub fn update(&mut self, world: &World, id: Id<Creature>) {
-        let (motion, action) = self.behavior.next(world, id);
-        self.next_motion = motion;
-        self.next_action = action;
+        let intents = self.behavior.intent(world, id);
+        for intent in intents {
+            if intent.check(world, id).is_ok() {
+                self.intent = intent;
+                return;
+            }
+        }
+        // Fallthrough
+        self.intent = Intent {
+            name: "Stunned".into(),
+            from: None,
+            cost: 0,
+            kind: IntentKind::Stunned,
+        }
     }
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, TsData)]
-pub enum Motion {
-    ToMelee,
-    /* TODO: more npc motions
-    ToRanged,
-    ToCover,
-    */
 }
 
 #[derive(Debug, Clone, Serialize, TsData)]
 pub struct Intent {
-    pub from: Id<Part>, // TODO: redundancy?
+    pub name: String,
+    pub from: Option<Id<Part>>,
     pub cost: i32,
     pub kind: IntentKind,
 }
 
 impl Intent {
     pub fn check_run(&self, world: &mut World, source: Id<Creature>) -> Result<Vec<Event>> {
-        // Check cost
-        let creature = world.creatures().get(source).ok_or(Error::NoSuchCreature)?;
-        if creature.cur_ap < self.cost {
-            return Err(Error::NotEnough);
-        }
-        // Check part
-        let part = creature.parts.get(self.from).ok_or(Error::NoSuchPart)?;
-        if part.tags().contains(&PartTag::Broken) {
-            return Err(Error::NoSuchPart);
-        }
-        // Check kind
+        self.check(world, source)?;
         self.kind.check(world, source)?;
 
         // Execute cost
@@ -72,11 +62,30 @@ impl Intent {
 
         Ok(events)
     }
+
+    fn check(&self, world: &World, source: Id<Creature>) -> Result<()> {
+        // Check cost
+        let creature = world.creatures().get(source).ok_or(Error::NoSuchCreature)?;
+        if creature.cur_ap < self.cost {
+            return Err(Error::NotEnough);
+        }
+        // Check part
+        if let Some(part_id) = self.from {
+            let part = creature.parts.get(part_id).ok_or(Error::NoSuchPart)?;
+            if part.tags().contains(&PartTag::Broken) {
+                return Err(Error::NoSuchPart);
+            }
+        }
+
+        Ok(())
+    }
 }
 
 #[derive(Debug, Clone, Serialize, TsData)]
 pub enum IntentKind {
-    Attack { base_damage: i32, range: Range }
+    Attack { base_damage: i32, range: Range },
+    #[serde(with = "serde_empty")]
+    Stunned,
 }
 
 impl IntentKind {
@@ -91,10 +100,11 @@ impl IntentKind {
                 }
                 Ok(())
             }
+            IntentKind::Stunned => Ok(()),
         }
     }
 
-    fn run(&self, world: &mut World, source: Id<Creature>, part: Id<Part>) -> Vec<Event> {
+    fn run(&self, world: &mut World, source: Id<Creature>, part: Option<Id<Part>>) -> Vec<Event> {
         match self {
             IntentKind::Attack { base_damage, .. } => {
                 let player_id = world.player_id();
@@ -104,11 +114,12 @@ impl IntentKind {
                 open.sort_by(|(_, a), (_, b)| a.cur_hp.cmp(&b.cur_hp));
                 let (pid, _) = open.first().unwrap();
                 let creature = world.creatures().get(source).unwrap();
-                let damage_from = creature.scale_damage_from(*base_damage, Some(part));
+                let damage_from = creature.scale_damage_from(*base_damage, part);
                 let damage = player.scale_damage_to(damage_from, Some(*pid));
                 let hit = Action::to_part(player_id, *pid, PartAction::Hit { damage });
                 world.execute(&hit)
             }
+            IntentKind::Stunned => vec![Event::FloatText { on: source, text: "Stunned!".into() }]
         }
     }
 }
@@ -120,7 +131,7 @@ pub enum Range {
 }
 
 pub trait Behavior: BehaviorClone + std::fmt::Debug + Send {
-    fn next(&mut self, world: &World, id: Id<Creature>) -> (Option<Motion>, Option<Intent>);
+    fn intent(&mut self, world: &World, id: Id<Creature>) -> Vec<Intent>;
 }
 
 pub trait BehaviorClone {

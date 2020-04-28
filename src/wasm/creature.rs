@@ -7,7 +7,7 @@ use wasm_bindgen::prelude::*;
 use crate::{
     card, creature,
     id_map::Id,
-    npc::{self, Intent, Motion},
+    npc::{self, Intent},
     part::{self, PartTag},
     wasm::{
         to_js_value,
@@ -94,15 +94,13 @@ impl Part {
 
 #[derive(Debug, Serialize, TsData)]
 pub struct NPC {
-    motion: Option<Motion>,
-    intent: Option<Intent>,
+    intent: Intent,
 }
 
 impl NPC {
     fn new(source: &npc::NPC) -> Self {
         NPC {
-            motion: source.next_motion.clone(),
-            intent: source.next_action.clone(),
+            intent: source.intent.clone(),
         }
     }
 }

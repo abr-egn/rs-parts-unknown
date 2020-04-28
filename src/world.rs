@@ -16,7 +16,7 @@ use crate::{
     id_map::{Id, IdMap},
     library,
     map::{Map},
-    npc::{Motion},
+    npc::{IntentKind, Range},
     trigger::{Trigger, TriggerId},
 };
 
@@ -46,7 +46,6 @@ impl World {
             triggers: IdMap::new(),
             tracer: None,
         };
-        out.update_npc_plans();
         out.execute(
             &Action::ToCreature {
                 id: pc_id,
@@ -194,30 +193,28 @@ impl World {
         let mut npc_plays = vec![];
         for (&id, creature) in &self.creatures {
             if let Some(npc) = &creature.npc {
-                npc_plays.push((id, npc.next_motion.clone(), npc.next_action.clone()));
+                npc_plays.push((id, npc.intent.clone()));
             }
         }
 
-        for (id, motion, action) in npc_plays {
-            if let Some(m) = motion {
-                let r = match m {
-                    Motion::ToMelee => self.move_to_melee(id),
-                };
-                match r {
-                    Ok(es) => events.extend(es),
-                    Err(e) => warn!("NPC movement failed: {}", e),
-                }
+        for (id, intent) in npc_plays {
+            // Motion
+            // TODO: move this logic to npc.rs
+            let result = match intent.kind {
+                IntentKind::Attack { range: Range::Melee, .. } => self.move_to_melee(id),
+                IntentKind::Stunned => Ok(vec![]),
+            };
+            match result {
+                Ok(es) => events.extend(es),
+                Err(e) => warn!("NPC movement failed: {}", e),
             }
 
-            if let Some(a) = action {
-                match a.check_run(self, id) {
-                    Ok(es) => events.extend(es),
-                    Err(e) => warn!("NPC action failed: {}", e),
-                }
+            // Action
+            match intent.check_run(self, id) {
+                Ok(es) => events.extend(es),
+                Err(e) => warn!("NPC action failed: {}", e),
             }
         }
-
-        self.update_npc_plans();
 
         // Refill NPC ap/mp
         let refills: Vec<Id<Creature>> = self.creatures.keys().cloned()
@@ -229,6 +226,8 @@ impl World {
 
         // NPC end turn triggers
         events.extend(self.system_event(Event::NpcTurnEnd));
+
+        self.update_npc_plans();
 
         events
     }

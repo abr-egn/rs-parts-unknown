@@ -7,7 +7,7 @@ use crate::{
     card::Card,
     error::{Error, Result},
     id_map::{Id, IdMap},
-    npc::{self, NPC},
+    npc::{NPC},
     part::{Part, PartAction, PartEvent, PartTag},
     serde_empty,
     some_or,
@@ -55,10 +55,6 @@ impl Creature {
         out
     }
 
-    pub fn new_npc<S: Into<String>, B: 'static + npc::Behavior>(name: S, parts: IdMap<Part>, behavior: B) -> Self {
-        Creature::new_ids(name, parts, Some(NPC::new(Box::new(behavior))))
-    }
-
     // Accessors
 
     pub fn max_ap(&self) -> i32 {
@@ -76,10 +72,11 @@ impl Creature {
     }
 
     pub fn max_mp(&self) -> i32 {
-        self.parts.values()
+        let val = self.parts.values()
             .filter(|part| !part.tags().contains(&PartTag::Broken))
             .map(|part| part.mp)
-            .sum()
+            .sum();
+        std::cmp::max(val, 1)
     }
 
     pub fn open_parts(&self) -> impl Iterator<Item=(Id<Part>, &Part)> {
