@@ -57,10 +57,12 @@ impl card::Behavior for HitPartBehavior {
         let source_creature = world.creatures().get(self.source).unwrap();
         let source_mp = source_creature.cur_mp;
         let mut out = vec![];
-        out.extend(world.execute(&Action::ToCreature {
-            id: self.source,
-            action: CreatureAction::SpendMP { mp: source_mp },
-        }));
+        out.extend(world.execute(&Action::normal(
+            Action::ToCreature {
+                id: self.source,
+                action: CreatureAction::SpendMP { mp: source_mp },
+            }
+        )));
         out.extend(world.execute(&Action::to_part(
             creature_id, part_id,
             PartAction::Hit { damage: self.damage }

@@ -132,10 +132,12 @@ impl World {
                 return out;
             }
             let mut mp_evs = self.execute(
-                &Action::ToCreature {
-                    id: creature_id,
-                    action: CreatureAction::SpendMP { mp: 1 },
-                }
+                &Action::normal(
+                    Action::ToCreature {
+                        id: creature_id,
+                        action: CreatureAction::SpendMP { mp: 1 },
+                    }
+                )
             );
             let failed = Event::is_failure(&mp_evs);
             out.append(&mut mp_evs);
@@ -158,10 +160,12 @@ impl World {
                 },
             }
         ));
-        events.extend(self.execute(&Action::ToCreature {
-            id: in_play.creature_id,
-            action: CreatureAction::SpendAP { ap: in_play.ap_cost },
-        }));
+        events.extend(self.execute(&Action::normal(
+            Action::ToCreature {
+                id: in_play.creature_id,
+                action: CreatureAction::SpendAP { ap: in_play.ap_cost },
+            }
+        )));
         if !Event::is_failure(&events) {
             events.extend(in_play.behavior.apply(self, target));
         }
@@ -294,6 +298,11 @@ impl World {
         use Action::*;
         match *action {
             Nothing => return Ok(vec![Event::Nothing]),
+            Normal { ref action } => {
+                let out = self.resolve(&*action)?;
+                let norm = out.into_iter().map(|ev| Event::Normal { event: Box::new(ev) }).collect();
+                return Ok(norm)
+            }
             MoveCreature { id, to } => {
                 let &from = self.map.creatures().get(&id).ok_or(Error::NoSuchCreature)?;
                 self.map.move_to(id, to)?;
@@ -329,14 +338,18 @@ impl World {
             (creature.max_ap() - creature.cur_ap, creature.max_mp() - creature.cur_mp)
         };
         if fill_ap > 0 {
-            events.extend(self.execute(&Action::ToCreature {
-                id, action: CreatureAction::GainAP { ap: fill_ap }
-            }));
+            events.extend(self.execute(&Action::normal(
+                Action::ToCreature {
+                    id, action: CreatureAction::GainAP { ap: fill_ap }
+                }
+            )));
         }
         if fill_mp > 0 {
-            events.extend(self.execute(&Action::ToCreature {
-                id, action: CreatureAction::GainMP { mp: fill_mp }
-            }));
+            events.extend(self.execute(&Action::normal(
+                Action::ToCreature {
+                    id, action: CreatureAction::GainMP { mp: fill_mp }
+                }
+            )));
         }
         events
     }

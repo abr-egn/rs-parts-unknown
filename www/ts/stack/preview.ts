@@ -117,8 +117,7 @@ export namespace Preview {
                         text: `${part.name}: ${strs.join(", ")}`,
                     };
                 }
-            }/* TASK: a way to suppress this for "normal" events
-            else if (oc = ev.event.ChangeAP) {
+            } else if (oc = ev.event.ChangeAP) {
                 const [text, color] = delta(oc.delta);
                 return {
                     pos,
@@ -132,7 +131,7 @@ export namespace Preview {
                     text: `${text} MP`,
                     style: { color },
                 };
-            } */else if (oc = ev.event.Died) {
+            } else if (oc = ev.event.Died) {
                 return {pos, text: "Dead!"}
             }
         } else if (ev = event.FloatText) {

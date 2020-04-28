@@ -16,6 +16,8 @@ use crate::{
 pub enum Action {
     #[serde(with = "serde_empty")]
     Nothing,
+    Normal { action: Box<Action> },
+
     MoveCreature { id: Id<Creature>, to: Hex },
     ToCreature { id: Id<Creature>, action: CreatureAction },
     AddTrigger {
@@ -26,6 +28,9 @@ pub enum Action {
 }
 
 impl Action {
+    pub fn normal(action: Action) -> Self {
+        Action::Normal { action: Box::new(action) }
+    }
     pub fn to_part(cid: Id<Creature>, pid: Id<Part>, action: PartAction) -> Self {
         Action::ToCreature {
             id: cid,
@@ -41,6 +46,8 @@ impl Action {
 pub enum Event {
     #[serde(with = "serde_empty")]
     Nothing,
+    Normal { event: Box<Event> },
+
     Failed { action: Action, reason: String },
     CreatureMoved { id: Id<Creature>, from: Hex, to: Hex, },
     OnCreature { id: Id<Creature>, event: CreatureEvent },

@@ -51,10 +51,12 @@ impl Intent {
         self.kind.check(world, source)?;
 
         // Execute cost
-        let mut events = world.execute(&Action::ToCreature {
-            id: source,
-            action: CreatureAction::SpendAP { ap: 1 },
-        });
+        let mut events = world.execute(&Action::normal(
+            Action::ToCreature {
+                id: source,
+                action: CreatureAction::SpendAP { ap: 1 },
+            }
+        ));
         if Event::is_failure(&events) { return Ok(events); }
 
         // Execute action
