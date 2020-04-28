@@ -60,7 +60,7 @@ impl Part {
         match action {
             Hit { damage } => {
                 let damage = std::cmp::min(self.cur_hp, *damage);
-                if damage <= 0 { return Ok(vec![]); }  // TODO: fail?
+                if damage <= 0 { return Ok(vec![]); }  // TODO: fail?  delta: 0?
                 self.cur_hp -= damage;
                 let mut out = vec![PartEvent::ChangeHP { delta: -damage }];
                 if self.cur_hp <= 0 {
