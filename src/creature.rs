@@ -128,20 +128,31 @@ impl Creature {
                     _ => action.clone(),
                 };
 
-                let part = self.parts.get_mut(&id).ok_or(Error::NoSuchPart)?;
-                let was_open = part.tags().contains(&PartTag::Open);
+                let mut out = vec![];
 
+                let part = self.parts.get_mut(&id).ok_or(Error::NoSuchPart)?;
+                let old_tags = part.tags();
                 let pevs = part.resolve(&scaled_action)?;
+                out.extend(pevs.into_iter().map(|pev| CreatureEvent::OnPart { id, event: pev }));
+                let new_tags = part.tags();
+
+                let set_tags: Vec<_> = new_tags.difference(&old_tags).cloned().collect();
+                if !set_tags.is_empty() {
+                    out.push(CreatureEvent::OnPart {
+                        id,
+                        event: PartEvent::TagsSet { tags: set_tags.clone() },
+                    });
+                }
+                let cleared_tags: Vec<_> = old_tags.difference(&new_tags).cloned().collect();
+                if !cleared_tags.is_empty() {
+                    out.push(CreatureEvent::OnPart {
+                        id,
+                        event: PartEvent::TagsCleared { tags: cleared_tags },
+                    });
+                }
 
                 let mut self_died = false;
-                let mut out = vec![];
-                // If it both became broken in this event, and as end result is broken:
-                let part_broken = pevs.iter().any(|pev| match pev {
-                    PartEvent::TagsSet { tags } => tags.contains(&PartTag::Broken),
-                    _ => false,
-                }) && part.tags().contains(&PartTag::Broken);
-                out.extend(pevs.into_iter().map(|pev| CreatureEvent::OnPart { id, event: pev }));
-                if part_broken {
+                if set_tags.iter().any(|t| *t == PartTag::Broken) {
                     if part.tags().contains(&PartTag::Vital) && !self_died {
                         self_died = true;
                         out.push(CreatureEvent::Died);
@@ -158,7 +169,7 @@ impl Creature {
                         });
                         self.cur_mp = self.max_mp();
                     }
-                    if was_open {
+                    if old_tags.contains(&PartTag::Open) {
                         let ids: Vec<_> = self.parts.iter()
                             .filter_map(|(id, part)| {
                                 if part.tags().contains(&PartTag::Broken) { None }

@@ -195,43 +195,43 @@ impl card::Behavior for Stagger {
         TargetSpec::Creature
     }
     fn target_check(&self, world: &World, target: &Target) -> bool {
-        let (_, part_ids) = Stagger::target_parts(world, target);
-        !part_ids.is_empty()
+        !Stagger::target_parts(world, target.creature().unwrap()).is_empty()
     }
     fn simulate(&self, _world: &World, target: &Target) -> Vec<Event> {
         let creature_id = target.creature().unwrap();
         vec![Event::FloatText { on: creature_id, text: "Stagger!".into() }]
     }
     fn apply(&self, world: &mut World, target: &Target) -> Vec<Event> {
-        let (target_id, part_ids) = Stagger::target_parts(world, target);
+        let cid = target.creature().unwrap();
+        let part_ids = Stagger::target_parts(world, cid);
         if part_ids.is_empty() { return vec![]; }
 
         let ix = thread_rng().gen_range(0, part_ids.len());
-        ExpireTagMod::add(world, target_id, part_ids[ix],
+        let (name, pid) = &part_ids[ix];
+        let mut out = vec![];
+        out.push(Event::FloatText { on: cid, text: format!("Exposed: {}", name) });
+        out.extend(ExpireTagMod::add(world, cid, *pid,
             Mod(|tags| { tags.insert(PartTag::Open); }),
-            |ev| matches!(ev, Event::PlayerTurnEnd))
+            |ev| matches!(ev, Event::PlayerTurnEnd)));
+        out
     }
 }
 
 impl Stagger {
-    fn target_parts(world: &World, target: &Target) -> (Id<Creature>, Vec<Id<Part>>) {
-        let target_id = match target {
-            Target::Creature { id } => *id,
-            _ => panic!("invalid target"),
-        };
-        let creature = world.creatures().get(target_id).unwrap();
+    fn target_parts(world: &World, creature_id: Id<Creature>) -> Vec<(String, Id<Part>)> {
+        let creature = world.creatures().get(creature_id).unwrap();
         let part_ids: Vec<_> = creature.parts.iter().filter_map(|(id, part)| {
             if part.tags().contains(&PartTag::Broken) { None }
-            else { Some(*id) }
+            else { Some((part.name.clone(), *id)) }
         }).collect();
-        (target_id, part_ids)
+        part_ids
     }
 }
 
 pub fn heal() -> Card {
     Card {
         name: "Heal".into(),
-        ap_cost: 2,
+        ap_cost: 1,
         start_play: |_, _, _| Box::new(Heal { amount: 5 })
     }
 }

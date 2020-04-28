@@ -24,6 +24,7 @@ export class MovePlayerState extends State {
         this.update((draft) => { draft.build(Highlight).range = this._range; });
     }
     onTileEntered(hex: Hex) {
+        // TASK: show LoS when moving
         const world = window.game.world;
         const events = world.simulateMove(hex);
         this.update((draft) => {
