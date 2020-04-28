@@ -3,7 +3,6 @@ use std::{
 };
 
 use hex::{self, Hex};
-use log::warn;
 use serde::Serialize;
 use ts_data_derive::TsData;
 use wasm_bindgen::prelude::wasm_bindgen;
@@ -204,13 +203,19 @@ impl World {
             };
             match result {
                 Ok(es) => events.extend(es),
-                Err(e) => warn!("NPC movement failed: {}", e),
+                Err(e) => events.push(Event::FloatText {
+                    on: id,
+                    text: format!("Move failed: {}", e),
+                }),
             }
 
             // Action
             match intent.check_run(self, id) {
                 Ok(es) => events.extend(es),
-                Err(e) => warn!("NPC action failed: {}", e),
+                Err(e) => events.push(Event::FloatText {
+                    on: id,
+                    text: format!("Action failed: {}", e),
+                }),
             }
         }
 
@@ -338,9 +343,9 @@ impl World {
 
     fn move_to_melee(&mut self, id: Id<Creature>) -> Result<Vec<Event>> {
         let player_hex = self.map.creatures().get(&self.player_id)
-            .ok_or(Error::Obstructed)?;
+            .ok_or(Error::NoSuchCreature)?;
         let from = self.map.creatures().get(&id)
-            .ok_or(Error::Obstructed)?;
+            .ok_or(Error::NoSuchCreature)?;
         if from.distance_to(*player_hex) <= 1 { return Ok(vec![]); }
         let mut near: Vec<_> = player_hex.neighbors()
             .filter(|h| self.map.tiles().get(h).map_or(false, |t| t.is_open()))

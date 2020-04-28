@@ -6,6 +6,8 @@ pub enum Error {
     Obstructed,
     #[error("out of bounds")]
     OutOfBounds,
+    #[error("out of range")]
+    OutOfRange,
     #[error("no such creature")]
     NoSuchCreature,
     #[error("no such part")]

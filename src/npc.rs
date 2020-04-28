@@ -96,7 +96,7 @@ impl IntentKind {
                 let player_pos = world.map().creatures().get(&world.player_id()).ok_or(Error::OutOfBounds)?;
                 let dist = creature_pos.distance_to(*player_pos);
                 match range {
-                    Range::Melee => if dist != 1 { return Err(Error::Obstructed); }
+                    Range::Melee => if dist != 1 { return Err(Error::OutOfRange); }
                 }
                 Ok(())
             }
