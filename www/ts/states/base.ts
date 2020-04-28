@@ -78,7 +78,7 @@ export class BaseState extends State {
         const ui = draft.build(BaseState.UI);
         const highlight = draft.build(Highlight);
         if (!highlight.static.creatures.has(id) || !ui.range.has(id)) {
-            let range = window.game.world.getCreatureRange(id);
+            let range = window.game.world.getCreatureRange(id);  // TODO: show npc range unobstructed by creatures
             let bounds = wasm.findBoundary(range);
             ui.range.set(id, bounds);
         }

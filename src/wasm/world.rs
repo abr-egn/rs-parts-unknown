@@ -109,7 +109,8 @@ impl World {
             Some(h) => h,
             None => return Array::new(),
         };
-        self.wrapped.map().range_from(*start, range).into_iter()
+        let space_only = id != self.wrapped.player_id();
+        self.wrapped.map().range_from(*start, range, space_only).into_iter()
             .map(|hex| to_js_value::<Hex>(&hex))
             .collect()
     }

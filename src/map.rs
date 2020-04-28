@@ -11,6 +11,7 @@ use crate::{
     creature::Creature,
     error::{Error, Result},
     id_map::Id,
+    some_or,
 };
 
 #[derive(Debug, Clone)]
@@ -44,7 +45,7 @@ impl Map {
         &self.creatures
     }
 
-    pub fn range_from(&self, start: Hex, range: i32) -> HashSet<Hex> {
+    pub fn range_from(&self, start: Hex, range: i32, space_only: bool) -> HashSet<Hex> {
         let mut out = HashSet::new();
         let mut pending: VecDeque<(Hex, i32)> = VecDeque::new();
         pending.push_back((start, range));
@@ -54,7 +55,11 @@ impl Map {
             if remaining_range > 0 {
                 for hex in current.neighbors() {
                     if out.contains(&hex) { continue }
-                    if self.tiles.get(&hex).map_or(false, |t| t.is_open()) {
+                    let tile = some_or!(self.tiles.get(&hex), continue);
+                    let open = if space_only {
+                        matches!(tile, Tile { space: Space::Empty, .. })
+                    } else { tile.is_open() };
+                    if open {
                         pending.push_back((hex, remaining_range-1));
                     }
                 }
