@@ -20,6 +20,7 @@ export function CardList(props: {
         window.game.stack.push(new PlayCardState(creatureId, ix));
     };
     const canPlay = (card: wasm.Card): boolean => {
+        // TODO: check part
         return world.checkSpendAP(card.creatureId, card.apCost);
     };
     const cardKey = (card: wasm.Card): string => {

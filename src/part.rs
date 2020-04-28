@@ -54,6 +54,7 @@ impl Part {
     }
 
     pub fn resolve(&mut self, action: &PartAction) -> Result<Vec<PartEvent>> {
+        // TODO: allow Add/Clear TagMod
         if self.tags().contains(&PartTag::Broken) { return Err(Error::BrokenPart); }
         use PartAction::*;
         match action {
