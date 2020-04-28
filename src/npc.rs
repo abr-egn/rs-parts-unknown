@@ -67,13 +67,13 @@ impl Intent {
         // Check cost
         let creature = world.creatures().get(source).ok_or(Error::NoSuchCreature)?;
         if creature.cur_ap < self.cost {
-            return Err(Error::NotEnough);
+            return Err(Error::NotEnough("AP".into()));
         }
         // Check part
         if let Some(part_id) = self.from {
             let part = creature.parts.get(part_id).ok_or(Error::NoSuchPart)?;
             if part.tags().contains(&PartTag::Broken) {
-                return Err(Error::NoSuchPart);
+                return Err(Error::BrokenPart);
             }
         }
 

@@ -205,7 +205,7 @@ impl World {
                 Ok(es) => events.extend(es),
                 Err(e) => events.push(Event::FloatText {
                     on: id,
-                    text: format!("Move failed: {}", e),
+                    text: format!("{}!", e),
                 }),
             }
 
@@ -214,7 +214,7 @@ impl World {
                 Ok(es) => events.extend(es),
                 Err(e) => events.push(Event::FloatText {
                     on: id,
-                    text: format!("Action failed: {}", e),
+                    text: format!("{}!", e),
                 }),
             }
         }

@@ -2,25 +2,25 @@ use thiserror::Error;
 
 #[derive(Error, Debug)]
 pub enum Error {
-    #[error("obstructed")]
+    #[error("Obstructed")]
     Obstructed,
-    #[error("out of bounds")]
+    #[error("Out of bounds")]
     OutOfBounds,
-    #[error("out of range")]
+    #[error("Out of range")]
     OutOfRange,
-    #[error("no such creature")]
+    #[error("No such creature")]
     NoSuchCreature,
-    #[error("no such part")]
+    #[error("No such part")]
     NoSuchPart,
-    #[error("no such card")]
+    #[error("No such card")]
     NoSuchCard,
-    #[error("dead creature")]
+    #[error("Dead creature")]
     DeadCreature,
-    #[error("broken part")]
+    #[error("Broken part")]
     BrokenPart,
-    #[error("not enough")]
-    NotEnough,
-    #[error("invalid action")]
+    #[error("Not enough {0}")]
+    NotEnough(String),
+    #[error("Invalid action")]
     InvalidAction,
 }
 

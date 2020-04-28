@@ -48,7 +48,8 @@ export class UpdateState extends State {
         }
         const float = Preview.float(event);
         if (float) {
-            float.style!.animationName = "floatLift";
+            if (!float.style) { float.style = {}; }
+            float.style.animationName = "floatLift";
             window.game.addFloat(float);
             setTimeout(() => window.game.deleteFloat(float), 2000);
             await new Promise(f => setTimeout(f, 500));

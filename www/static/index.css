@@ -65,6 +65,7 @@ div.topright {
     animation-duration: 2s;
     animation-timing-function: linear;
     animation-fill-mode: forwards;
+    color: yellow;
 }
 
 .attackIcon {

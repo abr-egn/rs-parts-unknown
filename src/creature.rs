@@ -107,7 +107,7 @@ impl Creature {
                 return Ok(vec![ChangeAP { delta: ap }]);
             }
             SpendAP { ap } => {
-                if self.cur_ap < ap { return Err(Error::NotEnough); }
+                if self.cur_ap < ap { return Err(Error::NotEnough("AP".into())); }
                 self.cur_ap -= ap;
                 return Ok(vec![ChangeAP { delta: -ap }]);
             }
@@ -116,7 +116,7 @@ impl Creature {
                 return Ok(vec![ChangeMP { delta: mp }]);
             }
             SpendMP { mp } => {
-                if self.cur_mp < mp { return Err(Error::NotEnough); }
+                if self.cur_mp < mp { return Err(Error::NotEnough("MP".into())); }
                 self.cur_mp -= mp;
                 return Ok(vec![ChangeMP { delta: -mp }]);
             }
