@@ -246,7 +246,12 @@ impl card::Behavior for Heal {
     fn target_spec(&self) -> TargetSpec {
         TargetSpec::Part { on_player: true, tags: vec![vec![PartTag::Flesh]] }
     }
-    fn target_check(&self, _world: &World, _target: &Target) -> bool { true }
+    fn target_check(&self, world: &World, target: &Target) -> bool {
+        let (cid, pid) = target.part().unwrap();
+        let creature = world.creatures().get(cid).unwrap();
+        let part = creature.parts.get(pid).unwrap();
+        part.cur_hp < part.max_hp
+    }
     fn apply(&self, world: &mut World, target: &Target) -> Vec<Event> {
         let (cid, pid) = target.part().unwrap();
         world.execute(&Action::to_part(cid, pid,
