@@ -23,6 +23,7 @@ export class Preview {
         this._stats = new Map();
         this._float = new FloatText.ItemSet();
         this._throb = [];
+        // TASK: when there are multiple floats, stagger the positions
         for (let event of events) {
             this.addStats(event);
             const float = Preview.float(event);
