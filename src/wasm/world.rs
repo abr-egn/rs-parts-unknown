@@ -11,13 +11,15 @@ use crate::{
     event::{Action, Event},
     id_map::Id,
     map::Tile,
-    part,
+    part::{self, PartTag},
     wasm::{
+        card::Card,
         creature::Creature,
         in_play::InPlay,
         from_js_value, to_js_value,
     },
     world,
+    some_or,
 };
 
 #[wasm_bindgen]
@@ -122,6 +124,15 @@ impl World {
     }
 
     #[wasm_bindgen(skip_typescript)]
+    pub fn isPlayable(&self, card: JsValue) -> bool {
+        let card: Card = from_js_value(card);
+        let creature = some_or!(self.wrapped.creatures().get(card.creatureId), return false);
+        if creature.cur_ap < card.apCost { return false; }
+        let part = some_or!(creature.parts.get(card.partId), return false);
+        return !part.tags().contains(&PartTag::Broken);
+    }
+
+    #[wasm_bindgen(skip_typescript)]
     pub fn startPlay(&self, creature_id: JsValue, hand_ix: JsValue) -> Option<InPlay> {
         let creature_id: Id<creature::Creature> = from_js_value(creature_id);
         let hand_ix: usize = from_js_value(hand_ix);
@@ -218,7 +229,7 @@ interface World {
     getCreatureMap(): [Id<Creature>, Hex][];
     getCreatureHex(id: Id<Creature>): Hex | undefined;
     getCreatureRange(id: Id<Creature>): Hex[];
-    checkSpendAP(id: Id<Creature>, ap: number): boolean;
+    isPlayable(card: Card): boolean;
     startPlay(creatureId: Id<Creature>, handIx: number): InPlay | undefined;
     path(from: Hex, to: Hex): Hex[];
     state(): GameState;

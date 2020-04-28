@@ -54,25 +54,10 @@ impl Part {
     }
 
     pub fn resolve(&mut self, action: &PartAction) -> Result<Vec<PartEvent>> {
-        // TODO: allow Add/Clear TagMod
-        if self.tags().contains(&PartTag::Broken) { return Err(Error::BrokenPart); }
         use PartAction::*;
+
+        // Allowed when broken
         match action {
-            Hit { damage } => {
-                let damage = std::cmp::min(self.cur_hp, *damage);
-                if damage <= 0 { return Ok(vec![]); }  // TODO: fail?  delta: 0?
-                self.cur_hp -= damage;
-                let mut out = vec![PartEvent::ChangeHP { delta: -damage }];
-                if self.cur_hp <= 0 {
-                    if self.base_tags.remove(&PartTag::Open) {
-                        out.push(PartEvent::TagsCleared { tags: vec![PartTag::Open] });
-                    }
-                    if self.base_tags.insert(PartTag::Broken) {
-                        out.push(PartEvent::TagsSet { tags: vec![PartTag::Broken] });
-                    }
-                }
-                return Ok(out);
-            }
             SetTags { tags } => {
                 let mut set = vec![];
                 for tag in tags {
@@ -104,21 +89,43 @@ impl Part {
                 let id = self.tag_mods.add(m.clone());
                 let mut out = vec![PartEvent::TagsModded { id }];
                 out.extend(self.mod_delta(prev));
-                Ok(out)
+                return Ok(out)
             }
             ClearTagMod { id } => {
                 let prev = self.tags();
                 self.tag_mods.remove(*id);
                 let mut out = vec![PartEvent::TagsUnmodded { id: *id }];
                 out.extend(self.mod_delta(prev));
-                Ok(out)
+                return Ok(out)
+            }
+            Hit { .. } | Heal { .. } => (),
+        }
+
+        if self.tags().contains(&PartTag::Broken) { return Err(Error::BrokenPart); }
+        
+        match action {
+            Hit { damage } => {
+                let damage = std::cmp::min(self.cur_hp, *damage);
+                if damage <= 0 { return Ok(vec![]); }  // TODO: fail?  delta: 0?
+                self.cur_hp -= damage;
+                let mut out = vec![PartEvent::ChangeHP { delta: -damage }];
+                if self.cur_hp <= 0 {
+                    if self.base_tags.remove(&PartTag::Open) {
+                        out.push(PartEvent::TagsCleared { tags: vec![PartTag::Open] });
+                    }
+                    if self.base_tags.insert(PartTag::Broken) {
+                        out.push(PartEvent::TagsSet { tags: vec![PartTag::Broken] });
+                    }
+                }
+                return Ok(out);
             }
             Heal { hp } => {
                 let hp = std::cmp::min(*hp, self.max_hp - self.cur_hp);
                 if hp <= 0 { return Ok(vec![]) }  // TODO: fail?
                 self.cur_hp += hp;
-                Ok(vec![PartEvent::ChangeHP { delta: hp }])
+                return Ok(vec![PartEvent::ChangeHP { delta: hp }])
             }
+            _ => unreachable!(),
         }
     }
 
