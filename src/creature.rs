@@ -15,7 +15,7 @@ use crate::{
 
 pub type CardId = (Id<Part>, Id<Card>);
 
-// TODO: stats for damage scaling
+// TASK: stats for damage scaling
 #[derive(Debug, Clone)]
 pub struct Creature {
     pub name: String,
@@ -86,12 +86,12 @@ impl Creature {
     }
 
     pub fn scale_damage_from(&self, damage: i32, _part: Option<Id<Part>>) -> i32 {
-        // TODO
+        // TASK: damage scaling
         damage
     }
 
     pub fn scale_damage_to(&self, damage: i32, _part: Option<Id<Part>>) -> i32 {
-        // TODO
+        // TASK: damage scaling
         damage
     }
 
@@ -172,8 +172,8 @@ impl Creature {
                     }
                 }
                 if self_died {
-                    // TODO: event
                     self.dead = true;
+                    out.push(CreatureEvent::Died);
                 }
                 Ok(out)
             }
@@ -188,7 +188,6 @@ impl Creature {
                 for _ in 0..self.hand_size() {
                     if self.draw.is_empty() {
                         if self.discard.is_empty() {
-                            // TODO: flag failure
                             return Ok(out);
                         }
                         out.push(CreatureEvent::DeckRecycled);

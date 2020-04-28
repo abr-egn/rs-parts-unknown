@@ -127,7 +127,7 @@ impl IntentKind {
 #[derive(Debug, Clone, Serialize, TsData)]
 pub enum Range {
     Melee,
-    // TODO: Ranged
+    // TASK: Ranged
 }
 
 pub trait Behavior: BehaviorClone + std::fmt::Debug + Send {

@@ -34,7 +34,7 @@ export class PlayCardState extends State {
         }
         const targetSpec = this._inPlay.getTargetSpec();
         if (targetSpec.None) {
-            // TODO: preview, confirm
+            // TASK: preview, confirm
             const [nextWorld, events] = window.game.world.finishPlay(this._inPlay!, {None: true});
             this._inPlay = undefined;
             window.game.stack.swap(new UpdateState(events, nextWorld));
@@ -90,7 +90,7 @@ export class PlayCardState extends State {
     onTileEntered(hex: Hex) {
         const world = window.game.world;
         const creature = window.game.creatureAt(hex);
-        if (!creature) { return; }  // TODO: hex targeting
+        if (!creature) { return; }  // TASK: hex targeting
         if (!this._canTargetCreature(creature)) { return; }
 
         const events: wasm.Event[] = [];
@@ -136,7 +136,7 @@ export class PlayCardState extends State {
     private _canTarget(hex: Hex): boolean {
         const creature = window.game.creatureAt(hex);
         if (creature && this._canTargetCreature(creature)) { return true; }
-        // TODO: hex targeting
+        // TASK: hex targeting
         return false;
     }
 

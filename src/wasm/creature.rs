@@ -66,7 +66,6 @@ pub struct Part {
     maxHp: i32,
     curHp: i32,
     thought: i32,
-    broken: bool,  // TODO: drop in favor of tags
     tags: Vec<PartTag>,
 }
 
@@ -86,7 +85,6 @@ impl Part {
             thought: source.thought,
             maxHp: source.max_hp,
             curHp: source.cur_hp,
-            broken: source.tags().contains(&PartTag::Broken),
             tags: source.tags().into_iter().collect(),
         }
     }

@@ -15,7 +15,7 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct Map {
-    // TODO: use bracket-lib?
+    // TASK: use bracket-lib?
     tiles: HashMap<Hex, Tile>,
     creatures: HashMap<Id<Creature>, Hex>,
 }

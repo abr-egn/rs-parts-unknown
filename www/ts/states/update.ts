@@ -6,6 +6,7 @@ import {hexToPixel} from "../draw";
 import {Preview} from "../stack/preview";
 import {Stack, State} from "../stack";
 import {GameOverState} from "./game_over";
+import { GameBoard } from "../game_board";
 
 export class UpdateState extends State {
     constructor(
@@ -42,7 +43,8 @@ export class UpdateState extends State {
         });
         let data;
         if (data = event.CreatureMoved) {
-            await board.moveCreatureTo(data.id, hexToPixel(data.to))
+            const motion = (board as unknown) as GameBoard.Motion;
+            await motion.moveCreatureTo(data.id, hexToPixel(data.to))
         }
         const float = Preview.float(event);
         if (float) {

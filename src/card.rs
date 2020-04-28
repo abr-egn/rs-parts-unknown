@@ -22,7 +22,6 @@ pub struct Card {
     pub start_play: fn(&World, &Id<Creature>, &Id<Part>) -> Box<dyn Behavior>,
 }
 
-// TODO: use this
 #[derive(Clone)]
 pub struct InPlay {
     pub creature_id: Id<Creature>,
@@ -42,10 +41,10 @@ impl std::fmt::Debug for Card {
     }
 }
 
-// TODO: power scaling
+// TASK: power scaling
 pub trait Behavior: BehaviorClone {
     fn range(&self, world: &World) -> Vec<Hex>;
-    // TODO: allow for multiple targets
+    // TASK: allow for multiple targets
     fn target_spec(&self) -> TargetSpec;
     fn target_check(&self, world: &World, target: &Target) -> bool;
     fn simulate(&self, world: &World, target: &Target) -> Vec<Event> {
@@ -68,7 +67,7 @@ impl dyn Behavior {
     }
 }
 
-// TODO: multiple targets
+// TASK: multiple targets
 // May be better to just go to Parts { tags, count } rather than full
 // generic Multi(Vec<TargetSpec>)
 #[derive(Debug, Serialize, TsData)]

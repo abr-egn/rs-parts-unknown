@@ -30,8 +30,8 @@ pub struct Part {
     pub thought: i32, // action points
     pub memory: i32,  // hand size
     pub mp: i32,
-    /* TODO: remaining part attributes
-    power: i32,  // TODO: level?
+    /* TASK: remaining part attributes
+    power: i32,  // TASK: level?
     capacity: i32,
     joints: Vec<Joint>,
     */
@@ -106,7 +106,7 @@ impl Part {
         match action {
             Hit { damage } => {
                 let damage = std::cmp::min(self.cur_hp, *damage);
-                if damage <= 0 { return Ok(vec![]); }  // TODO: fail?  delta: 0?
+                if damage <= 0 { return Ok(vec![PartEvent::ChangeHP { delta: 0 }]); }
                 self.cur_hp -= damage;
                 let mut out = vec![PartEvent::ChangeHP { delta: -damage }];
                 if self.cur_hp <= 0 {
@@ -121,7 +121,7 @@ impl Part {
             }
             Heal { hp } => {
                 let hp = std::cmp::min(*hp, self.max_hp - self.cur_hp);
-                if hp <= 0 { return Ok(vec![]) }  // TODO: fail?
+                if hp <= 0 { return Ok(vec![PartEvent::ChangeHP { delta: 0 }]) }
                 self.cur_hp += hp;
                 return Ok(vec![PartEvent::ChangeHP { delta: hp }])
             }

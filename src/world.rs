@@ -75,8 +75,6 @@ impl World {
         GameState::Play
     }
 
-    // TODO: make this into an action so effects can override it
-    // i.e. "your next attack that could target machines now also targets flesh"
     pub fn start_play(&self, creature_id: Id<Creature>, hand_ix: usize) -> Result<card::InPlay> {
         let creature = self.creatures.get(creature_id).ok_or(Error::NoSuchCreature)?;
         if hand_ix >= creature.hand.len() {

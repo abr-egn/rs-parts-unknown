@@ -51,21 +51,6 @@ export class GameBoard implements GameBoard.View {
         }
     }
 
-    // TODO: move this elsewhere
-    hpFloat(creatureId: Id<Creature>, partId: Id<Part>, delta: number): FloatText.Item {
-        const creature = this._cache.creatures.get(creatureId)!;
-        const part = creature.parts.get(partId)!;
-        let point = this._draw.elementCoords(this._creaturePos.get(creatureId)!);
-        const sign = delta < 0 ? "-" : "+";
-        return {
-            pos: new DOMPoint(point.x, point.y),
-            text: `${part.name}: ${sign}${Math.abs(delta)} HP`,
-            style: {
-                color: "#FF0000",
-            },
-        };
-    }
-
     creatureCoords(id: Id<Creature>): DOMPointReadOnly | undefined {
         const pos = this._creaturePos.get(id);
         if (!pos) { return undefined; }
@@ -199,9 +184,10 @@ export namespace GameBoard {
 
     export interface View {
         hexCoords(hex: Hex): DOMPointReadOnly;
-        hpFloat(creatureId: Id<Creature>, partId: Id<Part>, delta: number): FloatText.Item;
         creatureCoords(id: Id<Creature>): DOMPointReadOnly | undefined;
-        // TODO: some way to only expose this to UpdateState?
+    }
+
+    export interface Motion {
         moveCreatureTo(id: number, dest: DOMPointReadOnly): Promise<void>;
     }
 }

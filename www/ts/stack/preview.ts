@@ -94,7 +94,7 @@ export namespace Preview {
             if (oc = ev.event.OnPart) {
                 let op;
                 if (op = oc.event.ChangeHP) {
-                    return window.game.board.hpFloat(ev.id, oc.id, op.delta);
+                    return hpFloat(ev.id, oc.id, op.delta);
                 }
             }
         } else if (ev = event.FloatText) {
@@ -109,3 +109,19 @@ export namespace Preview {
 }
 
 type StatMap = Map<Id<wasm.Creature>, Preview.Stats>;
+
+function hpFloat(creatureId: Id<wasm.Creature>, partId: Id<wasm.Part>, delta: number): FloatText.Item | undefined {
+    let point = window.game.board.creatureCoords(creatureId);
+    if (!point) { return; }
+    let creature = window.game.world.getCreature(creatureId);
+    if (!creature) { return; }
+    let part = creature.parts.get(partId);
+    if (!part) { return; }
+    const sign = delta < 0 ? "-" : "+";
+    const color = delta < 0 ? "#FF0000" : "#00FF00";
+    return {
+        pos: new DOMPoint(point.x, point.y),
+        text: `${part.name}: ${sign}${Math.abs(delta)} HP`,
+        style: { color },
+    };
+}
