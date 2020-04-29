@@ -10,7 +10,7 @@ use crate::{
     creature,
     event::{Action, Event},
     id_map::Id,
-    map::Tile,
+    map::{Space, Tile},
     part::{self, PartTag},
     wasm::{
         card::Card,
@@ -180,6 +180,19 @@ impl World {
         creature.scale_damage_from(damage, part)
     }
 
+    #[wasm_bindgen(skip_typescript)]
+    pub fn shadeFrom(&self, hex: JsValue) -> Array /* Hex[] */ {
+        let hex: Hex = from_js_value(hex);
+        let los = self.wrapped.map().los_from(hex, self.wrapped.player_id());
+        self.wrapped.map().tiles().iter()
+            .filter_map(|(h, t)|
+                if t.space == Space::Empty && !los.contains(h) { Some(h) }
+                else { None }
+            )
+            .map(to_js_value)
+            .collect()
+    }
+
     // Updates
 
     #[wasm_bindgen(skip_typescript)]
@@ -237,6 +250,7 @@ interface World {
     simulateMove(to: Hex): Event[];
     scaleDamageTo(damage: number, to: Id<Creature>, part: Id<Part> | undefined): number;
     scaleDamageFrom(damage: number, from: Id<Creature>, part: Id<Part> | undefined): number;
+    shadeFrom(hex: Hex): Hex[];
 
     // Updates
 

@@ -114,7 +114,10 @@ export class GameBoard implements GameBoard.View {
     private _drawHighlight(hi?: Readonly<Highlight>) {
         if (!hi) { return; }
         for (let bound of hi.range) {
-            this._draw.boundary(bound);
+            this._draw.boundary(bound, "#808000");
+        }
+        for (let bound of hi.shade) {
+            this._draw.shade(bound);
         }
         for (let hex of this._highlightHexes(hi.static)) {
             this._draw.highlightHex(hex);

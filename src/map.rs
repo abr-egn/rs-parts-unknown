@@ -68,7 +68,7 @@ impl Map {
         out
     }
 
-    pub fn los_from(&self, start: Hex) -> HashSet<Hex> {
+    pub fn los_from(&self, start: Hex, id: Id<Creature>) -> HashSet<Hex> {
         let mut out = HashSet::new();
         out.insert(start);
         for (hex, tile) in &self.tiles {
@@ -76,9 +76,13 @@ impl Map {
             if tile.space != Space::Empty { continue; }
             let mut between: Vec<_> = start.line_to(*hex).skip(1).collect();
             between.pop();
-            if between.into_iter()
+            if !between.into_iter()
                 .filter_map(|coord| self.tiles.get(&coord))
-                .any(|line_tile| !line_tile.is_open()) {
+                .all(|line_tile| match line_tile {
+                    Tile { space: Space::Wall, .. } => false,
+                    Tile { creature: Some(cid), .. } if *cid != id => false,
+                    _ => true,
+                }) {
                 continue;
             }
             out.insert(*hex);

@@ -11,6 +11,7 @@ export class Highlight {
     static = new Highlight.Tracker();
     throb = new Highlight.Tracker();
     range: wasm.Boundary[] = [];
+    shade: wasm.Hex[] = [];
 }
 export namespace Highlight {
     export class Tracker {
@@ -34,8 +35,6 @@ export namespace Highlight {
         }
     }
 }
-
-
 
 class CountMap<K> {
     [immerable] = true;

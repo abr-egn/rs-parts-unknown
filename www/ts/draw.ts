@@ -65,7 +65,17 @@ export class Draw {
         this._ctx.restore();
     }
 
-    boundary(bound: Boundary) {
+    shade(hex: Hex) {
+        this._ctx.save();
+
+        this._pathHex(hex, HEX_SIZE);
+        this._ctx.fillStyle = "rgba(0, 0, 128, 0.5)";
+        this._ctx.fill();
+
+        this._ctx.restore();
+    }
+
+    boundary(bound: Boundary, style: string) {
         this._ctx.save();
 
         let point = hexToPixel(bound.hex);
@@ -93,7 +103,7 @@ export class Draw {
         }
 
         this._ctx.lineWidth = 2.0;
-        this._ctx.strokeStyle = "#808000";
+        this._ctx.strokeStyle = style;
         this._ctx.stroke();
 
         this._ctx.restore();

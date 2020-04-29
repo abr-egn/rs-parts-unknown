@@ -24,11 +24,25 @@ export class MovePlayerState extends State {
         this.update((draft) => { draft.build(Highlight).range = this._range; });
     }
     onTileEntered(hex: Hex) {
-        // TASK: show LoS when moving
         const world = window.game.world;
         const events = world.simulateMove(hex);
+        let lastMove: Hex | undefined;
+        for (let event of events) {
+            let move = event.CreatureMoved;
+            if (move) {
+                if (move.id != world.playerId) { continue; }
+                lastMove = move.to;
+            }
+        }
+        let shade: Hex[];
+        if (lastMove) {
+            shade = world.shadeFrom(lastMove);
+        } else {
+            shade = [];
+        }
         this.update((draft) => {
             draft.build(Preview).setEvents(events);
+            draft.build(Highlight).shade = shade;
         });
     }
     onTileClicked(hex: Hex) {

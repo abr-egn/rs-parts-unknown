@@ -26,7 +26,7 @@ impl HitPart {
         let range = if self.melee {
             position.neighbors().collect()
         } else {
-            world.map().los_from(position)
+            world.map().los_from(position, *source)
         };
         let creature = world.creatures().get(*source).unwrap();
         let damage = creature.scale_damage_from(self.damage, Some(*part));
