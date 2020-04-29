@@ -1,6 +1,5 @@
 import * as React from "react";
 
-import {Preview} from "../ts/stack/preview";
 import {Stack} from "../ts/stack";
 import {GameOverState} from "../ts/states/game_over";
 import {UpdateState} from "../ts/states/update";

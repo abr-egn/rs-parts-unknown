@@ -1,5 +1,5 @@
 import {
-    Creature, Hex, Id, Part, Tile, World,
+    Creature, Hex, Id, Tile, World,
 } from "../wasm";
 
 import {
@@ -9,8 +9,6 @@ import {
 import {Highlight} from "./stack/highlight";
 import {Preview} from "./stack/preview";
 import {Stack} from "./stack";
-
-import {FloatText} from "../tsx/float";
 
 export class GameBoard implements GameBoard.View {
     private readonly _draw: Draw;
