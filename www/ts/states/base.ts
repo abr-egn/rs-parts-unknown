@@ -75,12 +75,14 @@ export class BaseState extends State {
     }
 
     private _selectCreature(draft: Stack.Data, id: Id<wasm.Creature>) {
+        const world = window.game.world;
         const ui = draft.build(BaseState.UI);
         const highlight = draft.build(Highlight);
         if (!highlight.static.creatures.has(id) || !ui.range.has(id)) {
-            let range = window.game.world.getCreatureRange(id);  // TODO: show npc range unobstructed by creatures
+            let range = world.getCreatureRange(id);
             let bounds = wasm.findBoundary(range);
             ui.range.set(id, bounds);
+            highlight.shade = world.shadeFrom(world.getCreatureHex(id)!, id);
         }
         highlight.static.creatures.inc(id);
         this._buildRange(draft);
@@ -92,6 +94,7 @@ export class BaseState extends State {
         highlight.static.creatures.dec(id);
         if (!highlight.static.creatures.has(id)) {
             ui.range.delete(id);
+            highlight.shade = [];
         }
         this._buildRange(draft);
     }

@@ -181,9 +181,10 @@ impl World {
     }
 
     #[wasm_bindgen(skip_typescript)]
-    pub fn shadeFrom(&self, hex: JsValue) -> Array /* Hex[] */ {
+    pub fn shadeFrom(&self, hex: JsValue, id: JsValue) -> Array /* Hex[] */ {
         let hex: Hex = from_js_value(hex);
-        let los = self.wrapped.map().los_from(hex, self.wrapped.player_id());
+        let id: Id<creature::Creature> = from_js_value(id);
+        let los = self.wrapped.map().los_from(hex, id);
         self.wrapped.map().tiles().iter()
             .filter_map(|(h, t)|
                 if t.space == Space::Empty && !los.contains(h) { Some(h) }
@@ -250,7 +251,7 @@ interface World {
     simulateMove(to: Hex): Event[];
     scaleDamageTo(damage: number, to: Id<Creature>, part: Id<Part> | undefined): number;
     scaleDamageFrom(damage: number, from: Id<Creature>, part: Id<Part> | undefined): number;
-    shadeFrom(hex: Hex): Hex[];
+    shadeFrom(hex: Hex, id: Id<Creature>): Hex[];
 
     // Updates
 

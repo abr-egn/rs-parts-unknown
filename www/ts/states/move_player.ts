@@ -36,7 +36,7 @@ export class MovePlayerState extends State {
         }
         let shade: Hex[];
         if (lastMove) {
-            shade = world.shadeFrom(lastMove);
+            shade = world.shadeFrom(lastMove, world.playerId);
         } else {
             shade = [];
         }
