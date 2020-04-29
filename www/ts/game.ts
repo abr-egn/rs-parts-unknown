@@ -71,25 +71,6 @@ export class Game {
         return this._world.getCreature(id);
     }
 
-    // Mutators
-
-    updateWorld(newWorld: wasm.World) {
-        this._world.free();
-        this._world = newWorld;
-        this._board.updateWorld(this._world);
-        this._onUpdate();
-    }
-
-    addFloat(float: FloatText.Item) {
-        this._floats.add(float);
-        this._onUpdate();
-    }
-
-    deleteFloat(float: FloatText.Item) {
-        this._floats.delete(float);
-        this._onUpdate();
-    }
-
     makeFloat(event: Readonly<wasm.Event>): FloatText.Item | undefined {
         let ev;
         if (ev = event.OnCreature) {
@@ -145,6 +126,25 @@ export class Game {
                 };
             }
         }
+    }
+
+    // Mutators
+
+    updateWorld(newWorld: wasm.World) {
+        this._world.free();
+        this._world = newWorld;
+        this._board.updateWorld(this._world);
+        this._onUpdate();
+    }
+
+    addFloat(float: FloatText.Item) {
+        this._floats.add(float);
+        this._onUpdate();
+    }
+
+    deleteFloat(float: FloatText.Item) {
+        this._floats.delete(float);
+        this._onUpdate();
     }
 
     // Private
