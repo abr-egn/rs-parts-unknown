@@ -26,7 +26,7 @@ export class Preview {
         // TASK: when there are multiple floats, stagger the positions
         for (let event of events) {
             this.addStats(event);
-            const float = Preview.float(event);
+            const float = window.game.makeFloat(event);
             if (float) {
                 this._float.add(float);
             }
@@ -88,68 +88,6 @@ export namespace Preview {
         statDelta: Map<Stat, number>,
         hpDelta: Map<Id<wasm.Part>, number>,
     }
-    export function float(event: Readonly<wasm.Event>): FloatText.Item | undefined {
-        let ev;
-        if (ev = event.OnCreature) {
-            let pos = window.game.board.creatureCoords(ev.id)!;
-            pos = new DOMPoint(pos.x, pos.y);  // clone
-            let creature = window.game.world.getCreature(ev.id)!;
-            let oc;
-            if (oc = ev.event.OnPart) {
-                let part = creature.parts.get(oc.id)!;
-                let op;
-                if (op = oc.event.ChangeHP) {
-                    const [text, color] = delta(op.delta);
-                    return {
-                        pos,
-                        text: `${part.name}: ${text} HP`,
-                        style: { color },
-                    };
-                } else if (op = oc.event.TagsSet) {
-                    let strs = op.tags.map(t => `+${t}`);
-                    return {
-                        pos,
-                        text: `${part.name}: ${strs.join(", ")}`,
-                    };
-                } else if (op = oc.event.TagsCleared) {
-                    let strs = op.tags.map(t => `-${t}`);
-                    return {
-                        pos,
-                        text: `${part.name}: ${strs.join(", ")}`,
-                    };
-                }
-            } else if (oc = ev.event.ChangeAP) {
-                const [text, color] = delta(oc.delta);
-                return {
-                    pos,
-                    text: `${text} AP`,
-                    style: { color },
-                };
-            } else if (oc = ev.event.ChangeMP) {
-                const [text, color] = delta(oc.delta);
-                return {
-                    pos,
-                    text: `${text} MP`,
-                    style: { color },
-                };
-            } else if (oc = ev.event.Died) {
-                return {pos, text: "Dead!"}
-            }
-        } else if (ev = event.FloatText) {
-            let pos = window.game.board.creatureCoords(ev.on);
-            if (pos) {
-                return {
-                    pos, text: ev.text, style: {}
-                };
-            }
-        }
-    }
 }
 
 type StatMap = Map<Id<wasm.Creature>, Preview.Stats>;
-
-function delta(value: number): [string, string] /* text, color */ {
-    const sign = value < 0 ? "-" : "+";
-    const color = value < 0 ? "#FF0000" : "#00FF00";
-    return [`${sign}${Math.abs(value)}`, color]
-}

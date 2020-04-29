@@ -1,6 +1,5 @@
 import {immerable} from "immer";
 
-import {FloatText} from "../../tsx/float";
 import * as wasm from "../../wasm";
 import {hexToPixel} from "../draw";
 import {Preview} from "../stack/preview";
@@ -46,7 +45,7 @@ export class UpdateState extends State {
             const motion = (board as unknown) as GameBoard.Motion;
             await motion.moveCreatureTo(data.id, hexToPixel(data.to))
         }
-        const float = Preview.float(event);
+        const float = window.game.makeFloat(event);
         if (float) {
             if (!float.style) { float.style = {}; }
             float.style.animationName = "floatLift";

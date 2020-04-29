@@ -14,14 +14,6 @@ declare global {
     }
 }
 
-/*
-This:
-    a. Initializes everything and sets up linkages, and
-    b. Is the interface through which the UI and the game states act.
-
-Re. (b), it is made available as a global because there would be no gain to
-manually threading it through to all places.
-*/
 export class Game {
     private _world: wasm.World;
     private _stack: stack.Stack;
@@ -98,6 +90,63 @@ export class Game {
         this._onUpdate();
     }
 
+    makeFloat(event: Readonly<wasm.Event>): FloatText.Item | undefined {
+        let ev;
+        if (ev = event.OnCreature) {
+            let pos = this.board.creatureCoords(ev.id)!;
+            pos = new DOMPoint(pos.x, pos.y);  // clone
+            let creature = this.world.getCreature(ev.id)!;
+            let oc;
+            if (oc = ev.event.OnPart) {
+                let part = creature.parts.get(oc.id)!;
+                let op;
+                if (op = oc.event.ChangeHP) {
+                    const [text, color] = delta(op.delta);
+                    return {
+                        pos,
+                        text: `${part.name}: ${text} HP`,
+                        style: { color },
+                    };
+                } else if (op = oc.event.TagsSet) {
+                    let strs = op.tags.map(t => `+${t}`);
+                    return {
+                        pos,
+                        text: `${part.name}: ${strs.join(", ")}`,
+                    };
+                } else if (op = oc.event.TagsCleared) {
+                    let strs = op.tags.map(t => `-${t}`);
+                    return {
+                        pos,
+                        text: `${part.name}: ${strs.join(", ")}`,
+                    };
+                }
+            } else if (oc = ev.event.ChangeAP) {
+                const [text, color] = delta(oc.delta);
+                return {
+                    pos,
+                    text: `${text} AP`,
+                    style: { color },
+                };
+            } else if (oc = ev.event.ChangeMP) {
+                const [text, color] = delta(oc.delta);
+                return {
+                    pos,
+                    text: `${text} MP`,
+                    style: { color },
+                };
+            } else if (oc = ev.event.Died) {
+                return {pos, text: "Dead!"}
+            }
+        } else if (ev = event.FloatText) {
+            let pos = window.game.board.creatureCoords(ev.on);
+            if (pos) {
+                return {
+                    pos, text: ev.text, style: {}
+                };
+            }
+        }
+    }
+
     // Private
 
     private _onUpdate() {
@@ -160,4 +209,10 @@ export class BufferTracer implements wasm.Tracer {
             thunk();
         }
     }
+}
+
+function delta(value: number): [string, string] /* text, color */ {
+    const sign = value < 0 ? "-" : "+";
+    const color = value < 0 ? "#FF0000" : "#00FF00";
+    return [`${sign}${Math.abs(value)}`, color]
 }
