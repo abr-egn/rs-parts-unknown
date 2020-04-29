@@ -74,18 +74,9 @@ impl Map {
         for (hex, tile) in &self.tiles {
             if *hex == start { continue; }
             if tile.space != Space::Empty { continue; }
-            let mut between: Vec<_> = start.line_to(*hex).skip(1).collect();
-            between.pop();
-            if !between.into_iter()
-                .filter_map(|coord| self.tiles.get(&coord))
-                .all(|line_tile| match line_tile {
-                    Tile { space: Space::Wall, .. } => false,
-                    Tile { creature: Some(cid), .. } if *cid != id => false,
-                    _ => true,
-                }) {
-                continue;
+            if self.can_see(start, *hex, id) {
+                out.insert(*hex);
             }
-            out.insert(*hex);
         }
 
         out
@@ -137,6 +128,26 @@ impl Map {
         self.tiles.get_mut(from).unwrap().creature = None;
         self.creatures.insert(creature_id, to);
         Ok(())
+    }
+
+    // Private
+
+    fn all_clear(&self, between: &[Hex], id: Id<Creature>) -> bool {
+        between.into_iter()
+            .filter_map(|coord| self.tiles.get(&coord))
+            .all(|line_tile| match line_tile {
+                Tile { space: Space::Wall, .. } => false,
+                Tile { creature: Some(cid), .. } if *cid != id => false,
+                _ => true,
+            })
+    }
+
+    fn can_see(&self, a: Hex, b: Hex, id: Id<Creature>) -> bool {
+        let mut between: Vec<_> = a.line_to(b).skip(1).collect();
+        between.pop();
+        let mut between_alt: Vec<_> = a.line_to_alt(b).skip(1).collect();
+        between_alt.pop();
+        return self.all_clear(&between, id) || self.all_clear(&between_alt, id);
     }
 }
 
