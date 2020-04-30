@@ -4,7 +4,8 @@ import {Focus} from "../ts/stack/focus";
 import {Highlight} from "../ts/stack/highlight";
 import {Preview} from "../ts/stack/preview";
 import * as wasm from "../wasm";
-import {StackData, WorldContext} from "./index";
+import {StackData} from "./index";
+import {WorldContext} from "./level";
 
 export function CreatureStats(props: {
     creature: wasm.Creature,

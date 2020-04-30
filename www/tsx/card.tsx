@@ -5,7 +5,8 @@ import {Highlight} from "../ts/stack/highlight";
 import {PlayCardState} from "../ts/states/play_card";
 import * as wasm from "../wasm";
 import {Id} from "../wasm";
-import {StackData, WorldContext} from "./index";
+import {StackData} from "./index";
+import {WorldContext} from "./level";
 
 export function CardList(props: {
     active: boolean,

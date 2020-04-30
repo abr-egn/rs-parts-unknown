@@ -12,7 +12,8 @@ import {MovePlayerState} from "../ts/states/move_player";
 
 import {CardList} from "./card";
 import {CreatureStats} from "./creature";
-import {StackData, WorldContext} from "./index";
+import {StackData} from "./index";
+import {WorldContext} from "./level";
 
 export function PlayerControls(props: {}): JSX.Element {
     const world = React.useContext(WorldContext);
