@@ -5,10 +5,12 @@ import {LevelState} from "./level";
 
 export class TitleState extends State {
     onActivated() {
-        this.update(draft => draft.build(Title.UI, () => window.game.stack.swap(new LevelState())));
+        this.update(draft => {
+            draft.build(TitleState.UI, () => window.game.stack.swap(new LevelState()));
+        });
     }
 }
-export namespace Title {
+export namespace TitleState {
     export class UI {
         [Stack.Datum] = true;
         [immerable] = true;

@@ -29,6 +29,13 @@ div.topright {
     padding: 5px;
 }
 
+.title {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+}
+
 .gameOver {
     position: absolute;
     top: 50%;
