@@ -8,7 +8,7 @@ import {Focus} from "../stack/focus";
 import {Highlight} from "../stack/highlight";
 import {Preview} from "../stack/preview";
 import {Stack, State} from "../stack";
-
+import {LevelState} from "../states/level";
 import {TargetPartState} from "./target_part";
 import {UpdateState} from "./update";
 
@@ -20,7 +20,7 @@ export class PlayCardState extends State {
     ) { super(); }
 
     onPushed() {
-        const world = window.game.world;
+        const world = this.stack.data.get(LevelState.Data)!.world;
         const creature = world.getCreature(this._creatureId);
         if (!creature) { throw `Invalid creature id ${this._creatureId}`; }
         if (this._handIx >= creature.hand.length) {
@@ -35,9 +35,9 @@ export class PlayCardState extends State {
         const targetSpec = this._inPlay.getTargetSpec();
         if (targetSpec.None) {
             // TASK: preview, confirm
-            const [nextWorld, events] = window.game.world.finishPlay(this._inPlay!, {None: true});
+            const [nextWorld, events] = world.finishPlay(this._inPlay!, {None: true});
             this._inPlay = undefined;
-            window.game.stack.swap(new UpdateState(events, nextWorld));
+            this.stack.swap(new UpdateState(events, nextWorld));
             return;
         }
         const range = this._inPlay.range(world);
@@ -88,15 +88,16 @@ export class PlayCardState extends State {
     }
 
     onTileEntered(hex: Hex) {
-        const world = window.game.world;
-        const creature = window.game.creatureAt(hex);
+        const level = this.stack.data.get(LevelState.Data)!;
+        const world = level.world;
+        const creature = level.creatureAt(hex);
         if (!creature) { return; }  // TASK: hex targeting
         if (!this._canTargetCreature(creature)) { return; }
 
         const events: wasm.Event[] = [];
         const spec = this._inPlay!.getTargetSpec();
         if (spec.Creature) {
-            const target = creatureToTarget(window.game.creatureAt(hex)!);
+            const target = creatureToTarget(level.creatureAt(hex)!);
             events.push(...this._inPlay!.simulate(world, target));
         }
         this.update(draft => {
@@ -106,7 +107,8 @@ export class PlayCardState extends State {
     }
 
     onTileExited(hex: Hex) {
-        const creature = window.game.creatureAt(hex);
+        const level = this.stack.data.get(LevelState.Data)!;
+        const creature = level.creatureAt(hex);
         this.update((draft) => {
             if (creature) {
                 draft.build(Highlight).throb.creatures.dec(creature.id);
@@ -116,15 +118,16 @@ export class PlayCardState extends State {
     }
 
     onTileClicked(hex: Hex) {
+        const level = this.stack.data.get(LevelState.Data)!;
         if (!this._canTarget(hex)) { return; }
         const spec = this._inPlay!.getTargetSpec();
         if (spec.Part) {
-            let creature = window.game.creatureAt(hex);
+            let creature = level.creatureAt(hex);
             if (!creature) { return; }
             this.update(draft => { draft.build(Highlight).throb.clear(); })
-            window.game.stack.push(new TargetPartState(this._inPlay!, hex, creature));
+            this.stack.push(new TargetPartState(this._inPlay!, hex, creature));
         } else if (spec.Creature) {
-            let creature = window.game.creatureAt(hex);
+            let creature = level.creatureAt(hex);
             if (!creature) { return; }
             const target = creatureToTarget(creature);
             this._playOnTarget(target);
@@ -134,14 +137,15 @@ export class PlayCardState extends State {
     }
 
     private _canTarget(hex: Hex): boolean {
-        const creature = window.game.creatureAt(hex);
+        const level = this.stack.data.get(LevelState.Data)!;
+        const creature = level.creatureAt(hex);
         if (creature && this._canTargetCreature(creature)) { return true; }
         // TASK: hex targeting
         return false;
     }
 
     private _canTargetCreature(creature: wasm.Creature): boolean {
-        const world = window.game.world;
+        const world = this.stack.data.get(LevelState.Data)!.world;
         const spec = this._inPlay!.getTargetSpec();
         let match;
         if (match = spec.Part) {
@@ -162,34 +166,37 @@ export class PlayCardState extends State {
     }
 
     private _playOnTarget(target: wasm.Target) {
-        if (!this._inPlay!.targetValid(window.game.world, target)) {
+        const world = this.stack.data.get(LevelState.Data)!.world;
+        if (!this._inPlay!.targetValid(world, target)) {
             return;
         }
-        const [nextWorld, events] = window.game.world.finishPlay(this._inPlay!, target);
+        const [nextWorld, events] = world.finishPlay(this._inPlay!, target);
         this._inPlay = undefined;
         
         // The stack swap is deferred, so there's a brief window of time when
         // the current state is visible to the UI.  Set a tag so the UI
         // doesn't flicker for a frame.
         this.update((draft) => { draft.build(PlayCardState.ToUpdate); });
-        window.game.stack.swap(new UpdateState(events, nextWorld));
+        this.stack.swap(new UpdateState(events, nextWorld));
     }
 
     private _creatureFocus(): Focus.Handler<Id<wasm.Creature>> {
         const valid = (id: Id<wasm.Creature>) => {
+            const world = this.stack.data.get(LevelState.Data)!.world;
             const target = { Creature: { id } };
-            if (!this._inPlay?.targetValid(window.game.world, target)) {
+            if (!this._inPlay?.targetValid(world, target)) {
                 return undefined;
             }
             return target;
         };
         return {
             onEnter: (id) => {
+                const world = this.stack.data.get(LevelState.Data)!.world;
                 const target = valid(id);
                 if (target) {
                     this.update(draft => {
                         draft.build(Highlight).throb.creatures.inc(id);
-                        const events = this._inPlay!.simulate(window.game.world, target);
+                        const events = this._inPlay!.simulate(world, target);
                         draft.build(Preview).setEvents(events);
                     });
                 }
@@ -210,13 +217,13 @@ export class PlayCardState extends State {
     }
 
     private _partFocus(): Focus.Handler<[Id<wasm.Creature>, Id<wasm.Part>]> {
-        const world = window.game.world;
         return {
             onEnter: ([cid, pid]) => this.update(draft => {
+                const world = this.stack.data.get(LevelState.Data)!.world;
                 const target = this._partTarget(cid, pid);
                 if (target) {
                     draft.build(Highlight).throb.mutPartsFor(cid).inc(pid);
-                    const events = this._inPlay!.simulate(window.game.world, target);
+                    const events = this._inPlay!.simulate(world, target);
                     draft.build(Preview).setEvents(events);
                 }
             }),
@@ -240,7 +247,8 @@ export class PlayCardState extends State {
                 part_id: pid,
             }
         };
-        if (!this._inPlay?.targetValid(window.game.world, target)) {
+        const world = this.stack.data.get(LevelState.Data)!.world;
+        if (!this._inPlay?.targetValid(world, target)) {
             return undefined;
         }
         return target;

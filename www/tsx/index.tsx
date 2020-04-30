@@ -1,7 +1,9 @@
 import * as React from "react";
 
 import {Stack} from "../ts/stack";
+import {Preview} from "../ts/stack/preview";
 import {GameOverState} from "../ts/states/game_over";
+import {LevelState} from "../ts/states/level";
 import {UpdateState} from "../ts/states/update";
 import * as wasm from "../wasm";
 import {CreatureStats, CreatureIntent} from "./creature";
@@ -13,12 +15,11 @@ export const StackData = React.createContext((undefined as unknown) as Stack.Dat
 export const WorldContext = React.createContext((undefined as unknown) as wasm.World);
 
 export function Index(props: {
-    world: wasm.World,
     data: Stack.DataView,
-    intents: [wasm.Creature, DOMPointReadOnly][],
-    floats: FloatText.ItemId[],
 }): JSX.Element {
-    const world = props.world;
+    // TODO: don't assume LevelState
+    const level = props.data.get(LevelState.Data)!;
+    const world = level.world;
 
     const creatures = [];
     for (let creature of world.getCreatures()) {
@@ -28,17 +29,22 @@ export function Index(props: {
 
     let intents: JSX.Element[] = [];
     if (!props.data.get(UpdateState.UI)?.isEndTurn) {
-        intents = props.intents.map(([creature, point]) =>
+        intents = level.getIntents().map(([creature, point]) =>
             <CreatureIntent key={creature.id} creature={creature} coords={point}></CreatureIntent>);
     }
 
+    const floats: FloatText.ItemId[] = [];
+    const prevFloats = props.data.get(Preview)?.float;
+    if (prevFloats) { floats.push(...prevFloats); }
+    floats.push(...level.floats.all);
+
     return (
     <StackData.Provider value={props.data}>
-        <WorldContext.Provider value={props.world}>
+        <WorldContext.Provider value={world}>
             <div className="topleft"><PlayerControls/></div>
             <div className="topright">{creatures}</div>
             {intents}
-            {props.floats.map(ft => <FloatText key={ft.id} item={ft}></FloatText>)}
+            {floats.map(ft => <FloatText key={ft.id} item={ft}></FloatText>)}
             <TargetPart/>
             <GameOver/>
         </WorldContext.Provider>

@@ -5,7 +5,7 @@ import {Hex} from "../../wasm";
 import {partToTarget} from "../extra";
 import {Stack, State} from "../stack";
 import {Focus} from "../stack/focus"
-import { TargetPart } from "../../tsx/target";
+import {LevelState} from "../states/level";
 
 export class TargetPartState extends State {
     constructor(
@@ -18,7 +18,8 @@ export class TargetPartState extends State {
         const targets: [wasm.Part, boolean][] = [];
         for (let part of this._creature.parts.values()) {
             const target = partToTarget(part);
-            const canPlay = this._inPlay.targetValid(window.game.world, target);
+            const world = this.stack.data.get(LevelState.Data)!.world;
+            const canPlay = this._inPlay.targetValid(world, target);
             targets.push([part, canPlay]);
         }
         targets.sort((a, b) => a[0].id - b[0].id);

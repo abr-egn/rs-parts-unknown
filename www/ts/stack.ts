@@ -107,7 +107,7 @@ export class Stack {
             this._onUpdate();
         });
     }
-    data(): Stack.DataView { return this._view; }
+    get data(): Stack.DataView { return this._view; }
 
     boardListener(): GameBoard.Listener {
         return {
@@ -165,7 +165,7 @@ export namespace Stack {
             return this._chunks.get(key);
         }
 
-        getMut<C extends Constructor>(key: C): InstanceType<C> | undefined {
+        mut<C extends Constructor>(key: C): InstanceType<C> | undefined {
             return this._chunks.get(key);
         }
 

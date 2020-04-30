@@ -17,6 +17,7 @@ export class GameBoard implements GameBoard.View {
     private _frameWaits: ((value: number) => void)[] = [];
     private _creaturePos: Map<Id<Creature>, DOMPointReadOnly> = new Map();
     private _cache!: WorldCache;
+    private _stop: boolean = false;
     constructor(
             canvas: HTMLCanvasElement,
             world: World,
@@ -25,9 +26,6 @@ export class GameBoard implements GameBoard.View {
         this._tsMillis = performance.now();
         this._draw = new Draw(canvas.getContext('2d')!);
 
-        // TODO: move these up to Game
-        canvas.addEventListener("mousedown", (event) => this._onMouseDown(event));
-        canvas.addEventListener("mousemove", (event) => this._onMouseMove(event));
         window.requestAnimationFrame((ts) => this._frame(ts));
 
         this.updateWorld(world);
@@ -52,6 +50,27 @@ export class GameBoard implements GameBoard.View {
     hexCoords(hex: Hex): DOMPointReadOnly {
         return this._draw.elementCoords(hexToPixel(hex));
     }
+
+    onMouseDown(event: MouseEvent) {
+        event.preventDefault();
+        this._draw.focus();
+        const point = this._draw.mouseCoords(event);
+        this._listener.onTileClicked(pixelToHex(point));
+    }
+
+    onMouseMove(event: MouseEvent) {
+        const hex = pixelToHex(this._draw.mouseCoords(event));
+        if (this._cache.getTile(hex) == undefined) { return; }
+        if (hex.x != this._mouseHex?.x || hex.y != this._mouseHex?.y) {
+            if (this._mouseHex) {
+                this._listener.onTileExited(this._mouseHex);
+            }
+            this._listener.onTileEntered(hex);
+            this._mouseHex = hex;
+        }
+    }
+
+    stop() { this._stop = true; }
 
     async moveCreatureTo(id: number, dest: DOMPointReadOnly) {
         const MOVE_SPEED = 2.0;
@@ -100,7 +119,9 @@ export class GameBoard implements GameBoard.View {
         }
         this._frameWaits = [];
 
-        window.requestAnimationFrame((ts) => this._frame(ts));
+        if (!this._stop) {
+            window.requestAnimationFrame((ts) => this._frame(ts));
+        }
     }
 
     private _drawHighlight(hi?: Readonly<Highlight>) {
@@ -142,25 +163,6 @@ export class GameBoard implements GameBoard.View {
         if (!prev) { return; }
         for (let hex of prev.throb) {
             this._draw.throb(hex, this._tsMillis);
-        }
-    }
-
-    private _onMouseDown(event: MouseEvent) {
-        event.preventDefault();
-        this._draw.focus();
-        const point = this._draw.mouseCoords(event);
-        this._listener.onTileClicked(pixelToHex(point));
-    }
-
-    private _onMouseMove(event: MouseEvent) {
-        const hex = pixelToHex(this._draw.mouseCoords(event));
-        if (this._cache.getTile(hex) == undefined) { return; }
-        if (hex.x != this._mouseHex?.x || hex.y != this._mouseHex?.y) {
-            if (this._mouseHex) {
-                this._listener.onTileExited(this._mouseHex);
-            }
-            this._listener.onTileEntered(hex);
-            this._mouseHex = hex;
         }
     }
 }

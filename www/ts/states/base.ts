@@ -2,6 +2,7 @@ import * as wasm from "../../wasm";
 import {Id, Hex} from "../../wasm";
 import {Focus} from "../stack/focus";
 import {Highlight} from "../stack/highlight";
+import {LevelState} from "../states/level";
 import {Stack, State} from "../stack";
 
 export class BaseState extends State {
@@ -28,7 +29,8 @@ export class BaseState extends State {
     }
 
     onTileEntered(hex: Hex) {
-        let creature = window.game.creatureAt(hex);
+        const level = this.stack.data.get(LevelState.Data)!;
+        let creature = level.creatureAt(hex);
         if (creature) {
             let id = creature.id;
             this.update(draft => this._selectCreature(draft, id));
@@ -36,7 +38,8 @@ export class BaseState extends State {
     }
 
     onTileExited(hex: Hex) {
-        let creature = window.game.creatureAt(hex);
+        const level = this.stack.data.get(LevelState.Data)!;
+        let creature = level.creatureAt(hex);
         if (creature) {
             let id = creature.id;
             this.update(draft => this._unselectCreature(draft, id));
@@ -51,7 +54,7 @@ export class BaseState extends State {
     }
 
     private _selectCreature(draft: Stack.Data, id: Id<wasm.Creature>) {
-        const world = window.game.world;
+        const world = this.stack.data.get(LevelState.Data)!.world;
         const highlight = draft.build(Highlight);
         highlight.range = wasm.findBoundary(world.getCreatureRange(id));
         highlight.shade = world.shadeFrom(world.getCreatureHex(id)!, id);

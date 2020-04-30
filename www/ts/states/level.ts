@@ -6,43 +6,126 @@ import {GameBoard} from "../game_board";
 import {Stack, State} from "../stack";
 
 export class LevelState extends State {
+    // These live outside of the stack data so they're not unwound by sub-state pops.
+    private _world!: wasm.World;
+    private _board!: GameBoard;
+
     onPushed() {
         const canvas = document.getElementById("mainCanvas") as HTMLCanvasElement;
-        const world = new wasm.World();
-        world.setTracer(new ConsoleTracer());
-        const board = new GameBoard(canvas, world, this.stack.boardListener(), this.stack.data());
+        this._world = new wasm.World();
+        this._world.setTracer(new ConsoleTracer());
+        this._board = new GameBoard(canvas, this._world, this.stack.boardListener(), this.stack.data);
         const update = this.updateWorld.bind(this);
-        this.update(draft => { draft.build(LevelState.UI, world, board, update); })
-    }
-
-    onPopped() {
+        const getWorld = () => { return this._world; }
+        const getBoard = () => { return this._board; }
         this.update(draft => {
-            const ui = draft.getMut(LevelState.UI)!;
-            // TODO: stop board
-            ui.world.free();
+            draft.build(LevelState.Data, getWorld, getBoard, update);
         });
     }
 
+    onPopped() {
+        const data = this.stack.data.get(LevelState.Data)!;
+        data.board.stop();
+        data.world.free();
+    }
+
     updateWorld(newWorld: wasm.World) {
-        this.update(draft => {
-            const ui = draft.getMut(LevelState.UI)!;
-            ui.world.free();
-            ui.world = newWorld;
-            ui.board.updateWorld(ui.world);
-        })
+        this._world.free();
+        this._world = newWorld;
+        this._board.updateWorld(this._world);
+        this.update(draft => {});
     }
 }
 export namespace LevelState {
-    export class UI {
+    export class Data {
         [Stack.Datum] = true;
         [immerable] = true;
-        constructor(
-            public world: wasm.World,
-            public board: GameBoard,
-            updateWorld: (newWorld: wasm.World) => void,
-        ) {}
 
         floats: FloatText.ItemSet = new FloatText.ItemSet();
+        constructor(
+            private _getWorld: () => wasm.World,
+            private _getBoard: () => GameBoard,
+            public updateWorld: (newWorld: wasm.World) => void,
+        ) {}
+
+        get world(): wasm.World { return this._getWorld(); }
+        get board(): GameBoard { return this._getBoard(); }
+
+        creatureAt(hex: wasm.Hex): wasm.Creature | undefined {
+            const tile = this.world.getTile(hex);
+            if (!tile) { return undefined; }
+            const id = tile.creature;
+            if (id == undefined) { return undefined; }
+            return this.world.getCreature(id);
+        }
+        
+        makeFloat(event: Readonly<wasm.Event>): FloatText.Item | undefined {
+            let ev;
+            if (ev = event.OnCreature) {
+                let pos = this.board.creatureCoords(ev.id)!;
+                pos = new DOMPoint(pos.x, pos.y);  // clone
+                let creature = this.world.getCreature(ev.id)!;
+                let oc;
+                if (oc = ev.event.OnPart) {
+                    let part = creature.parts.get(oc.id)!;
+                    let op;
+                    if (op = oc.event.ChangeHP) {
+                        const [text, color] = delta(op.delta);
+                        return {
+                            pos,
+                            text: `${part.name}: ${text} HP`,
+                            style: { color },
+                        };
+                    } else if (op = oc.event.TagsSet) {
+                        let strs = op.tags.map(t => `+${t}`);
+                        return {
+                            pos,
+                            text: `${part.name}: ${strs.join(", ")}`,
+                        };
+                    } else if (op = oc.event.TagsCleared) {
+                        let strs = op.tags.map(t => `-${t}`);
+                        return {
+                            pos,
+                            text: `${part.name}: ${strs.join(", ")}`,
+                        };
+                    }
+                } else if (oc = ev.event.ChangeAP) {
+                    const [text, color] = delta(oc.delta);
+                    return {
+                        pos,
+                        text: `${text} AP`,
+                        style: { color },
+                    };
+                } else if (oc = ev.event.ChangeMP) {
+                    const [text, color] = delta(oc.delta);
+                    return {
+                        pos,
+                        text: `${text} MP`,
+                        style: { color },
+                    };
+                } else if (oc = ev.event.Died) {
+                    return {pos, text: "Dead!"}
+                }
+            } else if (ev = event.FloatText) {
+                let pos = this.board.creatureCoords(ev.on);
+                if (pos) {
+                    return {
+                        pos, text: ev.text, style: {}
+                    };
+                }
+            }
+        }
+
+        getIntents(): [wasm.Creature, DOMPointReadOnly][] {
+            const intents: [wasm.Creature, DOMPointReadOnly][] = [];
+            for (let creature of this.world.getCreatures()) {
+                if (creature.dead || !creature.npc) { continue; }
+                const point = this.board.creatureCoords(creature.id);
+                if (!point) { continue; }
+                intents.push([creature, point]);
+            }
+            return intents;
+        }
     }
 }
 
@@ -75,4 +158,10 @@ class BufferTracer implements wasm.Tracer {
             thunk();
         }
     }
+}
+
+function delta(value: number): [string, string] /* text, color */ {
+    const sign = value < 0 ? "-" : "+";
+    const color = value < 0 ? "#FF0000" : "#00FF00";
+    return [`${sign}${Math.abs(value)}`, color]
 }

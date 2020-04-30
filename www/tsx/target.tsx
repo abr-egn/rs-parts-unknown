@@ -2,6 +2,7 @@ import * as React from "react";
 
 import * as wasm from "../wasm";
 import {Focus} from "../ts/stack/focus";
+import {LevelState} from "../ts/states/level";
 import {TargetPartState} from "../ts/states/target_part";
 import {StackData} from "./index";
 
@@ -9,8 +10,9 @@ export function TargetPart(props: {}): JSX.Element | null {
     const data = React.useContext(StackData);
     const target = data.get(TargetPartState.UI);
     if (!target) { return null; }
+    const level = data.get(LevelState.Data)!;
 
-    const point = window.game.board.hexCoords(target.hex);
+    const point = level.board.hexCoords(target.hex);
     const style = {
         left: point.x,
         top: point.y,
