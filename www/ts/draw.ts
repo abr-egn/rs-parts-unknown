@@ -14,7 +14,7 @@ export class Draw {
 
         this._pathHex(hex, HEX_SIZE);
         this._ctx.lineWidth = 1.0;
-        this._ctx.strokeStyle = "#404040";
+        this._ctx.strokeStyle = "#004000";
         this._ctx.fillStyle = "#FFFFFF";
         if (tile.space == "Empty") {
             this._ctx.stroke();
@@ -49,7 +49,7 @@ export class Draw {
         this._ctx.save();
         this._pathHex(hex, size);
         this._ctx.lineWidth = 2.0;
-        this._ctx.strokeStyle = "#A0A0FF";
+        this._ctx.strokeStyle = "#A0FFA0";
         this._ctx.stroke();
         this._ctx.restore();
     }
@@ -59,7 +59,7 @@ export class Draw {
 
         this._pathHex(hex, HEX_SIZE);
         this._ctx.lineWidth = 2.0;
-        this._ctx.strokeStyle = "#0000FF";
+        this._ctx.strokeStyle = "#008000";
         this._ctx.stroke();
 
         this._ctx.restore();
@@ -69,7 +69,7 @@ export class Draw {
         this._ctx.save();
 
         this._pathHex(hex, HEX_SIZE);
-        this._ctx.fillStyle = "rgba(0, 0, 128, 0.5)";
+        this._ctx.fillStyle = "rgba(0, 64, 0, 0.5)";
         this._ctx.fill();
 
         this._ctx.restore();
