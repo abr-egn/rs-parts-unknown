@@ -31,9 +31,9 @@ export function Title(props: {}): JSX.Element {
     const stack = React.useContext(StackData);
     const ui = stack.get(TitleState.UI)!;
     let letters: JSX.Element[] = [];
-    const DELAY_DEC = 0.3;
+    const DELAY_INC = 0.3;
     const TEXT = "Parts Unknown";
-    let delay = DELAY_DEC * TEXT.length;
+    let delay = 0;
     for (let char of "Parts Unknown") {
         let style = {
             animationDelay: `${delay}s`
@@ -43,7 +43,7 @@ export function Title(props: {}): JSX.Element {
         } else {
             letters.push(<span className="text" style={style}>{char}</span>);
         }
-        delay -= DELAY_DEC;
+        delay += DELAY_INC;
     }
     return (<div className="title">
         <div className="letters">{letters}</div>

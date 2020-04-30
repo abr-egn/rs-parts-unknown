@@ -47,10 +47,10 @@ div.topright {
 }
 
 .title .text {
-    color: green;
+    color: black;
     display: inline-block;
     animation-name: titleAnim;
-    animation-duration: 5s;
+    animation-duration: 15s;
     animation-iteration-count: infinite;
 }
 
@@ -62,6 +62,25 @@ button {
 }
 
 @keyframes titleAnim {
+    0% {
+        color: black;
+        transform: translate(0px, -50%);
+    }
+    25% {
+        color: green;
+        transform: translate(0px, 0px);
+    }
+    75% {
+        color: green;
+        transform: translate(0px, 0px);
+    }
+    80% {
+        color: black;
+    }
+    100% {
+        color: black;
+    }
+    /*
     50% {
         color: black;
         transform: translate(0px, 50%);
@@ -70,6 +89,7 @@ button {
         color: black;
         transform: translate(0px, 0px);
     }
+    */
 }
 
 .gameOver {
