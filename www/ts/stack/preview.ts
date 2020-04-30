@@ -3,6 +3,7 @@ import {immerable} from "immer";
 import * as wasm from "../../wasm";
 import {Hex, Id} from "../../wasm";
 import {Stack} from "../stack";
+import {LevelState} from "../states/level";
 
 import {FloatText} from "../../tsx/float";
 
@@ -19,14 +20,14 @@ export class Preview {
     get stats(): Readonly<StatMap> { return this._stats; }
     set stats(v) {}  // Work around immer bug: https://github.com/immerjs/immer/pull/558
 
-    setEvents(events: Readonly<wasm.Event[]>) {
+    setEvents(level: Readonly<LevelState.Data>, events: Readonly<wasm.Event[]>) {
         this._stats = new Map();
         this._float = new FloatText.ItemSet();
         this._throb = [];
         // TASK: when there are multiple floats, stagger the positions
         for (let event of events) {
             this.addStats(event);
-            const float = window.game.makeFloat(event);
+            const float = level.makeFloat(event);
             if (float) {
                 this._float.add(float);
             }

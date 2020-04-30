@@ -4,6 +4,7 @@ import {Hex} from "../../wasm";
 import {Highlight} from "../stack/highlight";
 import {Preview} from "../stack/preview";
 import {State} from "../stack";
+import {LevelState} from "../states/level";
 
 import {UpdateState} from "./update";
 
@@ -15,7 +16,7 @@ export class MovePlayerState extends State {
     constructor() { super() }
 
     onPushed() {
-        const world = window.game.world;
+        const world = this.stack.data.get(LevelState.Data)!.world;
         const playerId = world.playerId;
         this._hexes = world.getCreatureRange(playerId);
         this._range = wasm.findBoundary(this._hexes);
@@ -24,7 +25,8 @@ export class MovePlayerState extends State {
         this.update((draft) => { draft.build(Highlight).range = this._range; });
     }
     onTileEntered(hex: Hex) {
-        const world = window.game.world;
+        const level = this.stack.data.get(LevelState.Data)!;
+        const world = level.world;
         const events = world.simulateMove(hex);
         let lastMove: Hex | undefined;
         for (let event of events) {
@@ -41,13 +43,14 @@ export class MovePlayerState extends State {
             shade = [];
         }
         this.update((draft) => {
-            draft.build(Preview).setEvents(events);
+            draft.build(Preview).setEvents(level, events);
             draft.build(Highlight).shade = shade;
         });
     }
     onTileClicked(hex: Hex) {
+        const world = this.stack.data.get(LevelState.Data)!.world;
         if (!this._hexes.some((h) => h.x == hex.x && h.y == hex.y)) { return; }
-        const [next, events] = window.game.world.movePlayer(hex);
+        const [next, events] = world.movePlayer(hex);
         window.game.stack.swap(new UpdateState(events, next));
     }
 }

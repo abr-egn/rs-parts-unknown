@@ -1,9 +1,12 @@
 import {immerable} from "immer";
 
+import {Id, Hex} from "../../wasm";
 import {FloatText} from "../../tsx/float";
 import * as wasm from "../../wasm";
 import {GameBoard} from "../game_board";
 import {Stack, State} from "../stack";
+import {Focus} from "../stack/focus";
+import {Highlight} from "../stack/highlight";
 
 export class LevelState extends State {
     // These live outside of the stack data so they're not unwound by sub-state pops.
@@ -15,11 +18,40 @@ export class LevelState extends State {
         this._world = new wasm.World();
         this._world.setTracer(new ConsoleTracer());
         this._board = new GameBoard(canvas, this._world, this.stack.boardListener(), this.stack.data);
-        const update = this.updateWorld.bind(this);
+        const update = this._updateWorld.bind(this);
         const getWorld = () => { return this._world; }
         const getBoard = () => { return this._board; }
         this.update(draft => {
             draft.build(LevelState.Data, getWorld, getBoard, update);
+        });
+    }
+
+    onActivated() {
+        this.update((draft) => {
+            const focus = draft.build(Focus);
+            focus.creature = {
+                onEnter: (id) => this.update(draft => {
+                    this._selectCreature(draft, id);
+                }),
+                onLeave: (id) => this.update(draft => {
+                    this._unselectCreature(draft, id);
+                }),
+            };
+            focus.part = {
+                onEnter: ([cid, pid]) => this.update(draft => {
+                    draft.build(Highlight).static.mutPartsFor(cid).inc(pid);
+                }),
+                onLeave: ([cid, pid]) => this.update(draft => {
+                    draft.build(Highlight).static.mutPartsFor(cid).dec(pid);
+                }),
+            }
+        });
+    }
+
+    onDeactivated() {
+        this.update(draft => {
+            draft.set(Highlight);
+            draft.set(Focus);
         });
     }
 
@@ -29,11 +61,44 @@ export class LevelState extends State {
         data.world.free();
     }
 
-    updateWorld(newWorld: wasm.World) {
+    onTileEntered(hex: Hex) {
+        const level = this.stack.data.get(LevelState.Data)!;
+        let creature = level.creatureAt(hex);
+        if (creature) {
+            let id = creature.id;
+            this.update(draft => this._selectCreature(draft, id));
+        }
+    }
+
+    onTileExited(hex: Hex) {
+        const level = this.stack.data.get(LevelState.Data)!;
+        let creature = level.creatureAt(hex);
+        if (creature) {
+            let id = creature.id;
+            this.update(draft => this._unselectCreature(draft, id));
+        }
+    }
+
+    private _updateWorld(newWorld: wasm.World) {
         this._world.free();
         this._world = newWorld;
         this._board.updateWorld(this._world);
         this.update(draft => {});
+    }
+
+    private _selectCreature(draft: Stack.Data, id: Id<wasm.Creature>) {
+        const world = this.stack.data.get(LevelState.Data)!.world;
+        const highlight = draft.build(Highlight);
+        highlight.range = wasm.findBoundary(world.getCreatureRange(id));
+        highlight.shade = world.shadeFrom(world.getCreatureHex(id)!, id);
+        highlight.static.creatures.inc(id);
+    }
+
+    private _unselectCreature(draft: Stack.Data, id: Id<wasm.Creature>) {
+        const highlight = draft.build(Highlight);
+        highlight.range = [];
+        highlight.shade = [];
+        highlight.static.creatures.dec(id);
     }
 }
 export namespace LevelState {

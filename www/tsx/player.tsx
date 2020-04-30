@@ -1,12 +1,9 @@
 import * as React from "react";
 
-import * as wasm from "../wasm";
-import {Id} from "../wasm";
-
 import {Stack} from "../ts/stack";
 
-import {BaseState} from "../ts/states/base";
 import {EndTurnState} from "../ts/states/end_turn";
+import {LevelState} from "../ts/states/level";
 import {PlayCardState} from "../ts/states/play_card";
 import {MovePlayerState} from "../ts/states/move_player";
 
@@ -30,7 +27,7 @@ export function PlayerControls(props: {}): JSX.Element {
     const hasAp = player.curAp > 0;
     const hasMp = player.curMp > 0;
 
-    const baseActive = Boolean(active?.is(BaseState));
+    const baseActive = Boolean(active?.is(LevelState));
     const inPlay = Boolean(active?.is(PlayCardState) && !toUpdate);
     const canCancel = Boolean(inPlay || active?.is(MovePlayerState));
 

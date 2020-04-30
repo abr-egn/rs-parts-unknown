@@ -1,10 +1,12 @@
 import {State} from "../stack";
 
+import {LevelState} from "./level";
 import {UpdateState} from "./update";
 
 export class EndTurnState extends State {
     onPushed() {
-        const [nextWorld, events] = window.game.world.npcTurn();
-        window.game.stack.swap(new UpdateState(events, nextWorld, true));
+        const level = this.stack.data.get(LevelState.Data)!;
+        const [nextWorld, events] = level.world.npcTurn();
+        this.stack.swap(new UpdateState(events, nextWorld, true));
     }
 }

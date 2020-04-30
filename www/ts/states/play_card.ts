@@ -102,7 +102,7 @@ export class PlayCardState extends State {
         }
         this.update(draft => {
             draft.build(Highlight).throb.creatures.inc(creature.id);
-            if (events) { draft.build(Preview).setEvents(events); }
+            if (events) { draft.build(Preview).setEvents(level, events); }
         });
     }
 
@@ -113,7 +113,7 @@ export class PlayCardState extends State {
             if (creature) {
                 draft.build(Highlight).throb.creatures.dec(creature.id);
             }
-            draft.build(Preview).setEvents([]);
+            draft.build(Preview).setEvents(level, []);
         });
     }
 
@@ -191,21 +191,23 @@ export class PlayCardState extends State {
         };
         return {
             onEnter: (id) => {
-                const world = this.stack.data.get(LevelState.Data)!.world;
+                const level = this.stack.data.get(LevelState.Data)!;
+                const world = level.world;
                 const target = valid(id);
                 if (target) {
                     this.update(draft => {
                         draft.build(Highlight).throb.creatures.inc(id);
                         const events = this._inPlay!.simulate(world, target);
-                        draft.build(Preview).setEvents(events);
+                        draft.build(Preview).setEvents(level, events);
                     });
                 }
             },
             onLeave: (id) => {
+                const level = this.stack.data.get(LevelState.Data)!;
                 if (valid(id)) {
                     this.update(draft => {
                         draft.build(Highlight).throb.creatures.dec(id);
-                        draft.build(Preview).setEvents([]);
+                        draft.build(Preview).setEvents(level, []);
                     });
                 }
             },
@@ -219,18 +221,20 @@ export class PlayCardState extends State {
     private _partFocus(): Focus.Handler<[Id<wasm.Creature>, Id<wasm.Part>]> {
         return {
             onEnter: ([cid, pid]) => this.update(draft => {
-                const world = this.stack.data.get(LevelState.Data)!.world;
+                const level = this.stack.data.get(LevelState.Data)!;
+                const world = level.world;
                 const target = this._partTarget(cid, pid);
                 if (target) {
                     draft.build(Highlight).throb.mutPartsFor(cid).inc(pid);
                     const events = this._inPlay!.simulate(world, target);
-                    draft.build(Preview).setEvents(events);
+                    draft.build(Preview).setEvents(level, events);
                 }
             }),
             onLeave: ([cid, pid]) => this.update(draft => {
+                const level = this.stack.data.get(LevelState.Data)!;
                 if (this._partTarget(cid, pid)) {
                     draft.build(Highlight).throb.mutPartsFor(cid).dec(pid);
-                    draft.build(Preview).setEvents([]);
+                    draft.build(Preview).setEvents(level, []);
                 }
             }),
             onClick: ([cid, pid]) => {
