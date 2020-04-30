@@ -38,7 +38,11 @@ export function Title(props: {}): JSX.Element {
         let style = {
             animationDelay: `${delay}s`
         };
-        letters.push(<span className="text" style={style}>{char}</span>);
+        if (char == " ") {
+            letters.push(<span className="text" style={style}>&nbsp;</span>);
+        } else {
+            letters.push(<span className="text" style={style}>{char}</span>);
+        }
         delay -= DELAY_DEC;
     }
     return (<div className="title">
