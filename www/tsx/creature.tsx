@@ -37,7 +37,7 @@ export function CreatureStats(props: {
             hpStyle.color = "green";
         }
         parts.push(
-            <li
+            <div
                 key={part.id}
                 onMouseEnter={() => focus?.part.onEnter?.([part.creatureId, part.id])}
                 onMouseLeave={() => focus?.part.onLeave?.([part.creatureId, part.id])}
@@ -46,7 +46,7 @@ export function CreatureStats(props: {
                 >
                 {part.name}<br/>
                 <span style={hpStyle}>HP: {part.curHp + hpDelta}/{part.maxHp}</span>
-            </li>
+            </div>
         );
     }
 
@@ -82,7 +82,7 @@ export function CreatureStats(props: {
         <div>{props.creature.name}</div>
         <div style={apStyle}>AP: {props.creature.curAp + apDelta}</div>
         <div style={mpStyle}>MP: {props.creature.curMp + mpDelta}</div>
-        <ul>{parts}</ul>
+        {parts}
     </div>);
 }
 
