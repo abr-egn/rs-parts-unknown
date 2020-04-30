@@ -22,16 +22,10 @@ export class GameBoard implements GameBoard.View {
             world: World,
             private readonly _listener: GameBoard.Listener,
             private readonly _data: Stack.DataView) {
-        canvas.width = window.innerWidth;
-        canvas.height = window.innerHeight;
-        window.onresize = () => {
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-        };
-
         this._tsMillis = performance.now();
         this._draw = new Draw(canvas.getContext('2d')!);
 
+        // TODO: move these up to Game
         canvas.addEventListener("mousedown", (event) => this._onMouseDown(event));
         canvas.addEventListener("mousemove", (event) => this._onMouseMove(event));
         window.requestAnimationFrame((ts) => this._frame(ts));

@@ -7,6 +7,7 @@ import {GameBoard} from "./game_board";
 const LOGGING = false;
 
 export class State {
+    private _stack?: Stack;
     private _updater?: (update: (draft: Stack.Data) => void) => void;
 
     onPushed() {}
@@ -21,10 +22,13 @@ export class State {
         this._updater!(update);
     }
 
-    _onPushed(updater: (update: (draft: Stack.Data) => void) => void) {
+    get stack(): Stack { return this._stack!; }
+
+    _onPushed(stack: Stack, updater: (update: (draft: Stack.Data) => void) => void) {
         if (LOGGING) {
             console.log("  PUSHED:", this.constructor.name);
         }
+        this._stack = stack;
         this._updater = updater;
         this.onPushed();
     }
@@ -125,7 +129,7 @@ export class Stack {
     private _pushImpl(state: State, data?: any) {
         this._oldData.push(this._data);
         this._stack.push(state);
-        state._onPushed(this._updater);
+        state._onPushed(this, this._updater);
         state._onActivated(data);
     }
     private _popImpl() {
@@ -158,6 +162,10 @@ export namespace Stack {
         private _chunks: Map<any, any> = new Map();
 
         get<C extends Constructor>(key: C): Readonly<InstanceType<C>> | undefined {
+            return this._chunks.get(key);
+        }
+
+        getMut<C extends Constructor>(key: C): InstanceType<C> | undefined {
             return this._chunks.get(key);
         }
 

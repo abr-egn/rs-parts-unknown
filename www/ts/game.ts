@@ -29,8 +29,12 @@ export class Game {
         this._stack = new stack.Stack(this._onUpdate);
 
         const canvas = document.getElementById("mainCanvas") as HTMLCanvasElement;
-        this._board = new GameBoard(canvas, this._world, this._stack.boardListener(), this._stack.data());
-
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        window.onresize = () => {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        };
         canvas.focus();
         canvas.addEventListener('keydown', (e) => {
             this._keys.set(e.code, true);
@@ -38,6 +42,8 @@ export class Game {
         canvas.addEventListener('keyup', (e) => {
             this._keys.set(e.code, false);
         });
+
+        this._board = new GameBoard(canvas, this._world, this._stack.boardListener(), this._stack.data());
 
         // Force a render to ensure everything's populated.
         this._onUpdate();

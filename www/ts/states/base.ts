@@ -1,5 +1,3 @@
-import {immerable} from "immer";
-
 import * as wasm from "../../wasm";
 import {Id, Hex} from "../../wasm";
 import {Focus} from "../stack/focus";
