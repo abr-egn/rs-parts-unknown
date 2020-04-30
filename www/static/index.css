@@ -36,6 +36,40 @@ div.topright {
     transform: translate(-50%,-50%);
 }
 
+.title button {
+    display: block;
+    margin: auto;
+}
+
+.title .letters {
+    font-size: 42;
+}
+
+.title .text {
+    color: green;
+    display: inline-block;
+    animation-name: titleAnim;
+    animation-duration: 5s;
+    animation-iteration-count: infinite;
+}
+
+.title button {
+    color: #00ff00;
+    background-color: black;
+    border-color: black;
+}
+
+@keyframes titleAnim {
+    50% {
+        color: black;
+        transform: translate(0px, 50%);
+    }
+    51% {
+        color: black;
+        transform: translate(0px, 0px);
+    }
+}
+
 .gameOver {
     position: absolute;
     top: 50%;

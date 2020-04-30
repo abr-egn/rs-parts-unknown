@@ -30,8 +30,21 @@ export function Index(props: {
 export function Title(props: {}): JSX.Element {
     const stack = React.useContext(StackData);
     const ui = stack.get(TitleState.UI)!;
+    let letters: JSX.Element[] = [];
+    const DELAY_DEC = 0.3;
+    const TEXT = "Parts Unknown";
+    let delay = DELAY_DEC * TEXT.length;
+    for (let char of "Parts Unknown") {
+        let style = {
+            animationDelay: `${delay}s`
+        };
+        letters.push(<span className="text" style={style}>{char}</span>);
+        delay -= DELAY_DEC;
+    }
     return (<div className="title">
-        <div>Parts Unknown</div>
-        <button onClick={ui.done}>Ready</button>
+        <div className="letters">{letters}</div>
+        <br/>
+        <br/>
+        <button onClick={ui.done}>Play</button>
     </div>);
 }
