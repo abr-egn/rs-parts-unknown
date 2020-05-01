@@ -9,6 +9,7 @@ mod mod_stack;
 mod npc;
 mod part;
 mod serde_empty;
+mod stat;
 mod trigger;
 mod wasm;
 mod world;
