@@ -1,30 +1,30 @@
 #[derive(Debug, Clone)]
-pub enum Mod {
+pub enum StatMod {
     Add(i32),
     Mul(f32),
 }
 
-impl Mod {
+impl StatMod {
+    pub fn eval<'a, I: IntoIterator<Item=&'a StatMod>>(base: i32, mods: I) -> i32 {
+        let mut sorted: Vec<_> = mods.into_iter().collect();
+        sorted.sort_by(|a, b| { a.index().cmp(&b.index()) });
+        let mut out = base;
+        for m in sorted {
+            out = m.apply(out);
+        }
+        out
+    }
+
     fn index(&self) -> u32 {
         match self {
-            Mod::Add(_) => 0,
-            Mod::Mul(_) => 1,
+            StatMod::Add(_) => 0,
+            StatMod::Mul(_) => 1,
         }
     }
     fn apply(&self, val: i32) -> i32 {
         match self {
-            Mod::Add(n) => val + *n,
-            Mod::Mul(n) => ((val as f32) * *n) as i32,
+            StatMod::Add(n) => val + *n,
+            StatMod::Mul(n) => ((val as f32) * *n) as i32,
         }
     }
-}
-
-pub fn eval<'a, I: IntoIterator<Item=&'a Mod>>(base: i32, mods: I) -> i32 {
-    let mut sorted: Vec<_> = mods.into_iter().collect();
-    sorted.sort_by(|a, b| { a.index().cmp(&b.index()) });
-    let mut out = base;
-    for m in sorted {
-        out = m.apply(out);
-    }
-    out
 }

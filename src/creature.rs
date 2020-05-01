@@ -10,6 +10,7 @@ use crate::{
     npc::{NPC},
     part::{Part, PartAction, PartEvent, PartTag},
     serde_empty,
+    stat::StatMod,
     some_or,
 };
 
@@ -27,6 +28,8 @@ pub struct Creature {
     pub draw: Vec<CardId>,  // end of vec -> top of pile
     pub hand: Vec<CardId>,
     pub discard: Vec<CardId>,
+    pub damage_from: IdMap<StatMod>,
+    pub damage_to: IdMap<StatMod>,
 }
 
 impl Creature {
@@ -38,7 +41,7 @@ impl Creature {
             pids.add(tmp);
         }
         Creature::new_ids(name, pids, npc)
-    }
+    } 
 
     pub fn new_ids<S: Into<String>>(name: S, parts: IdMap<Part>, npc: Option<NPC>) -> Self {
         let mut out = Creature {
@@ -48,6 +51,8 @@ impl Creature {
             dead: false,
             npc,
             draw: vec![], hand: vec![], discard: vec![],
+            damage_from: IdMap::new(),
+            damage_to: IdMap::new(),
         };
         out.cur_ap = out.max_ap();
         out.cur_mp = out.max_mp();
@@ -85,14 +90,22 @@ impl Creature {
             .filter(|(_, p)| p.tags().contains(&PartTag::Open))
     }
 
-    pub fn scale_damage_from(&self, damage: i32, _part: Option<Id<Part>>) -> i32 {
-        // TASK: damage scaling
-        damage
+    pub fn scale_damage_from(&self, damage: i32, part: Option<Id<Part>>) -> i32 {
+        let mut mods: Vec<_> = self.damage_from.values().collect();
+        if let Some(id) = part {
+            let part = self.parts.get(id).unwrap();
+            mods.extend(part.damage_from.values());
+        }
+        StatMod::eval(damage, mods)
     }
 
-    pub fn scale_damage_to(&self, damage: i32, _part: Option<Id<Part>>) -> i32 {
-        // TASK: damage scaling
-        damage
+    pub fn scale_damage_to(&self, damage: i32, part: Option<Id<Part>>) -> i32 {
+        let mut mods: Vec<_> = self.damage_to.values().collect();
+        if let Some(id) = part {
+            let part = self.parts.get(id).unwrap();
+            mods.extend(part.damage_to.values());
+        }
+        StatMod::eval(damage, mods)
     }
 
     // Mutators
