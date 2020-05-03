@@ -1,7 +1,7 @@
 #[derive(Debug, Clone)]
 pub enum StatMod {
-    Add(i32),
     Mul(f32),
+    Add(i32),
 }
 
 impl StatMod {
@@ -17,8 +17,8 @@ impl StatMod {
 
     fn index(&self) -> u32 {
         match self {
-            StatMod::Add(_) => 0,
-            StatMod::Mul(_) => 1,
+            StatMod::Mul(_) => 0,
+            StatMod::Add(_) => 1,
         }
     }
     fn apply(&self, val: i32) -> i32 {

@@ -1,5 +1,5 @@
 use std::{
-    collections::HashSet,
+    collections::{HashMap, HashSet},
     iter::FromIterator,
 };
 
@@ -31,13 +31,18 @@ pub struct Part {
     pub thought: i32, // action points
     pub memory: i32,  // hand size
     pub mp: i32,
-    pub damage_from: IdMap<StatMod>,
-    pub damage_to: IdMap<StatMod>,
+    pub stats: HashMap<Stat, IdMap<StatMod>>,
     /* TASK: remaining part attributes
     power: i32,  // TASK: level?
     capacity: i32,
     joints: Vec<Joint>,
     */
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+pub enum Stat {
+    DamageFrom,
+    DamageTo,
 }
 
 impl Part {
@@ -49,8 +54,7 @@ impl Part {
             tag_mods: ModStack::new(),
             thought: 0, memory: 0, mp: 0,
             max_hp, cur_hp: max_hp,
-            damage_from: IdMap::new(),
-            damage_to: IdMap::new(),
+            stats: HashMap::new(),
         }
     }
 

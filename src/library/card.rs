@@ -29,6 +29,7 @@ impl HitPart {
             world.map().los_from(position, *source)
         };
         let creature = world.creatures().get(*source).unwrap();
+        // TASK: scale_damage_from/to at world level
         let damage = creature.scale_damage_from(self.damage, Some(*part));
         Box::new(HitPartBehavior { damage, tags: self.tags, source: *source, range })
     }
