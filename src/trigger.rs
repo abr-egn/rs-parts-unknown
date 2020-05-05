@@ -3,7 +3,7 @@ use crate::{
     id_map::Id,
 };
 
-pub trait Trigger: TriggerClone + std::fmt::Debug + Send {
+pub trait Trigger: TriggerClone + std::fmt::Debug {
     fn name(&self) -> &'static str;
     fn kind(&self) -> TriggerKind;
     fn apply(&mut self, this: TriggerId, event: &Event) -> Vec<Action>;

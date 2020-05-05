@@ -2,6 +2,7 @@ mod card;
 mod creature;
 mod error;
 mod event;
+mod filter;
 mod id_map;
 mod library;
 mod map;

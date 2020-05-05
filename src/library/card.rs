@@ -9,7 +9,7 @@ use crate::{
     event::{Action, Event},
     id_map::Id,
     mod_stack::Mod,
-    part::{Part, PartAction, PartTag, TagMod, TagModId, WorldExt},
+    part::{Part, PartAction, PartTag, TagMod, WorldExt},
     trigger::{Trigger, TriggerId, TriggerKind},
     world::World,
 };
@@ -86,33 +86,21 @@ pub fn punch() -> Card {
 }
 
 #[derive(Clone)]
-struct ExpireTagMod {
-    creature: Id<Creature>,
-    part: Id<Part>,
-    mod_: TagModId,
-    when: fn(&Event) -> bool,
+struct Expire<When> {
+    remove: Vec<Action>,
+    when: When
 }
 
-impl std::fmt::Debug for ExpireTagMod {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        f.debug_struct("ExpireTagMod")
-            .field("creature", &self.creature)
-            .field("part", &self.part)
-            .field("mod", &self.mod_)
-            .field("when", &(self.when as usize))
-            .finish()
-    }
-}
-
-impl ExpireTagMod {
-    fn add(world: &mut World, creature: Id<Creature>, part: Id<Part>, m: TagMod, when: fn(&Event) -> bool) -> Vec<Event> {
+impl<When: Fn(&Event) -> bool + Clone + 'static> Expire<When> {
+    fn tag_mod(world: &mut World, creature: Id<Creature>, part: Id<Part>, m: TagMod, when: When) -> Vec<Event> {
         let mut out = vec![];
         let (open_id, open_evs) = world.add_mod(creature, part, m);
         out.extend(open_evs);
         out.extend(world.execute(&Action::AddTrigger {
-            trigger: Box::new(ExpireTagMod {
-                creature, part,
-                mod_: open_id,
+            trigger: Box::new(Self {
+                remove: vec![
+                    Action::to_part(creature, part, PartAction::ClearTagMod { id: open_id })
+                ],
                 when,
             })
         }));
@@ -120,18 +108,21 @@ impl ExpireTagMod {
     }
 }
 
-impl Trigger for ExpireTagMod {
-    fn name(&self) -> &'static str { "Expire Tag Mod" }
+impl<When> std::fmt::Debug for Expire<When> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.debug_struct("Expire")
+            .finish()
+    }
+}
+
+impl<When: Fn(&Event) -> bool + Clone + 'static> Trigger for Expire<When> {
+    fn name(&self) -> &'static str { "Expire" }
     fn kind(&self) -> TriggerKind { TriggerKind::Expire }
     fn apply(&mut self, this: TriggerId, event: &Event) -> Vec<Action> {
         if !(self.when)(event) { return vec![]; }
-        vec![
-            Action::to_part(
-                self.creature, self.part,
-                PartAction::ClearTagMod { id: self.mod_ }
-            ),
-            Action::RemoveTrigger { id: this },
-        ]
+        let mut out = self.remove.clone();
+        out.push(Action::RemoveTrigger { id: this });
+        out
     }
 }
 
@@ -161,12 +152,12 @@ impl card::Behavior for Guard {
     fn apply(&self, world: &mut World, target: &Target) -> Vec<Event> {
         let (target_id, part_id) = target.part().unwrap();
         let mut out = vec![];
-        out.extend(ExpireTagMod::add(world,
+        out.extend(Expire::tag_mod(world,
             self.source_creature, self.source_part,
             Mod(|tags| { tags.insert(PartTag::Open); }),
             |ev| matches!(ev, Event::NpcTurnEnd)
         ));
-        out.extend(ExpireTagMod::add(world,
+        out.extend(Expire::tag_mod(world,
             target_id, part_id,
             Mod(|tags| { tags.remove(&PartTag::Open); }),
             |ev| matches!(ev, Event::NpcTurnEnd)
@@ -210,7 +201,7 @@ impl card::Behavior for Stagger {
         let (name, pid) = &part_ids[ix];
         let mut out = vec![];
         out.push(Event::FloatText { on: cid, text: format!("Exposed: {}", name) });
-        out.extend(ExpireTagMod::add(world, cid, *pid,
+        out.extend(Expire::tag_mod(world, cid, *pid,
             Mod(|tags| { tags.insert(PartTag::Open); }),
             |ev| matches!(ev, Event::PlayerTurnEnd)));
         out
