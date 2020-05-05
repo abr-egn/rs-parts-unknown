@@ -85,7 +85,7 @@ impl Intent {
 
 #[derive(Debug, Clone, Serialize, TsData)]
 pub enum IntentKind {
-    Attack { base_damage: i32, range: Range },
+    Attack { damage: i32, range: Range },
     #[serde(with = "serde_empty")]
     Stunned,
 }
@@ -108,7 +108,7 @@ impl IntentKind {
 
     fn run(&self, world: &mut World, source: Id<Creature>, part: Option<Id<Part>>) -> Vec<Event> {
         match self {
-            IntentKind::Attack { base_damage, .. } => {
+            IntentKind::Attack { damage, .. } => {
                 let player_id = world.player_id();
                 let player = world.creatures().get(player_id).unwrap();
                 let mut open: Vec<_> = player.open_parts().collect();
@@ -116,9 +116,7 @@ impl IntentKind {
                 open.sort_by(|(_, a), (_, b)| a.cur_hp.cmp(&b.cur_hp));
                 let (pid, _) = open.first().unwrap();
                 let creature = world.creatures().get(source).unwrap();
-                let damage_from = creature.scale_damage_from(*base_damage, part);
-                let damage = player.scale_damage_to(damage_from, Some(*pid));
-                let hit = Action::to_part(player_id, *pid, PartAction::Hit { damage });
+                let hit = Action::to_part(player_id, *pid, PartAction::Hit { damage: *damage });
                 world.execute(&hit)
             }
             IntentKind::Stunned => vec![Event::FloatText { on: source, text: "Stunned!".into() }]

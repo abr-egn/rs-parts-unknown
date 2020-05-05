@@ -11,7 +11,7 @@ use crate::{
     event::{Action, Event},
     id_map::Id,
     map::{Space, Tile},
-    part::{self, PartTag},
+    part::{PartTag},
     wasm::{
         card::Card,
         creature::Creature,
@@ -165,22 +165,6 @@ impl World {
     }
 
     #[wasm_bindgen(skip_typescript)]
-    pub fn scaleDamageTo(&self, damage: i32, to: JsValue, part: JsValue) -> i32 {
-        let to: Id<creature::Creature> = from_js_value(to);
-        let part: Option<Id<part::Part>> = if part.is_undefined() { None } else { Some(from_js_value(part)) };
-        let creature = self.wrapped.creatures().get(to).unwrap();
-        creature.scale_damage_to(damage, part)
-    }
-
-    #[wasm_bindgen(skip_typescript)]
-    pub fn scaleDamageFrom(&self, damage: i32, to: JsValue, part: JsValue) -> i32 {
-        let to: Id<creature::Creature> = from_js_value(to);
-        let part: Option<Id<part::Part>> = if part.is_undefined() { None } else { Some(from_js_value(part)) };
-        let creature = self.wrapped.creatures().get(to).unwrap();
-        creature.scale_damage_from(damage, part)
-    }
-
-    #[wasm_bindgen(skip_typescript)]
     pub fn shadeFrom(&self, hex: JsValue, id: JsValue) -> Array /* Hex[] */ {
         let hex: Hex = from_js_value(hex);
         let id: Id<creature::Creature> = from_js_value(id);
@@ -249,8 +233,6 @@ interface World {
     path(from: Hex, to: Hex): Hex[];
     state(): GameState;
     simulateMove(to: Hex): Event[];
-    scaleDamageTo(damage: number, to: Id<Creature>, part: Id<Part> | undefined): number;
-    scaleDamageFrom(damage: number, from: Id<Creature>, part: Id<Part> | undefined): number;
     shadeFrom(hex: Hex, id: Id<Creature>): Hex[];
 
     // Updates

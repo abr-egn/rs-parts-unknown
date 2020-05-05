@@ -47,7 +47,7 @@ impl Monopod {
             from: Some(self.foot),
             cost: 1,
             kind: npc::IntentKind::Attack {
-                base_damage: 10,
+                damage: 10,
                 range: npc::Range::Melee,
             },
         }
@@ -59,7 +59,7 @@ impl Monopod {
             from: Some(self.head),
             cost: 1,
             kind: npc::IntentKind::Attack {
-                base_damage: 5,
+                damage: 5,
                 range: npc::Range::Melee,
             },
         }

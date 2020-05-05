@@ -1,5 +1,5 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{HashSet},
     iter::FromIterator,
 };
 
@@ -14,7 +14,6 @@ use crate::{
     event::{Action, Event},
     id_map::{Id, IdMap},
     mod_stack::{Mod, ModStack},
-    stat::StatMod,
     world::World,
 };
 
@@ -31,18 +30,11 @@ pub struct Part {
     pub thought: i32, // action points
     pub memory: i32,  // hand size
     pub mp: i32,
-    pub stats: HashMap<Stat, IdMap<StatMod>>,
     /* TASK: remaining part attributes
     power: i32,  // TASK: level?
     capacity: i32,
     joints: Vec<Joint>,
     */
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub enum Stat {
-    DamageFrom,
-    DamageTo,
 }
 
 impl Part {
@@ -54,7 +46,6 @@ impl Part {
             tag_mods: ModStack::new(),
             thought: 0, memory: 0, mp: 0,
             max_hp, cur_hp: max_hp,
-            stats: HashMap::new(),
         }
     }
 

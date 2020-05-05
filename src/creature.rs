@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use rand::prelude::*;
 use serde::{Serialize};
 use ts_data_derive::TsData;
@@ -10,15 +8,13 @@ use crate::{
     error::{Error, Result},
     id_map::{Id, IdMap},
     npc::{NPC},
-    part::{self, Part, PartAction, PartEvent, PartTag},
+    part::{Part, PartAction, PartEvent, PartTag},
     serde_empty,
-    stat::StatMod,
     some_or,
 };
 
 pub type CardId = (Id<Part>, Id<Card>);
 
-// TASK: stats for damage scaling
 #[derive(Debug, Clone)]
 pub struct Creature {
     pub name: String,
@@ -30,13 +26,6 @@ pub struct Creature {
     pub draw: Vec<CardId>,  // end of vec -> top of pile
     pub hand: Vec<CardId>,
     pub discard: Vec<CardId>,
-    pub stats: HashMap<Stat, IdMap<StatMod>>,
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
-pub enum Stat {
-    Part(part::Stat),
-    // TODO: MaxAP, MaxMP
 }
 
 impl Creature {
@@ -58,7 +47,6 @@ impl Creature {
             dead: false,
             npc,
             draw: vec![], hand: vec![], discard: vec![],
-            stats: HashMap::new(),
         };
         out.cur_ap = out.max_ap();
         out.cur_mp = out.max_mp();
@@ -96,14 +84,6 @@ impl Creature {
             .filter(|(_, p)| p.tags().contains(&PartTag::Open))
     }
 
-    pub fn scale_damage_from(&self, damage: i32, part: Option<Id<Part>>) -> i32 {
-        self.eval_stat(damage, Stat::Part(part::Stat::DamageFrom), part)
-    }
-
-    pub fn scale_damage_to(&self, damage: i32, part: Option<Id<Part>>) -> i32 {
-        self.eval_stat(damage, Stat::Part(part::Stat::DamageTo), part)
-    }
-
     // Mutators
 
     pub fn resolve(&mut self, action: &CreatureAction) -> Result<Vec<CreatureEvent>> {
@@ -130,18 +110,11 @@ impl Creature {
                 return Ok(vec![ChangeMP { delta: -mp }]);
             }
             ToPart { id, ref action } => {
-                let scaled_action = match action {
-                    PartAction::Hit { damage } => {
-                        PartAction::Hit { damage: self.scale_damage_to(*damage, Some(id)) }
-                    }
-                    _ => action.clone(),
-                };
-
                 let mut out = vec![];
 
                 let part = self.parts.get_mut(&id).ok_or(Error::NoSuchPart)?;
                 let old_tags = part.tags();
-                let pevs = part.resolve(&scaled_action)?;
+                let pevs = part.resolve(action)?;
                 out.extend(pevs.into_iter().map(|pev| CreatureEvent::OnPart { id, event: pev }));
                 let new_tags = part.tags();
 
@@ -228,18 +201,6 @@ impl Creature {
                 out.push(CreatureEvent::Discarded { part, card });
                 Ok(out)
             }
-            AddStatMod { stat, ref mod_ } => {
-                let mods = self.stats.entry(stat).or_insert(IdMap::new());
-                let id = mods.add(mod_.clone());
-                Ok(vec![StatModded { stat, id }])
-            }
-            ClearStatMod { stat, id } => {
-                let mods = self.stats.get_mut(&stat).ok_or(Error::NoSuchStat)?;
-                if mods.remove(&id).is_none() {
-                    return Err(Error::NoSuchStat);
-                }
-                Ok(vec![StatUnmodded { stat, id }])
-            }
         }
     }
 
@@ -256,23 +217,6 @@ impl Creature {
 
     // TODO: more fine-grained access
     pub fn npc_mut(&mut self) -> Option<&mut NPC> { self.npc.as_mut() }
-
-    // Private
-
-    fn eval_stat(&self, base: i32, stat: Stat, part: Option<Id<Part>>) -> i32 {
-        let mut mods: Vec<_> = self.stats.get(&Stat::Part(part::Stat::DamageFrom))
-            .map_or_else(|| vec![], |s| s.values().collect());
-        match (stat, part) {
-            (Stat::Part(s), Some(id)) => {
-                let part = self.parts.get(id).unwrap();
-                if let Some(pm) = part.stats.get(&s) {
-                    mods.extend(pm.values());
-                }
-            }
-            _ => (),
-        }
-        StatMod::eval(base, mods)
-    }
 }
 
 #[derive(Debug, Clone, Serialize, TsData)]
@@ -285,18 +229,6 @@ pub enum CreatureAction {
     #[serde(with = "serde_empty")]
     NewHand,
     Discard { part: Id<Part>, card: Id<Card> },
-    AddStatMod {
-        #[serde(skip)]
-        stat: Stat,
-        #[serde(skip)]
-        mod_: StatMod,
-    },
-    ClearStatMod {
-        #[serde(skip)]
-        stat: Stat,
-        #[serde(skip)]
-        id: Id<StatMod>,
-    },
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, TsData)]
@@ -310,16 +242,4 @@ pub enum CreatureEvent {
     Drew { part: Id<Part>, card: Id<Card> },
     #[serde(with = "serde_empty")]
     DeckRecycled,
-    StatModded {
-        #[serde(skip)]
-        stat: Stat,
-        #[serde(skip)]
-        id: Id<StatMod>,
-    },
-    StatUnmodded {
-        #[serde(skip)]
-        stat: Stat,
-        #[serde(skip)]
-        id: Id<StatMod>,
-    },
 }
