@@ -106,7 +106,7 @@ impl IntentKind {
         }
     }
 
-    fn run(&self, world: &mut World, source: Id<Creature>, part: Option<Id<Part>>) -> Vec<Event> {
+    fn run(&self, world: &mut World, source: Id<Creature>, _part: Option<Id<Part>>) -> Vec<Event> {
         match self {
             IntentKind::Attack { damage, .. } => {
                 let player_id = world.player_id();
@@ -115,7 +115,6 @@ impl IntentKind {
                 if open.is_empty() { return vec![]; }
                 open.sort_by(|(_, a), (_, b)| a.cur_hp.cmp(&b.cur_hp));
                 let (pid, _) = open.first().unwrap();
-                let creature = world.creatures().get(source).unwrap();
                 let hit = Action::to_part(player_id, *pid, PartAction::Hit { damage: *damage });
                 world.execute(&hit)
             }

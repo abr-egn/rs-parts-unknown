@@ -21,14 +21,13 @@ struct HitPart {
 }
 
 impl HitPart {
-    fn behavior(self, world: &World, source: &Id<Creature>, part: &Id<Part>) -> Box<dyn card::Behavior> {
+    fn behavior(self, world: &World, source: &Id<Creature>, _part: &Id<Part>) -> Box<dyn card::Behavior> {
         let position = world.map().creatures().get(source).unwrap().clone();
         let range = if self.melee {
             position.neighbors().collect()
         } else {
             world.map().los_from(position, *source)
         };
-        let creature = world.creatures().get(*source).unwrap();
         Box::new(HitPartBehavior { damage: self.damage, tags: self.tags, source: *source, range })
     }
 }
