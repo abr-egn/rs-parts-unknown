@@ -13,7 +13,7 @@ pub trait Filter: FilterClone + std::fmt::Debug {
 }
 
 impl dyn Filter {
-    fn apply(&mut self, action: &mut Action) {
+    pub fn apply(&mut self, action: &mut Action) {
         match action {
             Action::ToCreature { id: cid, action: creature_action } => {
                 match creature_action {
