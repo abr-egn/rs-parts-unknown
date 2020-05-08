@@ -93,17 +93,6 @@ impl World {
         })
     }
 
-    pub fn check_(&self, action: &action::Meta<action::Action>) -> Result<Vec<action::Pending>> {
-        use action::*;
-        let events = self.check__(action)?;
-        Ok(events.into_iter()
-            .map(|event| Pending {
-                action: action.data.clone(),
-                event,
-            })
-            .collect())
-    }
-
     fn check__(&self, action: &action::Meta<action::Action>) -> Result<Vec<action::Event>> {
         use action::*;
         match (&action.target, &action.data) {
@@ -125,8 +114,24 @@ impl World {
 
     // Mutators
 
-    pub fn resolve_(mut self, pending: &action::Pending) -> Result<action::Event> {
-        unimplemented!()
+    pub fn resolve_(&mut self, action: &action::Meta<action::Action>) -> Result<Vec<action::Meta<action::Event>>> {
+        use action::*;
+        match (&action.target, &action.data) {
+            (Path::Global, Action::AddTrigger { trigger }) => {
+                let id = self.triggers.add(trigger.clone());
+                return Ok(vec![action.carry(Event::TriggerAdded { id })])
+            }
+            _ => ()
+        }
+        match &action.target {
+            Path::Creature { cid }
+            | Path::Part { cid, .. }
+            | Path::Card { cid, .. }
+            => {
+                unimplemented!()
+            }
+            _ => return Err(Error::UnhandledAction)
+        }
     }
 
     pub fn execute(&mut self, action: &Action) -> Vec<Event> {

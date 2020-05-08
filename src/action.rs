@@ -12,6 +12,7 @@ use crate::{
     trigger::{Trigger, TriggerId},
 };
 
+#[derive(Debug, Clone)]
 pub struct Meta<T> {
     pub source: Path,
     pub target: Path,
@@ -19,6 +20,18 @@ pub struct Meta<T> {
     pub data: T,
 }
 
+impl<T> Meta<T> {
+    pub fn carry<D>(&self, data: D) -> Meta<D> {
+        Meta {
+            source: self.source.clone(),
+            target: self.target.clone(),
+            tags: self.tags.clone(),
+            data,
+        }
+    }
+}
+
+#[derive(Debug, Clone)]
 pub enum Path {
     Global,
     Creature { cid: Id<Creature> },
@@ -58,9 +71,4 @@ pub enum Event {
 
     // Creature
     CreatureMoved { id: Id<Creature>, from: Hex, to: Hex, },
-}
-
-pub struct Pending {
-    pub action: Action,
-    pub event: Event,
 }
