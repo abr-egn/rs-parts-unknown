@@ -29,7 +29,7 @@ impl<T> IdMap<T> {
         }
     }
 
-    pub fn get(&self, id: Id<T>) -> Option<&T> { self.map.get(&id) }
+    pub fn get(&self, id: Id<T>) -> Option<&T> { id.check(); self.map.get(&id) }
     pub fn iter(&self) -> Iter<Id<T>, T> { self.map.iter() }
     pub fn keys(&self) -> Keys<Id<T>, T> { self.map.keys() }
     pub fn values(&self) -> Values<Id<T>, T> { self.map.values() }
@@ -39,10 +39,10 @@ impl<T> IdMap<T> {
         self.map.insert(id, value);
         id
     }
-    pub fn get_mut(&mut self, id: &Id<T>) -> Option<&mut T> { self.map.get_mut(id) }
+    pub fn get_mut(&mut self, id: &Id<T>) -> Option<&mut T> { id.check(); self.map.get_mut(id) }
     pub fn values_mut(&mut self) -> impl Iterator<Item=&mut T> { self.map.values_mut() }
     pub fn iter_mut(&mut self) -> impl Iterator<Item=(&Id<T>, &mut T)> { self.map.iter_mut() }
-    pub fn remove(&mut self, id: &Id<T>) -> Option<T> { self.map.remove(id) }
+    pub fn remove(&mut self, id: &Id<T>) -> Option<T> { id.check(); self.map.remove(id) }
 }
 
 impl<'a, T> std::iter::IntoIterator for &'a IdMap<T> {
@@ -69,29 +69,17 @@ pub struct Id<T> {
     phantom: PhantomData<*const T>,
 }
 
-/*
-impl<T> Serialize for Id<T> {
-    fn serialize<S: Serializer>(&self, serializer: S) -> Result<S::Ok, S::Error> {
-        serializer.serialize_u32(self.value)
-    }
-}
-
-impl<'de, T> Deserialize<'de> for Id<T> {
-    
-}
-*/
-
 impl<T> Id<T> {
-    fn new(value: u32) -> Id<T> { Id { value: value, phantom: PhantomData } }
-    fn inc(&mut self) -> Id<T> {
+    fn new(value: u32) -> Self { Id { value: value, phantom: PhantomData } }
+    fn inc(&mut self) -> Self {
         let out = *self;
         self.value += 1;
+        if self.value == u32::MAX { panic!("maximum id reached"); }
         out
     }
-    /*
-    pub fn value(&self) -> u32 { self.value }
-    */
-    pub fn synthesize(value: u32) -> Id<T> { Id::new(value) }
+    fn check(&self) { if self.value == u32::MAX { panic!("invalid id"); } }
+    pub fn invalid() -> Self { Id::new(u32::MAX) }
+    pub fn synthesize(value: u32) -> Self { Id::new(value) }
 }
 
 impl<T> fmt::Debug for Id<T> {

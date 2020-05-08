@@ -8,6 +8,7 @@ use ts_data_derive::TsData;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 use crate::{
+    action,
     card::{self, Target},
     creature::{Creature, CreatureAction},
     error::{Error, Result},
@@ -92,7 +93,41 @@ impl World {
         })
     }
 
+    pub fn check_(&self, action: &action::Meta<action::Action>) -> Result<Vec<action::Pending>> {
+        use action::*;
+        let events = self.check__(action)?;
+        Ok(events.into_iter()
+            .map(|event| Pending {
+                action: action.data.clone(),
+                event,
+            })
+            .collect())
+    }
+
+    fn check__(&self, action: &action::Meta<action::Action>) -> Result<Vec<action::Event>> {
+        use action::*;
+        match (&action.target, &action.data) {
+            (Path::Global, Action::AddTrigger { .. }) => {
+                return Ok(vec![Event::TriggerAdded { id: Id::invalid() }])
+            }
+            _ => ()
+        }
+        match &action.target {
+            Path::Creature { cid }
+            | Path::Part { cid, .. }
+            | Path::Card { cid, .. }
+            => {
+                unimplemented!()
+            }
+            _ => return Err(Error::UnhandledAction)
+        }
+    }
+
     // Mutators
+
+    pub fn resolve_(mut self, pending: &action::Pending) -> Result<action::Event> {
+        unimplemented!()
+    }
 
     pub fn execute(&mut self, action: &Action) -> Vec<Event> {
         self.execute_(action, &HashSet::new())

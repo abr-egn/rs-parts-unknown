@@ -1,16 +1,15 @@
 use std::{
     collections::HashSet,
-    marker::PhantomData,
 };
 
 use hex::Hex;
 
 use crate::{
     id_map::{Id},
+    card::Card,
     creature::Creature,
-    error::Result,
     part::Part,
-    world::World,
+    trigger::{Trigger, TriggerId},
 };
 
 pub struct Meta<T> {
@@ -22,8 +21,9 @@ pub struct Meta<T> {
 
 pub enum Path {
     Global,
-    Creature { id: Id<Creature> },
+    Creature { cid: Id<Creature> },
     Part { cid: Id<Creature>, pid: Id<Part> },
+    Card { cid: Id<Creature>, pid: Id<Part>, card: Id<Card> },
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
@@ -32,19 +32,35 @@ pub enum Tag {
     Normal,
 }
 
+#[derive(Debug, Clone)]
 pub enum Action {
-    MoveCreature { to: Hex },
+    // Global
+    AddTrigger { trigger: Box<dyn Trigger> },
+    RemoveTrigger { id: TriggerId },
+
+    // Creature
+    Move { to: Hex },
+    GainAP { ap: i32 },
+    SpendAP { ap: i32 },
+    GainMP { mp: i32 },
+    SpendMP { mp: i32 },
+    NewHand,
+
+    // Card
+    Discard,
 }
 
-impl Meta<Action> {
-    pub fn resolve(&self, world: &World) -> Result<Event<Pending>> {
-        unimplemented!()
-    }
+#[derive(Debug, Clone)]
+pub enum Event {
+    // Global
+    TriggerAdded { id: TriggerId },
+    TriggerRemoved { id: TriggerId },
+
+    // Creature
+    CreatureMoved { id: Id<Creature>, from: Hex, to: Hex, },
 }
 
-pub enum Event<T> {
-    Never { p: PhantomData<T> },
+pub struct Pending {
+    pub action: Action,
+    pub event: Event,
 }
-
-pub struct Pending;
-pub struct Done;

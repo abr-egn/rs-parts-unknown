@@ -24,6 +24,8 @@ pub enum Error {
     NotEnough(String),
     #[error("Invalid action")]
     InvalidAction,
+    #[error("Unhandled action")]
+    UnhandledAction,  // TODO: include the action
 }
 
 pub type Result<T> = std::result::Result<T, Error>;
