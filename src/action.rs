@@ -3,13 +3,18 @@ use std::{
 };
 
 use hex::Hex;
+use serde::{Serialize};
+use ts_data_derive::TsData;
+use wasm_bindgen::prelude::wasm_bindgen;
 
 use crate::{
     id_map::{Id},
     card::Card,
     creature::Creature,
+    error::Error,
     part::Part,
-    trigger::{Trigger, TriggerId},
+    serde_empty,
+    status::{Status, StatusId},
 };
 
 #[derive(Debug, Clone)]
@@ -21,6 +26,15 @@ pub struct Meta<T> {
 }
 
 impl<T> Meta<T> {
+    pub fn new(data: T) -> Self {
+        Meta {
+            source: Path::Global,
+            target: Path::Global,
+            tags: HashSet::new(),
+            data,
+        }
+    }
+
     pub fn carry<D>(&self, data: D) -> Meta<D> {
         Meta {
             source: self.source.clone(),
@@ -31,12 +45,32 @@ impl<T> Meta<T> {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, TsData)]
 pub enum Path {
+    #[serde(with="serde_empty")]
     Global,
     Creature { cid: Id<Creature> },
     Part { cid: Id<Creature>, pid: Id<Part> },
     Card { cid: Id<Creature>, pid: Id<Part>, card: Id<Card> },
+}
+
+impl Path {
+    pub fn creature(&self) -> Option<Id<Creature>> {
+        match self {
+            Path::Creature { cid }
+            | Path::Part { cid, .. }
+            | Path::Card { cid, .. }
+            => Some(*cid),
+            _ => None,
+        }
+    }
+
+    pub fn part(&self) -> Option<(Id<Creature>, Id<Part>)> {
+        match self {
+            Path::Part { cid, pid } => Some((*cid, *pid)),
+            _ => None,
+        }
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
@@ -46,10 +80,14 @@ pub enum Tag {
 }
 
 #[derive(Debug, Clone)]
-pub enum Action {
-    // Global
-    AddTrigger { trigger: Box<dyn Trigger> },
-    RemoveTrigger { id: TriggerId },
+pub enum ActionData {
+    // Special
+    Nothing,
+    Fail { description: String },
+
+    // Entity
+    AddStatus { status: Box<dyn Status> },
+    RemoveStatus { id: StatusId },
 
     // Creature
     Move { to: Hex },
@@ -63,12 +101,48 @@ pub enum Action {
     Discard,
 }
 
-#[derive(Debug, Clone)]
-pub enum Event {
+pub mod action {
+    pub use super::ActionData::*;
+}
+
+pub type Action = Meta<ActionData>;
+
+#[derive(Debug, Clone, Serialize, TsData)]
+pub enum EventData {
+    // Special
+    #[serde(with = "serde_empty")]
+    Nothing,
+    Failed { description: String },
+
     // Global
-    TriggerAdded { id: TriggerId },
-    TriggerRemoved { id: TriggerId },
+    #[serde(with = "serde_empty")]
+    PlayerTurnEnd,
+    #[serde(with = "serde_empty")]
+    NpcTurnEnd,
+    FloatText { text: String },
+
+    // Entity
+    StatusAdded { id: StatusId },
+    StatusRemoved { id: StatusId },
 
     // Creature
-    CreatureMoved { id: Id<Creature>, from: Hex, to: Hex, },
+    Moved { from: Hex, to: Hex, },
+}
+
+pub mod event {
+    pub use super::EventData::*;
+}
+
+pub type Event = Meta<EventData>;
+
+impl Event {
+    pub fn failed(err: Error) -> Event {
+        Meta::new(EventData::Failed { description: format!("{:?}", err) })
+    }
+    pub fn is_failure(events: &[Event]) -> bool {
+        match events {
+            [Meta { data: EventData::Failed { .. }, .. }, ..] => true,
+            _ => false,
+        }
+    }
 }

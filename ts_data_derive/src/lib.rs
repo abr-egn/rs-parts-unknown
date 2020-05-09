@@ -242,7 +242,7 @@ impl<'ast> Visit<'ast> for TranslateType {
             "hex::Direction" => { self.push_str("Direction"); }
             "part::Part" => { self.push_str("Part"); }
             "TagModId" => { self.push_str("Id<TagMod>"); }
-            "TriggerId" => { self.push_str("Id<Trigger>"); }
+            "StatusId" => { self.push_str("Id<Status>"); }
             // Pass through
             s if TranslateType::is_passthrough(s) => {
                 self.push_str(s);

@@ -5,7 +5,7 @@ use wasm_bindgen::prelude::*;
 use crate::{
     creature::{Creature, CreatureAction},
     error::{Error, Result},
-    event::{Action, Event},
+    action::{Action, Event},
     id_map::Id,
     part::{Part, PartAction, PartTag},
     serde_empty,
@@ -49,8 +49,10 @@ impl Intent {
     pub fn check_run(&self, world: &mut World, source: Id<Creature>) -> Result<Vec<Event>> {
         self.check(world, source)?;
         self.kind.check(world, source)?;
+        let mut events = vec![];
 
         // Execute cost
+        /* TEMP
         let mut events = world.execute(&Action::normal(
             Action::ToCreature {
                 id: source,
@@ -58,6 +60,7 @@ impl Intent {
             }
         ));
         if Event::is_failure(&events) { return Ok(events); }
+        */
 
         // Execute action
         events.extend(self.kind.run(world, source, self.from));
@@ -107,6 +110,7 @@ impl IntentKind {
     }
 
     fn run(&self, world: &mut World, source: Id<Creature>, _part: Option<Id<Part>>) -> Vec<Event> {
+        /* TEMP
         match self {
             IntentKind::Attack { damage, .. } => {
                 let player_id = world.player_id();
@@ -120,6 +124,8 @@ impl IntentKind {
             }
             IntentKind::Stunned => vec![Event::FloatText { on: source, text: "Stunned!".into() }]
         }
+        */
+        unimplemented!()
     }
 }
 

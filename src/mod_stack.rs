@@ -37,7 +37,7 @@ impl<T> ModStack<T> {
     }
 
     pub fn remove(&mut self, id: Id<Mod<T>>) -> bool {
-        if self.mods.remove(&id).is_none() { return false; }
+        if self.mods.remove(id).is_none() { return false; }
         let ix = self.mod_order.iter().position(|i| *i == id).unwrap();
         self.mod_order.remove(ix);
         true

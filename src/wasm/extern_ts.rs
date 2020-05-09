@@ -16,5 +16,5 @@ export type Id<T> = number & { [phantom]?: T }
 
 export type TagMod = {};
 
-export type Trigger = {};
+export type Status = {};
 "#;

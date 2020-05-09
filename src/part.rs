@@ -11,7 +11,8 @@ use crate::{
     card::Card,
     creature::Creature,
     error::{Error, Result},
-    event::{Action, Event},
+    entity::Entity,
+    action::{Action, Event},
     id_map::{Id, IdMap},
     mod_stack::{Mod, ModStack},
     world::World,
@@ -24,6 +25,7 @@ pub struct Part {
     pub cards: IdMap<Card>,
     pub base_tags: HashSet<PartTag>,
     pub tag_mods: ModStack<HashSet<PartTag>>,
+    pub entity: Entity,
     // Stats
     pub max_hp: i32,
     pub cur_hp: i32,
@@ -44,6 +46,7 @@ impl Part {
             cards: IdMap::new(),
             base_tags: HashSet::from_iter(tags.iter().cloned()),
             tag_mods: ModStack::new(),
+            entity: Entity::new(),
             thought: 0, memory: 0, mp: 0,
             max_hp, cur_hp: max_hp,
         }
@@ -164,6 +167,7 @@ pub struct Joint {
 }
 */
 
+/* TEMP
 pub trait WorldExt {
     fn add_mod(&mut self, cid: Id<Creature>, pid: Id<Part>, m: TagMod) -> (TagModId, Vec<Event>);
 }
@@ -180,3 +184,4 @@ impl WorldExt for World {
         (mod_id, events)
     }
 }
+*/

@@ -5,7 +5,7 @@ use wasm_bindgen::prelude::*;
 
 use crate::{
     creature::{Creature},
-    event::{Event},
+    action::{Event},
     id_map::Id,
     part::{Part, PartTag},
     serde_empty,

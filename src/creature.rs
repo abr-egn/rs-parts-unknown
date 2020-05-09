@@ -6,6 +6,7 @@ use wasm_bindgen::prelude::wasm_bindgen;
 use crate::{
     card::Card,
     error::{Error, Result},
+    entity::Entity,
     id_map::{Id, IdMap},
     npc::{NPC},
     part::{Part, PartAction, PartEvent, PartTag},
@@ -26,6 +27,7 @@ pub struct Creature {
     pub draw: Vec<CardId>,  // end of vec -> top of pile
     pub hand: Vec<CardId>,
     pub discard: Vec<CardId>,
+    pub entity: Entity,
 }
 
 impl Creature {
@@ -47,6 +49,7 @@ impl Creature {
             dead: false,
             npc,
             draw: vec![], hand: vec![], discard: vec![],
+            entity: Entity::new(),
         };
         out.cur_ap = out.max_ap();
         out.cur_mp = out.max_mp();
@@ -112,7 +115,7 @@ impl Creature {
             ToPart { id, ref action } => {
                 let mut out = vec![];
 
-                let part = self.parts.get_mut(&id).ok_or(Error::NoSuchPart)?;
+                let part = self.parts.get_mut(id).ok_or(Error::NoSuchPart)?;
                 let old_tags = part.tags();
                 let pevs = part.resolve(action)?;
                 out.extend(pevs.into_iter().map(|pev| CreatureEvent::OnPart { id, event: pev }));
@@ -160,7 +163,7 @@ impl Creature {
                             .collect();
                         if !ids.is_empty() {
                             let ix = thread_rng().gen_range(0, ids.len());
-                            self.parts.get_mut(&ids[ix]).unwrap().base_tags.insert(PartTag::Open);
+                            self.parts.get_mut(ids[ix]).unwrap().base_tags.insert(PartTag::Open);
                         }
                     }
                 }
