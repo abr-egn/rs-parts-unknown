@@ -3,11 +3,11 @@ use ts_data_derive::TsData;
 use wasm_bindgen::prelude::*;
 
 use crate::{
-    creature::{Creature, CreatureAction},
+    creature::{Creature},
     error::{Error, Result},
     action::{Action, Event},
     id_map::Id,
-    part::{Part, PartAction, PartTag},
+    part::{Part, PartTag},
     serde_empty,
     world::World,
 };

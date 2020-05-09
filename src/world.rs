@@ -11,7 +11,7 @@ use wasm_bindgen::prelude::wasm_bindgen;
 use crate::{
     action::{action, event, Action, Event, EventData, Meta, Path},
     card::{self, Target},
-    creature::{Creature, CreatureAction},
+    creature::{Creature},
     entity::{Entity},
     error::{Error, Result},
     id_map::{Id, IdMap},
@@ -179,19 +179,23 @@ impl World {
             };
             match result {
                 Ok(es) => events.extend(es),
-                Err(e) => events.push(Meta::new(event::FloatText {
-                    on: id,
-                    text: format!("{}!", e),
-                })),
+                Err(e) => events.push(Meta {
+                    source: Path::Global,
+                    target: Path::Creature { cid: id },
+                    tags: HashSet::new(),
+                    data: event::FloatText { text: format!("{}!", e) },
+                }),
             }
 
             // Action
             match intent.check_run(self, id) {
                 Ok(es) => events.extend(es),
-                Err(e) => events.push(Meta::new(event::FloatText {
-                    on: id,
-                    text: format!("{}!", e),
-                })),
+                Err(e) => events.push(Meta {
+                    source: Path::Global,
+                    target: Path::Creature { cid: id },
+                    tags: HashSet::new(),
+                    data: event::FloatText { text: format!("{}!", e) },
+                }),
             }
         }
 

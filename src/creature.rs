@@ -1,16 +1,13 @@
 use rand::prelude::*;
-use serde::{Serialize};
-use ts_data_derive::TsData;
-use wasm_bindgen::prelude::wasm_bindgen;
 
 use crate::{
+    action::{action, event, Action, Event, Path},
     card::Card,
     error::{Error, Result},
     entity::Entity,
     id_map::{Id, IdMap},
     npc::{NPC},
-    part::{Part, PartAction, PartEvent, PartTag},
-    serde_empty,
+    part::{Part, PartTag},
     some_or,
 };
 
@@ -89,96 +86,35 @@ impl Creature {
 
     // Mutators
 
-    pub fn resolve(&mut self, action: &CreatureAction) -> Result<Vec<CreatureEvent>> {
+    pub fn resolve(&mut self, action: &Action) -> Result<Vec<Event>> {
+        let simple = |ev| Ok(vec![action.carry(ev)]);
         if self.dead { return Err(Error::DeadCreature); }
-        use CreatureAction::*;
-        use CreatureEvent::*;
-        match *action {
-            GainAP { ap } => {
+        match action.data {
+            action::GainAP { ap } => {
                 self.cur_ap += ap;
-                return Ok(vec![ChangeAP { delta: ap }]);
+                return simple(event::ChangeAP { delta: ap });
             }
-            SpendAP { ap } => {
+            action::SpendAP { ap } => {
                 if self.cur_ap < ap { return Err(Error::NotEnough("AP".into())); }
                 self.cur_ap -= ap;
-                return Ok(vec![ChangeAP { delta: -ap }]);
+                return simple(event::ChangeAP { delta: -ap });
             }
-            GainMP { mp } => {
+            action::GainMP { mp } => {
                 self.cur_mp += mp;
-                return Ok(vec![ChangeMP { delta: mp }]);
+                return simple(event::ChangeMP { delta: mp });
             }
-            SpendMP { mp } => {
+            action::SpendMP { mp } => {
                 if self.cur_mp < mp { return Err(Error::NotEnough("MP".into())); }
                 self.cur_mp -= mp;
-                return Ok(vec![ChangeMP { delta: -mp }]);
+                return simple(event::ChangeMP { delta: -mp });
             }
-            ToPart { id, ref action } => {
+            action::NewHand => {
                 let mut out = vec![];
-
-                let part = self.parts.get_mut(id).ok_or(Error::NoSuchPart)?;
-                let old_tags = part.tags();
-                let pevs = part.resolve(action)?;
-                out.extend(pevs.into_iter().map(|pev| CreatureEvent::OnPart { id, event: pev }));
-                let new_tags = part.tags();
-
-                let set_tags: Vec<_> = new_tags.difference(&old_tags).cloned().collect();
-                if !set_tags.is_empty() {
-                    out.push(CreatureEvent::OnPart {
-                        id,
-                        event: PartEvent::TagsSet { tags: set_tags.clone() },
-                    });
-                }
-                let cleared_tags: Vec<_> = old_tags.difference(&new_tags).cloned().collect();
-                if !cleared_tags.is_empty() {
-                    out.push(CreatureEvent::OnPart {
-                        id,
-                        event: PartEvent::TagsCleared { tags: cleared_tags },
-                    });
-                }
-
-                let mut self_died = false;
-                if set_tags.iter().any(|t| *t == PartTag::Broken) {
-                    if part.tags().contains(&PartTag::Vital) && !self_died {
-                        self_died = true;
-                        out.push(CreatureEvent::Died);
-                    }
-                    if self.cur_ap > self.max_ap() {
-                        out.push(CreatureEvent::ChangeAP {
-                            delta: self.max_ap() - self.cur_ap,
-                        });
-                        self.cur_ap = self.max_ap();
-                    }
-                    if self.cur_mp > self.max_mp() {
-                        out.push(CreatureEvent::ChangeMP {
-                            delta: self.max_mp() - self.cur_mp,
-                        });
-                        self.cur_mp = self.max_mp();
-                    }
-                    if old_tags.contains(&PartTag::Open) {
-                        let ids: Vec<_> = self.parts.iter()
-                            .filter_map(|(id, part)| {
-                                if part.tags().contains(&PartTag::Broken) { None }
-                                else { Some(*id) }
-                            })
-                            .collect();
-                        if !ids.is_empty() {
-                            let ix = thread_rng().gen_range(0, ids.len());
-                            self.parts.get_mut(ids[ix]).unwrap().base_tags.insert(PartTag::Open);
-                        }
-                    }
-                }
-                if self_died {
-                    self.dead = true;
-                    out.push(CreatureEvent::Died);
-                }
-                Ok(out)
-            }
-            NewHand => {
-                let mut out = vec![];
+                let cid = action.target.creature().unwrap();
                 for card in self.hand.drain(..) {
-                    out.push(CreatureEvent::Discarded {
-                        part: card.0, card: card.1,
-                    });
+                    let mut ev = action.carry(event::Discarded);
+                    ev.target = Path::Card { cid, pid: card.0, card: card.1 };
+                    out.push(ev);
                     self.discard.push(card);
                 }
                 for _ in 0..self.hand_size() {
@@ -186,25 +122,75 @@ impl Creature {
                         if self.discard.is_empty() {
                             return Ok(out);
                         }
-                        out.push(CreatureEvent::DeckRecycled);
+                        out.push(action.carry(event::DeckRecycled));
                         self.draw.append(&mut self.discard);
                         self.draw.shuffle(&mut rand::thread_rng());
                     }
                     let card = some_or!(self.draw.pop(), break);
-                    out.push(CreatureEvent::Drew { part: card.0, card: card.1 });
+                    let mut ev = action.carry(event::Drew);
+                    ev.target = Path::Card { cid, pid: card.0, card: card.1 };
+                    out.push(ev);
                     self.hand.push(card);
                 }
-
-                Ok(out)
+                return Ok(out)
             }
-            Discard { part, card } => {
-                let mut out = vec![];
-                let ix = self.hand.iter().position(|&c| c == (part, card)).ok_or(Error::NoSuchCard)?;
-                self.discard.push(self.hand.remove(ix));
-                out.push(CreatureEvent::Discarded { part, card });
-                Ok(out)
-            }
+            _ => (),
         }
+        match (&action.target, &action.data) {
+            (Path::Card { pid, card, .. }, action::Discard) => {
+                let ix = self.hand.iter().position(|&c| c == (*pid, *card)).ok_or(Error::NoSuchCard)?;
+                self.discard.push(self.hand.remove(ix));
+                return simple(event::Discarded);
+            }
+            _ => (),
+        }
+        if let Some((cid, pid)) = action.target.part() {
+            let part = self.parts.get_mut(pid).ok_or(Error::NoSuchPart)?;
+            let old_tags = part.tags();
+            let mut out = part.resolve(action)?;
+            let new_tags = part.tags();
+            let mut self_died = false;
+            if new_tags.difference(&old_tags).any(|t| *t == PartTag::Broken) {
+                let self_ev = |ev| {
+                    let mut out = action.carry(ev);
+                    out.target = Path::Creature { cid };
+                    out
+                };
+                if part.tags().contains(&PartTag::Vital) && !self_died {
+                    self_died = true;
+                    out.push(self_ev(event::Died));
+                }
+                if self.cur_ap > self.max_ap() {
+                    out.push(self_ev(event::ChangeAP {
+                        delta: self.max_ap() - self.cur_ap,
+                    }));
+                    self.cur_ap = self.max_ap();
+                }
+                if self.cur_mp > self.max_mp() {
+                    out.push(self_ev(event::ChangeMP {
+                        delta: self.max_mp() - self.cur_mp,
+                    }));
+                    self.cur_mp = self.max_mp();
+                }
+                if old_tags.contains(&PartTag::Open) {
+                    let ids: Vec<_> = self.parts.iter()
+                        .filter_map(|(id, part)| {
+                            if part.tags().contains(&PartTag::Broken) { None }
+                            else { Some(*id) }
+                        })
+                        .collect();
+                    if !ids.is_empty() {
+                        let ix = thread_rng().gen_range(0, ids.len());
+                        self.parts.get_mut(ids[ix]).unwrap().base_tags.insert(PartTag::Open);
+                    }
+                }
+            }
+            if self_died {
+                self.dead = true;
+            }
+            return Ok(out);
+        }
+        Err(Error::UnhandledAction)
     }
 
     pub fn reset_cards(&mut self) {
@@ -220,29 +206,4 @@ impl Creature {
 
     // TODO: more fine-grained access
     pub fn npc_mut(&mut self) -> Option<&mut NPC> { self.npc.as_mut() }
-}
-
-#[derive(Debug, Clone, Serialize, TsData)]
-pub enum CreatureAction {
-    GainAP { ap: i32 },
-    SpendAP { ap: i32 },
-    GainMP { mp: i32 },
-    SpendMP { mp: i32 },
-    ToPart { id: Id<Part>, action: PartAction },
-    #[serde(with = "serde_empty")]
-    NewHand,
-    Discard { part: Id<Part>, card: Id<Card> },
-}
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, TsData)]
-pub enum CreatureEvent {
-    ChangeAP { delta: i32 },
-    ChangeMP { delta: i32 },
-    OnPart { id: Id<Part>, event: PartEvent },
-    #[serde(with = "serde_empty")]
-    Died,
-    Discarded { part: Id<Part>, card: Id<Card> },
-    Drew { part: Id<Part>, card: Id<Card> },
-    #[serde(with = "serde_empty")]
-    DeckRecycled,
 }

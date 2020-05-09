@@ -12,7 +12,7 @@ use crate::{
     card::Card,
     creature::Creature,
     error::Error,
-    part::Part,
+    part::{Part, PartTag, TagMod, TagModId},
     serde_empty,
     status::{Status, StatusId},
 };
@@ -99,6 +99,14 @@ pub enum ActionData {
 
     // Card
     Discard,
+
+    // Part
+    Hit { damage: i32 },
+    Heal { hp: i32 },
+    SetTags { tags: Vec<PartTag> },
+    ClearTags { tags: Vec<PartTag> },
+    AddTagMod { m: TagMod },
+    ClearTagMod { id: TagModId, },
 }
 
 pub mod action {
@@ -127,6 +135,25 @@ pub enum EventData {
 
     // Creature
     Moved { from: Hex, to: Hex, },
+    ChangeAP { delta: i32 },
+    ChangeMP { delta: i32 },
+    #[serde(with = "serde_empty")]
+    Died,
+    #[serde(with = "serde_empty")]
+    DeckRecycled,
+
+    // Card
+    #[serde(with = "serde_empty")]
+    Discarded,
+    #[serde(with = "serde_empty")]
+    Drew,
+
+    // Part
+    ChangeHP { delta: i32 },
+    TagsSet { tags: Vec<PartTag> },
+    TagsCleared { tags: Vec<PartTag> },
+    TagsModded { id: TagModId },
+    TagsUnmodded { id: TagModId },
 }
 
 pub mod event {

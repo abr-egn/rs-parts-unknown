@@ -8,14 +8,12 @@ use ts_data_derive::TsData;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 use crate::{
+    action::{action, event, Action, Event},
     card::Card,
-    creature::Creature,
     error::{Error, Result},
     entity::Entity,
-    action::{Action, Event},
     id_map::{Id, IdMap},
     mod_stack::{Mod, ModStack},
-    world::World,
 };
 
 #[derive(Debug, Clone)]
@@ -56,96 +54,73 @@ impl Part {
         self.tag_mods.eval(self.base_tags.clone())
     }
 
-    pub fn resolve(&mut self, action: &PartAction) -> Result<Vec<PartEvent>> {
-        use PartAction::*;
+    pub fn resolve(&mut self, action: &Action) -> Result<Vec<Event>> {
+        let old_tags = self.tags();
+        let mut out = self.resolve_(action)?;
+        let new_tags = self.tags();
+        let added: Vec<_> = new_tags.difference(&old_tags).cloned().collect();
+        let removed: Vec<_> = old_tags.difference(&new_tags).cloned().collect();
+        if !added.is_empty() {
+            out.push(action.carry(event::TagsSet { tags: added }));
+        }
+        if !removed.is_empty() {
+            out.push(action.carry(event::TagsCleared { tags: removed }));
+        }
+        Ok(out)
+    }
 
-        // Allowed when broken
-        match action {
-            SetTags { tags } => {
+    fn resolve_(&mut self, action: &Action) -> Result<Vec<Event>> {
+        let simple = |ev| Ok(vec![action.carry(ev)]);
+        match action.data {
+            action::SetTags { ref tags } => {
                 for tag in tags {
                     self.base_tags.insert(*tag);
                 }
                 return Ok(vec![]);
             }
-            ClearTags { tags } => {
+            action::ClearTags { ref tags } => {
                 for tag in tags {
                     self.base_tags.remove(tag);
                 }
                 return Ok(vec![]);
             }
-            AddTagMod { m } => {
+            action::AddTagMod { ref m } => {
                 let id = self.tag_mods.add(m.clone());
-                return Ok(vec![PartEvent::TagsModded { id }]);
+                return simple(event::TagsModded { id });
             }
-            ClearTagMod { id } => {
-                self.tag_mods.remove(*id);
-                return Ok(vec![PartEvent::TagsUnmodded { id: *id }]);
+            action::ClearTagMod { id } => {
+                self.tag_mods.remove(id);
+                return simple(event::TagsUnmodded { id: id });
             }
-            Hit { .. } | Heal { .. } => (),
-        }
-
-        if self.tags().contains(&PartTag::Broken) { return Err(Error::BrokenPart); }
-        
-        match action {
-            Hit { damage } => {
-                let damage = std::cmp::min(self.cur_hp, *damage);
-                if damage <= 0 { return Ok(vec![PartEvent::ChangeHP { delta: 0 }]); }
+            action::Hit { damage } => {
+                if self.tags().contains(&PartTag::Broken) { return Err(Error::BrokenPart); }
+                let damage = std::cmp::min(self.cur_hp, damage);
+                if damage <= 0 { return simple(event::ChangeHP { delta: 0 }); }
                 self.cur_hp -= damage;
                 if self.cur_hp <= 0 {
                     self.base_tags.remove(&PartTag::Open);
                     self.base_tags.insert(PartTag::Broken);
                 }
-                return Ok(vec![PartEvent::ChangeHP { delta: -damage }]);
+                return simple(event::ChangeHP { delta: -damage });
             }
-            Heal { hp } => {
-                let hp = std::cmp::min(*hp, self.max_hp - self.cur_hp);
-                if hp <= 0 { return Ok(vec![PartEvent::ChangeHP { delta: 0 }]) }
-                let mut out = vec![];
-                out.push(PartEvent::ChangeHP { delta: hp });
+            action::Heal { hp } => {
+                if self.tags().contains(&PartTag::Broken) { return Err(Error::BrokenPart); }
+                let hp = std::cmp::min(hp, self.max_hp - self.cur_hp);
+                if hp <= 0 { return simple(event::ChangeHP { delta: 0 }) }
                 if self.cur_hp == 0 && hp > 0 {
                     self.base_tags.remove(&PartTag::Broken);
                 }
                 self.cur_hp += hp;
-                return Ok(out)
+                return simple(event::ChangeHP { delta: hp });
             }
-            _ => unreachable!(),
+            _ => (),
         }
+        Err(Error::UnhandledAction)
     }
-}
-
-#[derive(Debug, Clone, Serialize, TsData)]
-pub enum PartAction {
-    Hit { damage: i32 },
-    SetTags { tags: Vec<PartTag> },
-    ClearTags { tags: Vec<PartTag> },
-    AddTagMod {
-        #[serde(skip)]
-        m: TagMod
-    },
-    ClearTagMod { id: TagModId, },
-    Heal { hp: i32 },
 }
 
 pub type TagMod = Mod<HashSet<PartTag>>;
 pub type TagModId = Id<TagMod>;
-
-#[derive(Debug, Clone, PartialEq, Eq, Serialize, TsData)]
-pub enum PartEvent {
-    ChangeHP { delta: i32 },
-    TagsSet { tags: Vec<PartTag> },
-    TagsCleared { tags: Vec<PartTag> },
-    TagsModded { id: TagModId },
-    TagsUnmodded { id: TagModId },
-}
-
-impl PartEvent {
-    pub fn tags_modded(&self) -> Option<TagModId> {
-        match self {
-            PartEvent::TagsModded { id } => Some(*id),
-            _ => None,
-        }
-    }
-}
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, TsData)]
 pub enum PartTag {
