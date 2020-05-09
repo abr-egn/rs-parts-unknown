@@ -191,9 +191,7 @@ impl World {
         events
     }
 
-    // Private
-
-    fn move_creature(&mut self, creature_id: Id<Creature>, to: Hex) -> Vec<Event> {
+    pub fn move_creature(&mut self, creature_id: Id<Creature>, to: Hex) -> Vec<Event> {
         let from = match self.map.creatures().get(&creature_id) {
             Some(h) => h,
             None => return vec![Event::failed(Error::NoSuchCreature)],
@@ -223,6 +221,8 @@ impl World {
         }
         out
     }
+
+    // Private
 
     fn execute_(
         &mut self,

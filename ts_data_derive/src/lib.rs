@@ -133,12 +133,8 @@ impl TranslateType {
     }
     fn is_passthrough(s: &str) -> bool {
         match s {
-            "Action" => (),
-            "ActionKind" => (),
             "Card" => (),
             "Creature" => (),
-            "CreatureAction" => (),
-            "CreatureEvent" => (),
             "Direction" => (),
             "Event" => (),
             "Hex" => (),
@@ -148,11 +144,11 @@ impl TranslateType {
             "MotionKind" => (),
             "NPC" => (),
             "Part" => (),
-            "PartAction" => (),
-            "PartEvent" => (),
             "PartTag" => (),
+            "Path" => (),
             "Range" => (),
             "Space" => (),
+            "Tag" => (),
             "Target" => (),
             "TargetSpec" => (),
             _ => return false,
@@ -218,7 +214,7 @@ impl<'ast> Visit<'ast> for TranslateType {
                     }
                 }
             }
-            "Vec" => {
+            "Vec" | "HashSet" => {
                 let mut tmp = TranslateType::new();
                 visit::visit_path(&mut tmp, path);
                 match &tmp.out as &[String] {

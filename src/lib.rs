@@ -11,7 +11,7 @@ mod npc;
 mod part;
 mod serde_empty;
 mod status;
-//mod wasm;  TEMP
+mod wasm;
 mod world;
 
 use log::{Level, info};

@@ -6,9 +6,8 @@ use wasm_bindgen::{
 };
 
 use crate::{
-    card::{Target},
+    action::{Action, Event, Path},
     creature,
-    event::{Action, Event},
     id_map::Id,
     map::{Space, Tile},
     part::{PartTag},
@@ -182,7 +181,7 @@ impl World {
 
     #[wasm_bindgen(skip_typescript)]
     pub fn finishPlay(&self, in_play: InPlay, target: JsValue) -> Array /* [World, Event[]] */ {
-        let target: Target = from_js_value(target);
+        let target: Path = from_js_value(target);
         let mut newWorld = self.wrapped.clone();
         let events = newWorld.finish_play(in_play.wrapped, &target);
         world_update(newWorld, &events)
@@ -267,8 +266,8 @@ extern "C" {
 #[wasm_bindgen(typescript_custom_section)]
 const TRACER_TS: &'static str = r#"
 export interface Tracer {
-    resolveAction: (action: Action, events: [Event]) => void,
-    systemEvent: (events: [Event]) => void,
+    resolveAction: (action: string, events: Event[]) => void,
+    systemEvent: (events: Event[]) => void,
 }
 "#;
 
@@ -286,7 +285,8 @@ impl WrapTracer {
 impl world::Tracer for WrapTracer {
     fn resolve_action(&self, action: &Action, events: &[Event]) {
         let events: Array = events.iter().map(to_js_value).collect();
-        self.wrapped().resolveAction(&to_js_value(action), &events);
+        let action = format!("{:?}", action);
+        self.wrapped().resolveAction(&to_js_value(&action), &events);
     }
     fn system_event(&self, events: &[Event]) {
         let events: Array = events.iter().map(to_js_value).collect();

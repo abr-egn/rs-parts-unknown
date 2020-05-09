@@ -17,4 +17,11 @@ export type Id<T> = number & { [phantom]?: T }
 export type TagMod = {};
 
 export type Status = {};
+
+export interface Event {
+    source: Path,
+    target: Path,
+    tags: Tag[],
+    data: EventData,
+}
 "#;

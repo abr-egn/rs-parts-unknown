@@ -18,7 +18,7 @@ use crate::{
     world::World,
 };
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct Meta<T> {
     pub source: Path,
     pub target: Path,
@@ -78,7 +78,7 @@ impl Path {
     }
 }
 
-#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, TsData)]
 pub enum Tag {
     Attack,
     Normal,  // TODO: rename to NoRender
