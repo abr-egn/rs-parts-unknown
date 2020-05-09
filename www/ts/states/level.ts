@@ -195,13 +195,13 @@ export namespace LevelState {
 }
 
 class ConsoleTracer implements wasm.Tracer {
-    resolveAction(action: wasm.Action, events: [wasm.Event]) {
+    resolveAction(action: string, events: wasm.Event[]) {
         console.log("ACTION:", action);
         for (let event of events) {
             console.log("==>", event);
         }
     }
-    systemEvent(events: [wasm.Event]) {
+    systemEvent(events: wasm.Event[]) {
         console.log("SYSTEM:", events[0]);
         for (let event of events.slice(1)) {
             console.log("==>", event);
@@ -212,10 +212,10 @@ class ConsoleTracer implements wasm.Tracer {
 class BufferTracer implements wasm.Tracer {
     private _buffer: (() => void)[] = [];
     constructor(private _wrapped: wasm.Tracer) {}
-    resolveAction(action: wasm.Action, events: [wasm.Event]) {
+    resolveAction(action: string, events: wasm.Event[]) {
         this._buffer.push(() => this._wrapped.resolveAction(action, events));
     }
-    systemEvent(events: [wasm.Event]) {
+    systemEvent(events: wasm.Event[]) {
         this._buffer.push(() => this._wrapped.systemEvent(events));
     }
     runBuffer() {
