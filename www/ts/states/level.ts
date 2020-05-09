@@ -1,12 +1,15 @@
 import {immerable} from "immer";
 
-import {Id, Hex} from "../../wasm";
-import {FloatText} from "../../tsx/float";
 import * as wasm from "../../wasm";
+import {Id, Hex} from "../../wasm";
+
+import {pathCreature, pathPart} from "../extra";
 import {GameBoard} from "../game_board";
 import {Stack, State} from "../stack";
 import {Focus} from "../stack/focus";
 import {Highlight} from "../stack/highlight";
+
+import {FloatText} from "../../tsx/float";
 
 export class LevelState extends State {
     // These live outside of the stack data so they're not unwound by sub-state pops.
@@ -125,59 +128,56 @@ export namespace LevelState {
         }
         
         makeFloat(event: Readonly<wasm.Event>): FloatText.Item | undefined {
-            let ev;
-            if (ev = event.OnCreature) {
-                let pos = this.board.creatureCoords(ev.id)!;
-                pos = new DOMPoint(pos.x, pos.y);  // clone
-                let creature = this.world.getCreature(ev.id)!;
-                let oc;
-                if (oc = ev.event.OnPart) {
-                    let part = creature.parts.get(oc.id)!;
-                    let op;
-                    if (op = oc.event.ChangeHP) {
-                        const [text, color] = delta(op.delta);
-                        return {
-                            pos,
-                            text: `${part.name}: ${text} HP`,
-                            style: { color },
-                        };
-                    } else if (op = oc.event.TagsSet) {
-                        let strs = op.tags.map(t => `+${t}`);
-                        return {
-                            pos,
-                            text: `${part.name}: ${strs.join(", ")}`,
-                        };
-                    } else if (op = oc.event.TagsCleared) {
-                        let strs = op.tags.map(t => `-${t}`);
-                        return {
-                            pos,
-                            text: `${part.name}: ${strs.join(", ")}`,
-                        };
-                    }
-                } else if (oc = ev.event.ChangeAP) {
-                    const [text, color] = delta(oc.delta);
-                    return {
-                        pos,
-                        text: `${text} AP`,
-                        style: { color },
-                    };
-                } else if (oc = ev.event.ChangeMP) {
-                    const [text, color] = delta(oc.delta);
-                    return {
-                        pos,
-                        text: `${text} MP`,
-                        style: { color },
-                    };
-                } else if (oc = ev.event.Died) {
-                    return {pos, text: "Dead!"}
-                }
-            } else if (ev = event.FloatText) {
-                let pos = this.board.creatureCoords(ev.on);
-                if (pos) {
-                    return {
-                        pos, text: ev.text, style: {}
-                    };
-                }
+            let cid = pathCreature(event.target);
+            if (!cid) { return undefined; }
+            let pos = this.board.creatureCoords(cid)!;
+            pos = new DOMPoint(pos.x, pos.y);  // clone
+            let creature = this.world.getCreature(cid)!;
+
+            let pid = pathPart(event.target);
+            let part: wasm.Part | undefined;
+            if (pid != undefined) {
+                part = creature.parts.get(pid)!;
+            }
+
+            let data;
+            if (data = event.data.ChangeHP) {
+                const [text, color] = delta(data.delta);
+                return {
+                    pos,
+                    text: `${part!.name}: ${text} HP`,
+                    style: { color },
+                };
+            } else if (data = event.data.TagsSet) {
+                let strs = data.tags.map(t => `+${t}`);
+                return {
+                    pos,
+                    text: `${part!.name}: ${strs.join(", ")}`,
+                };
+            } else if (data = event.data.TagsCleared) {
+                let strs = data.tags.map(t => `-${t}`);
+                return {
+                    pos,
+                    text: `${part!.name}: ${strs.join(", ")}`,
+                };
+            } else if (data = event.data.ChangeAP) {
+                const [text, color] = delta(data.delta);
+                return {
+                    pos,
+                    text: `${text} AP`,
+                    style: { color },
+                };
+            } else if (data = event.data.ChangeMP) {
+                const [text, color] = delta(data.delta);
+                return {
+                    pos,
+                    text: `${text} MP`,
+                    style: { color },
+                };
+            } else if (data = event.data.Died) {
+                return {pos, text: "Dead!"}
+            } else if (data = event.data.FloatText) {
+                return { pos, text: data.text };
             }
         }
 

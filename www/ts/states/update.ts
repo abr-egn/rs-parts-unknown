@@ -2,6 +2,7 @@ import {immerable} from "immer";
 
 import * as wasm from "../../wasm";
 import {hexToPixel} from "../draw";
+import {pathCreature} from "../extra";
 import {GameBoard} from "../game_board";
 import {Preview} from "../stack/preview";
 import {Stack, State} from "../stack";
@@ -44,9 +45,9 @@ export class UpdateState extends State {
             draft.build(Preview).addStats(event);
         });
         let data;
-        if (data = event.CreatureMoved) {
+        if (data = event.data.Moved) {
             const motion = (board as unknown) as GameBoard.Motion;
-            await motion.moveCreatureTo(data.id, hexToPixel(data.to))
+            await motion.moveCreatureTo(pathCreature(event.target)!, hexToPixel(data.to));
         }
         const float = level.makeFloat(event);
         if (float) {

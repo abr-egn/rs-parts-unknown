@@ -1,6 +1,7 @@
 import * as wasm from "../../wasm";
 import {Hex} from "../../wasm";
 
+import {pathCreature} from "../extra";
 import {Highlight} from "../stack/highlight";
 import {Preview} from "../stack/preview";
 import {State} from "../stack";
@@ -30,9 +31,9 @@ export class MovePlayerState extends State {
         const events = world.simulateMove(hex);
         let lastMove: Hex | undefined;
         for (let event of events) {
-            let move = event.CreatureMoved;
+            let move = event.data.Moved;
             if (move) {
-                if (move.id != world.playerId) { continue; }
+                if (pathCreature(event.target) != world.playerId) { continue; }
                 lastMove = move.to;
             }
         }

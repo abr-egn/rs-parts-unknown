@@ -98,7 +98,7 @@ export class PlayCardState extends State {
         const spec = this._inPlay!.getTargetSpec();
         if (spec.Creature) {
             const target = creatureToTarget(level.creatureAt(hex)!);
-            events.push(...this._inPlay!.simulate(world, target));
+            events.push(...this._inPlay!.preview(world, target));
         }
         this.update(draft => {
             draft.build(Highlight).throb.creatures.inc(creature.id);
@@ -165,7 +165,7 @@ export class PlayCardState extends State {
         return false;
     }
 
-    private _playOnTarget(target: wasm.Target) {
+    private _playOnTarget(target: wasm.Path) {
         const world = this.stack.data.get(LevelState.Data)!.world;
         if (!this._inPlay!.targetValid(world, target)) {
             return;
@@ -181,9 +181,9 @@ export class PlayCardState extends State {
     }
 
     private _creatureFocus(): Focus.Handler<Id<wasm.Creature>> {
-        const valid = (id: Id<wasm.Creature>) => {
+        const valid = (id: Id<wasm.Creature>): wasm.Path | undefined => {
             const world = this.stack.data.get(LevelState.Data)!.world;
-            const target = { Creature: { id } };
+            const target = { Creature: { cid: id } };
             if (!this._inPlay?.targetValid(world, target)) {
                 return undefined;
             }
@@ -197,7 +197,7 @@ export class PlayCardState extends State {
                 if (target) {
                     this.update(draft => {
                         draft.build(Highlight).throb.creatures.inc(id);
-                        const events = this._inPlay!.simulate(world, target);
+                        const events = this._inPlay!.preview(world, target);
                         draft.build(Preview).setEvents(level, events);
                     });
                 }
@@ -226,7 +226,7 @@ export class PlayCardState extends State {
                 const target = this._partTarget(cid, pid);
                 if (target) {
                     draft.build(Highlight).throb.mutPartsFor(cid).inc(pid);
-                    const events = this._inPlay!.simulate(world, target);
+                    const events = this._inPlay!.preview(world, target);
                     draft.build(Preview).setEvents(level, events);
                 }
             }),
@@ -244,13 +244,8 @@ export class PlayCardState extends State {
         };
     }
 
-    private _partTarget(cid: Id<wasm.Creature>, pid: Id<wasm.Part>): wasm.Target | undefined {
-        const target = {
-            Part: {
-                creature_id: cid,
-                part_id: pid,
-            }
-        };
+    private _partTarget(cid: Id<wasm.Creature>, pid: Id<wasm.Part>): wasm.Path | undefined {
+        const target = { Part: { cid, pid } };
         const world = this.stack.data.get(LevelState.Data)!.world;
         if (!this._inPlay?.targetValid(world, target)) {
             return undefined;
@@ -265,7 +260,7 @@ export namespace PlayCardState {
 
         constructor (
             public card: wasm.Card,
-            public playOnTarget: (target: wasm.Target) => void,
+            public playOnTarget: (target: wasm.Path) => void,
             private _getInPlay: () => wasm.InPlay | undefined,
         ) {}
         get inPlay(): wasm.InPlay | undefined {

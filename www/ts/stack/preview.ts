@@ -2,10 +2,13 @@ import {immerable} from "immer";
 
 import * as wasm from "../../wasm";
 import {Hex, Id} from "../../wasm";
+
+import {pathCreature, pathPart} from "../extra";
 import {Stack} from "../stack";
 import {LevelState} from "../states/level";
 
 import {FloatText} from "../../tsx/float";
+
 
 export class Preview {
     [Stack.Datum] = true;
@@ -36,26 +39,22 @@ export class Preview {
     }
 
     addStats(event: Readonly<wasm.Event>) {
-        let ev;
-        if (ev = event.OnCreature) {
-            let oc;
-            if (oc = ev.event.ChangeAP) {
-                this._addStatDelta(ev.id, "AP", oc.delta);
-            } else if (oc = ev.event.ChangeMP) {
-                this._addStatDelta(ev.id, "MP", oc.delta);
-            } else if (oc = ev.event.OnPart) {
-                let op;
-                if (op = oc.event.ChangeHP) {
-                    this._addHpDelta(ev.id, oc.id, op.delta);
-                }
-            }
+        let id = pathCreature(event.target);
+        let data;
+        if (data = event.data.ChangeAP) {
+            this._addStatDelta(id!, "AP", data.delta);
+        } else if (data = event.data.ChangeMP) {
+            this._addStatDelta(id!, "MP", data.delta);
+        } else if (data = event.data.ChangeHP) {
+            let pid = pathPart(event.target)!;
+            this._addHpDelta(id!, pid, data.delta);
         }
     }
 
     private _addOther(event: Readonly<wasm.Event>) {
-        let ev;
-        if (ev = event.CreatureMoved) {
-            this._throb.push(ev.from, ev.to);
+        let data;
+        if (data = event.data.Moved) {
+            this._throb.push(data.from, data.to);
         }
     }
 
