@@ -4,7 +4,7 @@ mod creature;
 mod error;
 mod entity;
 mod id_map;
-//mod library;  TEMP
+mod library;
 mod map;
 mod mod_stack;
 mod npc;

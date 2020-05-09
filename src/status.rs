@@ -8,18 +8,25 @@ pub trait Status: StatusClone + std::fmt::Debug {
     fn kind(&self) -> StatusKind;
     fn order(&self) -> StatusOrder { StatusOrder::Misc }
     fn alter(&mut self, _action: &Action) -> Option<Action> { None }
-    fn trigger(&mut self, _this: StatusId, _events: &Event) -> Vec<Action> { vec![] }
+    fn trigger(&mut self, _event: &Event) -> (Vec<Action>, StatusDone) { (vec![], StatusDone::Continue) }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
 pub enum StatusKind {
     Buff,
     Debuff,
+    Hidden,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub enum StatusOrder {
     Misc,
+}
+
+#[derive(Debug, Copy, Clone, PartialEq, Eq)]
+pub enum StatusDone {
+    Continue,
+    Expire,
 }
 
 pub type StatusId = Id<Box<dyn Status>>;

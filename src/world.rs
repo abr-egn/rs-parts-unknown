@@ -1,5 +1,6 @@
 use std::{
     collections::HashSet,
+    iter::FromIterator,
 };
 
 use enum_iterator::IntoEnumIterator;
@@ -9,16 +10,19 @@ use ts_data_derive::TsData;
 use wasm_bindgen::prelude::wasm_bindgen;
 
 use crate::{
-    action::{action, event, Action, Event, EventData, Meta, Path},
-    card::{self, Target},
+    action::{
+        Action, Event, EventData, Meta, Path, Tag,
+        action, event, to_creature,
+    },
+    card,
     creature::{Creature},
     entity::{Entity},
     error::{Error, Result},
     id_map::{Id, IdMap},
-    //library,  TEMP
+    library,
     map::{Map},
     npc::{IntentKind, Range},
-    status::{Status, StatusId},
+    status::{StatusDone, StatusId},
     some_or,
 };
 
@@ -35,15 +39,12 @@ impl World {
     pub fn new() -> Self {
         let mut creatures = IdMap::new();
         let mut map = Map::new();
-        let pc_id = Id::invalid(); // TEMP
-        /* TEMP
         let pc_id = creatures.add(library::player::player());
         map.place_at(pc_id, hex::ORIGIN).unwrap();
         let enemy_id = creatures.add(library::npc::Monopod::creature());
         map.place_at(enemy_id, Hex { x: -4, y: 1 }).unwrap();
         let enemy2_id = creatures.add(library::npc::Monopod::creature());
         map.place_at(enemy2_id, Hex { x: 4, y: -1 }).unwrap();
-        */
         let mut out = World {
             map: map,
             player_id: pc_id,
@@ -51,14 +52,7 @@ impl World {
             entity: Entity::new(),
             tracer: None,
         };
-        /* TEMP
-        out.execute(
-            &Action::ToCreature {
-                id: pc_id,
-                action: CreatureAction::NewHand,
-            }
-        );
-        */
+        out.execute(&to_creature(pc_id, action::NewHand));
         out
     }
 
@@ -82,6 +76,7 @@ impl World {
         GameState::Play
     }
 
+    // TODO: move to card.rs
     pub fn start_play(&self, creature_id: Id<Creature>, hand_ix: usize) -> Result<card::InPlay> {
         let creature = self.creatures.get(creature_id).ok_or(Error::NoSuchCreature)?;
         if hand_ix >= creature.hand.len() {
@@ -90,7 +85,7 @@ impl World {
         let (part_id, card_id) = creature.hand[hand_ix];
         let part = creature.parts.get(part_id).ok_or(Error::NoSuchPart)?;
         let card = part.cards.get(card_id).ok_or(Error::NoSuchCard)?;
-        let behavior = (card.start_play)(self, &creature_id, &part_id);
+        let behavior = (card.start_play)(self, &Path::Part { cid: creature_id, pid: part_id });
         Ok(card::InPlay {
             creature_id,
             part_id,
@@ -117,28 +112,26 @@ impl World {
         out
     }
 
-    pub fn finish_play(&mut self, in_play: card::InPlay, target: &Target) -> Vec<Event> {
-        let mut events = vec![];
-        /* TEMP
-        events.extend(self.execute(
-            &Action::ToCreature {
-                id: in_play.creature_id,
-                action: CreatureAction::Discard {
-                    part: in_play.part_id,
-                    card: in_play.card_id,
-                },
-            }
-        ));
-        events.extend(self.execute(&Action::normal(
-            Action::ToCreature {
-                id: in_play.creature_id,
-                action: CreatureAction::SpendAP { ap: in_play.ap_cost },
-            }
-        )));
-        if !Event::is_failure(&events) {
-            events.extend(in_play.behavior.apply(self, target));
+    // TODO: move to card.rs
+    pub fn finish_play(&mut self, in_play: card::InPlay, target: &Path) -> Vec<Event> {
+        let mut events = self.execute(&Meta {
+            source: Path::Global,
+            target: Path::Card { cid: in_play.creature_id, pid: in_play.part_id, card: in_play.card_id },
+            tags: HashSet::new(),
+            data: action::Discard,
+        });
+        let ap = self.execute(&Meta {
+            source: Path::Global,
+            target: Path::Creature { cid: in_play.creature_id },
+            tags: HashSet::from_iter(vec![Tag::Normal]),
+            data: action::SpendAP { ap: in_play.ap_cost },
+        });
+        let ap_failed = Event::is_failure(&ap);
+        events.extend(ap);
+        if !ap_failed {
+            let source = Path::Part { cid: in_play.creature_id, pid: in_play.part_id };
+            events.extend(in_play.behavior.apply(self, source, target.clone()));
         }
-        */
         events
     }
 
@@ -150,14 +143,7 @@ impl World {
         events.extend(self.refill(player_id));
 
         // Refresh player hand
-        /* TEMP
-        events.extend(self.execute(
-            &Action::ToCreature {
-                id: player_id,
-                action: CreatureAction::NewHand,
-            }
-        ));
-        */
+        events.extend(self.execute(&to_creature(player_id, action::NewHand)));
 
         // Player end turn triggers
         events.extend(self.system_event(event::PlayerTurnEnd));
@@ -179,23 +165,13 @@ impl World {
             };
             match result {
                 Ok(es) => events.extend(es),
-                Err(e) => events.push(Meta {
-                    source: Path::Global,
-                    target: Path::Creature { cid: id },
-                    tags: HashSet::new(),
-                    data: event::FloatText { text: format!("{}!", e) },
-                }),
+                Err(e) => events.push(to_creature(id, event::FloatText { text: format!("{}!", e) })),
             }
 
             // Action
             match intent.check_run(self, id) {
                 Ok(es) => events.extend(es),
-                Err(e) => events.push(Meta {
-                    source: Path::Global,
-                    target: Path::Creature { cid: id },
-                    tags: HashSet::new(),
-                    data: event::FloatText { text: format!("{}!", e) },
-                }),
+                Err(e) => events.push(to_creature(id, event::FloatText { text: format!("{}!", e) })),
             }
         }
 
@@ -239,22 +215,11 @@ impl World {
                 out.push(Event::failed(Error::Obstructed));
                 return out;
             }
-            /* TEMP
-            let mut mp_evs = self.execute(
-                &Action::normal(
-                    Action::ToCreature {
-                        id: creature_id,
-                        action: CreatureAction::SpendMP { mp: 1 },
-                    }
-                )
-            );
+            let mut mp_evs = self.execute(&to_creature(creature_id, action::SpendMP { mp: 1 }));
             let failed = Event::is_failure(&mp_evs);
             out.append(&mut mp_evs);
             if failed { return out; }
-            out.append(&mut self.execute(
-                &Action::MoveCreature { id: creature_id, to: *to }
-            ));
-            */
+            out.append(&mut self.execute(&to_creature(creature_id, action::Move { to: *to })));
         }
         out
     }
@@ -286,31 +251,8 @@ impl World {
     }
 
     fn entity_mut<T>(&mut self, meta: &Meta<T>, scope: Scope) -> Option<&mut Entity> {
-        match scope {
-            Scope::SourcePart => {
-                let (cid, pid) = meta.source.part()?;
-                let creature = self.creatures.get_mut(cid)?;
-                let part = creature.parts.get_mut(pid)?;
-                Some(&mut part.entity)
-            }
-            Scope::SourceCreature => {
-                let cid = meta.source.creature()?;
-                let creature = self.creatures.get_mut(cid)?;
-                Some(&mut creature.entity)
-            }
-            Scope::World => Some(&mut self.entity),
-            Scope::TargetCreature => {
-                let cid = meta.target.creature()?;
-                let creature = self.creatures.get_mut(cid)?;
-                Some(&mut creature.entity)
-            }
-            Scope::TargetPart => {
-                let (cid, pid) = meta.target.part()?;
-                let creature = self.creatures.get_mut(cid)?;
-                let part = creature.parts.get_mut(pid)?;
-                Some(&mut part.entity)
-            }
-        }
+        let path = scope.path(meta)?;
+        self.path_entity_mut(&path).ok()
     }
 
     fn path_entity_mut(&mut self, path: &Path) -> Result<&mut Entity> {
@@ -346,11 +288,19 @@ impl World {
                 if let Some(order) = self.entity_mut(&event, scope).map(|e| e.status_order()) {
                     for sid in order {
                         if skip.contains(&sid) { continue; }
-                        let actions = {
+                        let (mut actions, done) = {
                             let entity = self.entity_mut(&event, scope).unwrap();
                             let status = some_or!(entity.status.get_mut(sid), continue);
-                            status.trigger(sid, event)
+                            status.trigger(event)
                         };
+                        if done == StatusDone::Expire {
+                            actions.push(Action {
+                                source: Path::Global,
+                                target: scope.path(&event).unwrap(),
+                                tags: HashSet::new(),
+                                data: action::RemoveStatus { id: sid },
+                            });
+                        }
                         let mut sub_skip = skip.clone();
                         sub_skip.insert(sid);
                         for action in actions {
@@ -407,22 +357,12 @@ impl World {
             };
             (creature.max_ap() - creature.cur_ap, creature.max_mp() - creature.cur_mp)
         };
-        /* TEMP
         if fill_ap > 0 {
-            events.extend(self.execute(&Action::normal(
-                Action::ToCreature {
-                    id, action: CreatureAction::GainAP { ap: fill_ap }
-                }
-            )));
+            events.extend(self.execute(&to_creature(id, action::GainAP { ap: fill_ap })));
         }
         if fill_mp > 0 {
-            events.extend(self.execute(&Action::normal(
-                Action::ToCreature {
-                    id, action: CreatureAction::GainMP { mp: fill_mp }
-                }
-            )));
+            events.extend(self.execute(&to_creature(id, action::GainMP { mp: fill_mp })));
         }
-        */
         events
     }
 
@@ -489,4 +429,28 @@ enum Scope {
     World,
     TargetCreature,
     TargetPart,
+}
+
+impl Scope {
+    pub fn path<T>(&self, meta: &Meta<T>) -> Option<Path> {
+        match self {
+            Scope::SourcePart => {
+                let (cid, pid) = meta.source.part()?;
+                Some(Path::Part { cid, pid })
+            }
+            Scope::SourceCreature => {
+                let cid = meta.source.creature()?;
+                Some(Path::Creature { cid })
+            }
+            Scope::World => Some(Path::Global),
+            Scope::TargetCreature => {
+                let cid = meta.target.creature()?;
+                Some(Path::Creature { cid })
+            }
+            Scope::TargetPart => {
+                let (cid, pid) = meta.target.part()?;
+                Some(Path::Part { cid, pid })
+            }
+        }
+    }
 }

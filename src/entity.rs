@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use crate::{
-    action::{Action, Event},
+    action::{Action},
     id_map::IdMap,
     status::{Status, StatusId},
     some_or,

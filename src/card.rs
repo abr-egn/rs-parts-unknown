@@ -1,11 +1,11 @@
 use hex::Hex;
-use serde::{Deserialize, Serialize};
+use serde::{Serialize};
 use ts_data_derive::TsData;
 use wasm_bindgen::prelude::*;
 
 use crate::{
+    action::{Event, Path},
     creature::{Creature},
-    action::{Event},
     id_map::Id,
     part::{Part, PartTag},
     serde_empty,
@@ -19,7 +19,7 @@ pub struct Card {
     pub ap_cost: i32,
     // Contract: the world will not change between start_play and Behavior methods.
     #[serde(skip)]
-    pub start_play: fn(&World, &Id<Creature>, &Id<Part>) -> Box<dyn Behavior>,
+    pub start_play: fn(&World, &Path) -> Box<dyn Behavior>,
 }
 
 #[derive(Clone)]
@@ -46,24 +46,24 @@ pub trait Behavior: BehaviorClone {
     fn range(&self, world: &World) -> Vec<Hex>;
     // TASK: allow for multiple targets
     fn target_spec(&self) -> TargetSpec;
-    fn target_check(&self, world: &World, target: &Target) -> bool;
-    fn simulate(&self, world: &World, target: &Target) -> Vec<Event> {
+    fn target_check(&self, world: &World, source: &Path, target: &Path) -> bool;
+    fn preview(&self, world: &World, source: Path, target: Path) -> Vec<Event> {
         let mut tmp = world.clone();
         tmp.tracer = None;
-        self.apply(&mut tmp, target)
+        self.apply(&mut tmp, source, target)
     }
-    fn apply(&self, world: &mut World, target: &Target) -> Vec<Event>;
+    fn apply(&self, world: &mut World, source: Path, target: Path) -> Vec<Event>;
 }
 
 impl dyn Behavior {
-    pub fn target_valid(&self, world: &World, target: &Target) -> bool {
+    pub fn target_valid(&self, world: &World, source: &Path, target: &Path) -> bool {
         if !self.target_spec().matches(world, target) { return false; }
         let range = self.range(world);
         if !range.is_empty() {
             let pos = some_or!(target.hex(world), return false);
             if !range.contains(&pos) { return false; }
         }
-        self.target_check(world, target)
+        self.target_check(world, source, target)
     }
 }
 
@@ -80,13 +80,13 @@ pub enum TargetSpec {
 }
 
 impl TargetSpec {
-    pub fn matches(&self, world: &World, target: &Target) -> bool {
+    pub fn matches(&self, world: &World, target: &Path) -> bool {
         match (self, target) {
-            (TargetSpec::None, Target::None) => true,
-            (TargetSpec::Part { on_player, tags }, Target::Part { creature_id, part_id }) => {
-                if *on_player != (*creature_id == world.player_id()) { return false; }
-                let creature = some_or!(world.creatures().get(*creature_id), return false);
-                let part = some_or!(creature.parts.get(*part_id), return false);
+            (TargetSpec::None, Path::Global) => true,
+            (TargetSpec::Part { on_player, tags }, Path::Part { cid, pid }) => {
+                if *on_player != (*cid == world.player_id()) { return false; }
+                let creature = some_or!(world.creatures().get(*cid), return false);
+                let part = some_or!(creature.parts.get(*pid), return false);
                 for group in tags {
                     if group.iter().all(|tag| part.tags().contains(tag)) {
                         return true;
@@ -94,40 +94,8 @@ impl TargetSpec {
                 }
                 false
             }
-            (TargetSpec::Creature, Target::Creature { id }) => *id != world.player_id(),
+            (TargetSpec::Creature, Path::Creature { cid }) => *cid != world.player_id(),
             _ => false,
-        }
-    }
-}
-
-#[derive(Debug, Serialize, Deserialize, TsData)]
-pub enum Target {
-    #[serde(with = "serde_empty")]
-    None,
-    Part { creature_id: Id<Creature>, part_id: Id<Part> },
-    Creature { id: Id<Creature> },
-}
-
-impl Target {
-    pub fn hex(&self, world: &World) -> Option<Hex> {
-        match self {
-            Target::None => None,
-            Target::Part { creature_id: id, .. } |
-            Target::Creature { id } => {
-                world.map().creatures().get(id).cloned()
-            }
-        }
-    }
-    pub fn part(&self) -> Option<(Id<Creature>, Id<Part>)> {
-        match self {
-            Target::Part { creature_id, part_id } => Some((*creature_id, *part_id)),
-            _ => None
-        }
-    }
-    pub fn creature(&self) -> Option<Id<Creature>> {
-        match self {
-            Target::Creature { id } => Some(*id),
-            _ => None
         }
     }
 }

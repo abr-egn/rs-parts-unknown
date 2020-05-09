@@ -3,7 +3,7 @@ use std::{
 };
 
 use hex::Hex;
-use serde::{Serialize};
+use serde::{Deserialize, Serialize};
 use ts_data_derive::TsData;
 use wasm_bindgen::prelude::wasm_bindgen;
 
@@ -15,6 +15,7 @@ use crate::{
     part::{Part, PartTag, TagMod, TagModId},
     serde_empty,
     status::{Status, StatusId},
+    world::World,
 };
 
 #[derive(Debug, Clone)]
@@ -45,10 +46,10 @@ impl<T> Meta<T> {
     }
 }
 
-#[derive(Debug, Clone, Serialize, TsData)]
+#[derive(Debug, Clone, Serialize, Deserialize, TsData)]
 pub enum Path {
     #[serde(with="serde_empty")]
-    Global,
+    Global,  // TODO: rename to World
     Creature { cid: Id<Creature> },
     Part { cid: Id<Creature>, pid: Id<Part> },
     Card { cid: Id<Creature>, pid: Id<Part>, card: Id<Card> },
@@ -71,12 +72,16 @@ impl Path {
             _ => None,
         }
     }
+
+    pub fn hex(&self, world: &World) -> Option<Hex> {
+        self.creature().and_then(|cid| world.map().creatures().get(&cid).cloned())
+    }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash)]
 pub enum Tag {
     Attack,
-    Normal,
+    Normal,  // TODO: rename to NoRender
 }
 
 #[derive(Debug, Clone)]
@@ -171,5 +176,14 @@ impl Event {
             [Meta { data: EventData::Failed { .. }, .. }, ..] => true,
             _ => false,
         }
+    }
+}
+
+pub fn to_creature<T>(cid: Id<Creature>, data: T) -> Meta<T> {
+    Meta {
+        source: Path::Global,
+        target: Path::Creature { cid },
+        tags: HashSet::new(),
+        data,
     }
 }

@@ -1,11 +1,13 @@
+use std::collections::HashSet;
+
 use serde::{Serialize};
 use ts_data_derive::TsData;
 use wasm_bindgen::prelude::*;
 
 use crate::{
+    action::{Event, Meta, Path, Tag, action, event, to_creature},
     creature::{Creature},
     error::{Error, Result},
-    action::{Action, Event},
     id_map::Id,
     part::{Part, PartTag},
     serde_empty,
@@ -49,18 +51,12 @@ impl Intent {
     pub fn check_run(&self, world: &mut World, source: Id<Creature>) -> Result<Vec<Event>> {
         self.check(world, source)?;
         self.kind.check(world, source)?;
-        let mut events = vec![];
 
         // Execute cost
-        /* TEMP
-        let mut events = world.execute(&Action::normal(
-            Action::ToCreature {
-                id: source,
-                action: CreatureAction::SpendAP { ap: 1 },
-            }
-        ));
+        let mut act = to_creature(source, action::SpendAP { ap: 1 });
+        act.tags.insert(Tag::Normal);
+        let mut events = world.execute(&act);
         if Event::is_failure(&events) { return Ok(events); }
-        */
 
         // Execute action
         events.extend(self.kind.run(world, source, self.from));
@@ -110,22 +106,26 @@ impl IntentKind {
     }
 
     fn run(&self, world: &mut World, source: Id<Creature>, _part: Option<Id<Part>>) -> Vec<Event> {
-        /* TEMP
         match self {
             IntentKind::Attack { damage, .. } => {
                 let player_id = world.player_id();
-                let player = world.creatures().get(player_id).unwrap();
-                let mut open: Vec<_> = player.open_parts().collect();
-                if open.is_empty() { return vec![]; }
-                open.sort_by(|(_, a), (_, b)| a.cur_hp.cmp(&b.cur_hp));
-                let (pid, _) = open.first().unwrap();
-                let hit = Action::to_part(player_id, *pid, PartAction::Hit { damage: *damage });
-                world.execute(&hit)
+                let pid = {
+                    let player = world.creatures().get(player_id).unwrap();
+                    let mut open: Vec<_> = player.open_parts().collect();
+                    if open.is_empty() { return vec![]; }
+                    open.sort_by(|(_, a), (_, b)| a.cur_hp.cmp(&b.cur_hp));
+                    let (pid, _) = open.first().unwrap();
+                    *pid
+                };
+                world.execute(&Meta {
+                    source: Path::Creature { cid: source },
+                    target: Path::Part { cid: player_id, pid },
+                    tags: HashSet::new(), // TODO: attack
+                    data: action::Hit { damage: *damage },
+                })
             }
-            IntentKind::Stunned => vec![Event::FloatText { on: source, text: "Stunned!".into() }]
+            IntentKind::Stunned => vec![to_creature(source, event::FloatText { text: "Stunned!".into() })]
         }
-        */
-        unimplemented!()
     }
 }
 

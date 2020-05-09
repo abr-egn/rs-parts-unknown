@@ -134,29 +134,10 @@ pub enum PartTag {
     Arm, Leg,
 }
 
-/*
+/* TASK
 #[derive(Debug, Clone)]
 pub struct Joint {
     required: HashSet<PartTag>,
     attached: Option<Id<Part>>,
-}
-*/
-
-/* TEMP
-pub trait WorldExt {
-    fn add_mod(&mut self, cid: Id<Creature>, pid: Id<Part>, m: TagMod) -> (TagModId, Vec<Event>);
-}
-
-impl WorldExt for World {
-    fn add_mod(&mut self, cid: Id<Creature>, pid: Id<Part>, m: TagMod) -> (TagModId, Vec<Event>) {
-        let events = self.execute(&Action::to_part(
-            cid, pid,
-            PartAction::AddTagMod { m }
-        ));
-        let mod_id = events[0].on_part()
-            .and_then(|(_, _, event)| event.tags_modded())
-            .unwrap();
-        (mod_id, events)
-    }
 }
 */
