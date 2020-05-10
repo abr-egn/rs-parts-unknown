@@ -30,6 +30,15 @@ div.bottom {
     transform: translate(-50%, 0);
 }
 
+button {
+    color: #00A000;
+    background-color: black;
+    border-color: #00A000;
+    border-radius: 15px;
+}
+
+/* Cards */
+
 .hand {
     display: flex;
     justify-content: center;
@@ -73,73 +82,26 @@ div.bottom {
     margin: 5px;
 }
 
+.card.playable:hover {
+    cursor: default;
+    transform: translate(0, -50px);
+}
+
+.unplayable {
+    color: #004000;
+}
+
+.unplayable.highlight {
+    border: 1px solid gray;
+}
+
+/* UI Widgets */
+
 .uibox {
     border: 1px solid #006000;
     border-radius: 10px;
     margin: 5px;
     padding: 5px;
-}
-
-.title {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%,-50%);
-}
-
-.title button {
-    display: block;
-    margin: auto;
-}
-
-.title .letters {
-    font-size: 42;
-}
-
-.title .text {
-    color: black;
-    display: inline-block;
-    animation-name: titleAnim;
-    animation-duration: 15s;
-    animation-iteration-count: infinite;
-}
-
-button {
-    color: #00A000;
-    background-color: black;
-    border-color: #00A000;
-    border-radius: 15px;
-}
-
-@keyframes titleAnim {
-    0% {
-        color: black;
-        transform: translate(0px, -50%);
-    }
-    25% {
-        color: green;
-        transform: translate(0px, 0px);
-    }
-    75% {
-        color: green;
-        transform: translate(0px, 0px);
-    }
-    80% {
-        color: black;
-    }
-    100% {
-        color: black;
-    }
-    /*
-    50% {
-        color: black;
-        transform: translate(0px, 50%);
-    }
-    51% {
-        color: black;
-        transform: translate(0px, 0px);
-    }
-    */
 }
 
 .gameOver {
@@ -200,35 +162,67 @@ button {
     padding: 5px;
 }
 
+/* Creature Stats */
+
 .part {
     border: 1px solid black;
     border-radius: 10px;
     padding: 5px;
 }
 
-/* Modifiers */
-
-.playable:hover {
-    border: 1px solid white;
-    animation-name: throbble;
-    animation-duration: 0.8s;
-    animation-iteration-count: infinite;
-    animation-direction: alternate;
-    cursor: default;
-}
-
-.unplayable {
-    color: #004000;
-}
-
-.unplayable.highlight {
-    border: 1px solid gray;
-}
-
 .partOpen {
     border: 1px solid #006000;
     border-radius: 10px;
 }
+
+/* Title Screen */
+
+.title {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+}
+
+.title button {
+    display: block;
+    margin: auto;
+}
+
+.title .letters {
+    font-size: 42;
+}
+
+.title .text {
+    color: black;
+    display: inline-block;
+    animation-name: titleAnim;
+    animation-duration: 15s;
+    animation-iteration-count: infinite;
+}
+
+@keyframes titleAnim {
+    0% {
+        color: black;
+        transform: translate(0px, -50%);
+    }
+    25% {
+        color: green;
+        transform: translate(0px, 0px);
+    }
+    75% {
+        color: green;
+        transform: translate(0px, 0px);
+    }
+    80% {
+        color: black;
+    }
+    100% {
+        color: black;
+    }
+}
+
+/* Modifiers */
 
 .highlight {
     border: 1px solid #00FF00;
