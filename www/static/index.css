@@ -179,10 +179,11 @@ button {
 /* Modifiers */
 
 .playable:hover {
-    border: 1px solid #A0FFA0;
+    border: 1px solid white;
     animation-name: throbble;
     animation-duration: 0.8s;
     animation-iteration-count: infinite;
+    animation-direction: alternate;
     cursor: default;
 }
 
@@ -204,12 +205,13 @@ button {
 }
 
 .throb {
-    border: 1px solid #A0FFA0;
+    border: 1px solid white;
     animation-name: throbble;
     animation-duration: 0.8s;
     animation-iteration-count: infinite;
+    animation-direction: alternate;
 }
 
 @keyframes throbble {
-    0% { border: 1px solid green; }
+    0% { border: 1px solid #006000; }
 }
