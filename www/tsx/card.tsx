@@ -61,7 +61,7 @@ export function Hand(props: {
                     <div className="cost">{card.apCost}</div>
                 </div>
                 <div className="picture"></div>
-                <div className="cardtext">Lorem Ipsum</div>
+                <div className="cardtext">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do...</div>
             </div>
         );
     });

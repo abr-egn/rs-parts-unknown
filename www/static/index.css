@@ -42,7 +42,7 @@ button {
 .hand {
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-end;
 }
 
 .card {
@@ -79,16 +79,18 @@ button {
 }
 
 .card .cardtext {
-    margin: 5px;
+    margin: 10px;
+    height: 100px;
+    font-size: small;
 }
 
 .card.playable:hover {
     cursor: default;
-    transform: translate(0, -50px);
+    transform: translate(0, -100px) scale(1.5, 1.5);
 }
 
-.unplayable {
-    color: #004000;
+.card.unplayable {
+    background: #a09f91;
 }
 
 .unplayable.highlight {
