@@ -23,6 +23,13 @@ div.topright {
     right: 10px;
 }
 
+div.bottom {
+    position: absolute;
+    left: 50%;
+    bottom: 10px;
+    transform: translate(-50%, 0);
+}
+
 .uibox {
     border: 1px solid #006000;
     border-radius: 10px;

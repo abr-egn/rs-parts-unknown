@@ -11,6 +11,7 @@ import {CardList} from "./card";
 import {CreatureStats} from "./creature";
 import {StackData} from "./index";
 import {WorldContext} from "./level";
+import {RootPortal} from "./root";
 
 export function PlayerControls(props: {}): JSX.Element {
     const world = React.useContext(WorldContext);
@@ -35,13 +36,15 @@ export function PlayerControls(props: {}): JSX.Element {
         <CreatureStats
             creature={player}
         />
-        <div>
-            Hand:
-            <CardList
-                active={hasAp && baseActive}
-                cards={player.hand}
-            />
-        </div>
+        <RootPortal>
+            <div className="bottom">
+                Hand:
+                <CardList
+                    active={hasAp && baseActive}
+                    cards={player.hand}
+                />
+            </div>
+        </RootPortal>
         {inPlay && <div>Playing: {play?.card.name}</div>}
         {baseActive && <EndTurnButton/>}
         {baseActive && hasMp && <button onClick={movePlayer}>Move</button>}
