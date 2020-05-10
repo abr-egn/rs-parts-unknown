@@ -128,8 +128,11 @@ export namespace LevelState {
         }
         
         makeFloat(event: Readonly<wasm.Event>): FloatText.Item | undefined {
+            if (event.tags.includes("Normal")) {
+                return undefined;
+            }
             let cid = pathCreature(event.target);
-            if (!cid) { return undefined; }
+            if (cid == undefined) { return undefined; }
             let pos = this.board.creatureCoords(cid)!;
             pos = new DOMPoint(pos.x, pos.y);  // clone
             let creature = this.world.getCreature(cid)!;

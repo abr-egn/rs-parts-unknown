@@ -213,7 +213,12 @@ impl World {
                 out.push(Event::failed(Error::Obstructed));
                 return out;
             }
-            let mut mp_evs = self.execute(&to_creature(creature_id, action::SpendMP { mp: 1 }));
+            let mut mp_evs = self.execute(&Action {
+                source: Path::Global,
+                target: Path::Creature { cid: creature_id },
+                tags: HashSet::from_iter(vec![Tag::Normal]),
+                data: action::SpendMP { mp: 1 },
+            });
             let failed = Event::is_failure(&mp_evs);
             out.append(&mut mp_evs);
             if failed { return out; }
@@ -358,10 +363,20 @@ impl World {
             (creature.max_ap() - creature.cur_ap, creature.max_mp() - creature.cur_mp)
         };
         if fill_ap > 0 {
-            events.extend(self.execute(&to_creature(id, action::GainAP { ap: fill_ap })));
+            events.extend(self.execute(&Action {
+                source: Path::Global,
+                target: Path::Creature{ cid: id },
+                tags: HashSet::from_iter(vec![Tag::Normal]),
+                data: action::GainAP { ap: fill_ap }
+            }));
         }
         if fill_mp > 0 {
-            events.extend(self.execute(&to_creature(id, action::GainMP { mp: fill_mp })));
+            events.extend(self.execute(&Action {
+                source: Path::Global,
+                target: Path::Creature{ cid: id },
+                tags: HashSet::from_iter(vec![Tag::Normal]),
+                data: action::GainMP { mp: fill_mp }
+            }));
         }
         events
     }
