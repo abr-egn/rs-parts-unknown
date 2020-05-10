@@ -125,7 +125,7 @@ pub type TagModId = Id<TagMod>;
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, TsData)]
 pub enum PartTag {
     // State
-    Vital, Broken, Open,
+    Vital, Broken, Open /* TODO: replace with Guarded */,
     // Universal: shape
     Head, Torso, Limb,
     // Universal: material

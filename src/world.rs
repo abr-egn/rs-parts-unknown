@@ -151,6 +151,7 @@ impl World {
         // NPC turns
         let mut npc_plays = vec![];
         for (&id, creature) in &self.creatures {
+            if creature.dead { continue; }
             if let Some(npc) = &creature.npc {
                 npc_plays.push((id, npc.intent.clone()));
             }
@@ -284,16 +285,24 @@ impl World {
     fn apply_triggers(&mut self, skip: &HashSet<(Path, StatusId)>, events: &[Event]) -> Vec<Event> {
         let mut out = vec![];
         for event in events {
+            let mut scoped = HashSet::new();
             for scope in Scope::into_enum_iter() {
-                out.extend(self.apply_triggers_ev(skip, event, scope));
+                let path = some_or!(scope.path(event), continue);
+                scoped.insert(path.clone());
+                out.extend(self.apply_triggers_path(skip, event, &path));
+            }
+            if event.is_global() {
+                for path in self.all_entity_paths() {
+                    if scoped.contains(&path) { continue; }
+                    out.extend(self.apply_triggers_path(skip, event, &path));
+                }
             }
         }
         out
     }
 
-    fn apply_triggers_ev(&mut self, skip: &HashSet<(Path, StatusId)>, event: &Event, scope: Scope) -> Vec<Event> {
+    fn apply_triggers_path(&mut self, skip: &HashSet<(Path, StatusId)>, event: &Event, path: &Path) -> Vec<Event> {
         let mut out = vec![];
-        let path = some_or!(scope.path(event), return vec![]);
         let order = some_or!(self.entity_mut(&path).map(|e| e.trigger_order()).ok(), return out);
         for sid in order {
             if skip.contains(&(path.clone(), sid)) { continue; }
@@ -305,7 +314,7 @@ impl World {
             if done == StatusDone::Expire {
                 actions.push(Action {
                     source: Path::Global,
-                    target: scope.path(&event).unwrap(),
+                    target: path.clone(),
                     tags: HashSet::new(),
                     data: action::RemoveStatus { id: sid },
                 });
@@ -402,6 +411,7 @@ impl World {
         for id in ids {
             let mut npc = {
                 let creature = self.creatures.get(id).unwrap();
+                if creature.dead { continue; }
                 match &creature.npc {
                     Some(n) => n.clone(),
                     None => continue,
@@ -411,6 +421,18 @@ impl World {
             let creature = self.creatures.get_mut(id).unwrap();
             *creature.npc_mut().unwrap() = npc;
         }
+    }
+
+    fn all_entity_paths(&self) -> Vec<Path> {
+        let mut out = vec![];
+        out.push(Path::Global);
+        for (&cid, creature) in &self.creatures {
+            out.push(Path::Creature { cid });
+            for &pid in creature.parts.keys() {
+                out.push(Path::Part { cid, pid })
+            }
+        }
+        out
     }
 }
 

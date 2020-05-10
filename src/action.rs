@@ -132,7 +132,6 @@ pub enum EventData {
     PlayerTurnEnd,
     #[serde(with = "serde_empty")]
     NpcTurnEnd,
-    FloatText { text: String },
 
     // Entity
     StatusAdded { id: StatusId },
@@ -159,6 +158,19 @@ pub enum EventData {
     TagsCleared { tags: Vec<PartTag> },
     TagsModded { id: TagModId },
     TagsUnmodded { id: TagModId },
+
+    // Cosmetic
+    FloatText { text: String },
+}
+
+impl EventData {
+    pub fn is_global(&self) -> bool {
+        match self {
+            EventData::PlayerTurnEnd => true,
+            EventData::NpcTurnEnd => true,
+            _ => false,
+        }
+    }
 }
 
 pub mod event {
@@ -166,6 +178,10 @@ pub mod event {
 }
 
 pub type Event = Meta<EventData>;
+
+impl Event {
+    pub fn is_global(&self) -> bool { self.data.is_global() }
+}
 
 impl Event {
     pub fn failed(err: Error) -> Event {

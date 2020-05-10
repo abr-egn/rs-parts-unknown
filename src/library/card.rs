@@ -66,7 +66,7 @@ impl card::Behavior for HitPartBehavior {
         }));
         out.extend(world.execute(&Action {
             source, target,
-            tags: HashSet::from_iter(vec![Tag::Attack]),
+            tags: HashSet::from_iter(vec![Tag::Attack]),  // TODO: melee tag
             data: action::Hit { damage: self.damage },
         }));
         out
