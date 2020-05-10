@@ -55,8 +55,13 @@ export function Hand(props: {
                 onMouseLeave={(ev) => onCardLeave(card, ev)}
                 onMouseDown={onClick}
                 className={classes.join(" ")}
-                >
-                [{card.apCost}] {card.name}
+            >
+                <div className="titlebar">
+                    <div className="name">{card.name}</div>
+                    <div className="cost">{card.apCost}</div>
+                </div>
+                <div className="picture"></div>
+                <div className="cardtext">Lorem Ipsum</div>
             </div>
         );
     });

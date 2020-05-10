@@ -38,9 +38,39 @@ div.bottom {
 
 .card {
     width: 150px;
-    height: 200px;
+    height: 240px;
     border: 1px solid #006000;
     margin: 10px;
+    color: black;
+    background: #fffee8;
+    border-radius: 5px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+}
+
+.card .titlebar {
+    display: flex;
+    flex-direction: row;
+    margin-left: 5px;
+    margin-right: 5px;
+}
+
+.card .name {
+    align-self: center;
+    flex-grow: 1;
+}
+
+.card .picture {
+    width: 130px;
+    height: 100px;
+    border: 1px solid #006000;
+    background: black;
+    align-self: center;
+}
+
+.card .cardtext {
+    margin: 5px;
 }
 
 .uibox {
