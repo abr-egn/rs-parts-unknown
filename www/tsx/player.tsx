@@ -7,7 +7,7 @@ import {LevelState} from "../ts/states/level";
 import {PlayCardState} from "../ts/states/play_card";
 import {MovePlayerState} from "../ts/states/move_player";
 
-import {CardList} from "./card";
+import {Hand} from "./card";
 import {CreatureStats} from "./creature";
 import {StackData} from "./index";
 import {WorldContext} from "./level";
@@ -38,8 +38,7 @@ export function PlayerControls(props: {}): JSX.Element {
         />
         <RootPortal>
             <div className="bottom">
-                Hand:
-                <CardList
+                <Hand
                     active={hasAp && baseActive}
                     cards={player.hand}
                 />

@@ -8,7 +8,7 @@ import {Id} from "../wasm";
 import {StackData} from "./index";
 import {WorldContext} from "./level";
 
-export function CardList(props: {
+export function Hand(props: {
     active: boolean,
     cards: wasm.Card[],
 }): JSX.Element {
@@ -50,15 +50,15 @@ export function CardList(props: {
             }
         }
         return (
-            <li key={cardKey(card)}
+            <div key={cardKey(card)}
                 onMouseEnter={(ev) => onCardEnter(card, ev)}
                 onMouseLeave={(ev) => onCardLeave(card, ev)}
                 onMouseDown={onClick}
                 className={classes.join(" ")}
                 >
                 [{card.apCost}] {card.name}
-            </li>
+            </div>
         );
     });
-    return <ul>{list}</ul>;
+    return <div className="hand">{list}</div>;
   }

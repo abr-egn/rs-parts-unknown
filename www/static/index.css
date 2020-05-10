@@ -26,8 +26,21 @@ div.topright {
 div.bottom {
     position: absolute;
     left: 50%;
-    bottom: 10px;
+    bottom: 0px;
     transform: translate(-50%, 0);
+}
+
+.hand {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.card {
+    width: 150px;
+    height: 200px;
+    border: 1px solid #006000;
+    margin: 10px;
 }
 
 .uibox {
@@ -155,10 +168,6 @@ button {
     background-color: rgba(0, 0, 0, 0.5);
     margin: 0px;
     padding: 5px;
-}
-
-.card {
-    border: 1px solid black;
 }
 
 .part {
