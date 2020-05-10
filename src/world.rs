@@ -303,7 +303,7 @@ impl World {
         for sid in order {
             if skip.contains(&(path.clone(), sid)) { continue; }
             let (mut actions, done) = {
-                let entity = self.entity_mut(&event, scope).unwrap();
+                let entity = some_or!(self.entity_mut(&event, scope), continue);
                 let status = some_or!(entity.status.get_mut(sid), continue);
                 status.trigger(event)
             };
