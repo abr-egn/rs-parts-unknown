@@ -11,6 +11,7 @@ import {WorldContext} from "./level";
 export function Hand(props: {
     active: boolean,
     cards: wasm.Card[],
+    playing?: wasm.Card,
 }): JSX.Element {
     const world = React.useContext(WorldContext);
     const data = React.useContext(StackData);
@@ -27,10 +28,16 @@ export function Hand(props: {
         return `(${card.creatureId},${card.partId},${card.id})`;
     };
     const onCardEnter = (card: wasm.Card, event: React.MouseEvent) => {
-        focus?.part?.onEnter?.([card.creatureId, card.partId]);
+        const playable = props.active && canPlay(card);
+        if (playable) {
+            focus?.part?.onEnter?.([card.creatureId, card.partId]);
+        }
     };
     const onCardLeave = (card: wasm.Card, event: React.MouseEvent) => {
-        focus?.part?.onLeave?.([card.creatureId, card.partId]);
+        const playable = props.active && canPlay(card);
+        if (playable) {
+            focus?.part?.onLeave?.([card.creatureId, card.partId]);
+        }
     }
   
     const list = props.cards.map((card, ix) => {
@@ -45,12 +52,14 @@ export function Hand(props: {
             onClick = () => startPlay(card.creatureId, ix);
             lit = Boolean(highlight?.static.parts.get(card.creatureId)?.has(card.partId));
         } else {
-            classes.push("unplayable");
+            if (props.playing?.creatureId == card.creatureId && props.playing.id == card.id) {
+                classes.push("playing");
+            } else {
+                classes.push("unplayable");
+            }
             lit = Boolean(highlight?.throb.parts.get(card.creatureId)?.has(card.partId));
         }
-        let partclass = "cardpart";
         if (lit) {
-            //partclass = partclass + " lit";
             classes.push("lit");
         }
         return (
@@ -65,7 +74,7 @@ export function Hand(props: {
                 </div>
                 <div className="picture"></div>
                 <div className="databar">
-                    <div className={partclass}>{part.name}</div>
+                    <div className="cardpart">{part.name}</div>
                     <div className="cost">{card.apCost}</div>
                 </div>
                 <div className="cardtext">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do...</div>

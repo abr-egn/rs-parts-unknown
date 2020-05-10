@@ -41,6 +41,7 @@ export function PlayerControls(props: {}): JSX.Element {
                 <Hand
                     active={hasAp && baseActive}
                     cards={player.hand}
+                    playing={play?.card}
                 />
             </div>
         </RootPortal>
