@@ -57,6 +57,7 @@ impl Creature {
     // Accessors
 
     pub fn max_ap(&self) -> i32 {
+        if self.dead { return 0; }
         self.parts.values()
             .filter(|part| !part.tags().contains(&PartTag::Broken))
             .map(|part| part.thought)
@@ -71,6 +72,7 @@ impl Creature {
     }
 
     pub fn max_mp(&self) -> i32 {
+        if self.dead { return 0; }
         let val = self.parts.values()
             .filter(|part| !part.tags().contains(&PartTag::Broken))
             .map(|part| part.mp)
