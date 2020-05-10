@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 use crate::{
-    action::{Action},
+    action::{Action, Path},
     id_map::IdMap,
     status::{Status, StatusId},
     some_or,
@@ -29,7 +29,7 @@ impl Entity {
         tmp.into_iter().map(|(id, _)| *id).collect()
     }
 
-    pub fn apply_alters(&mut self, action: &Action) -> Action {
+    pub fn apply_alters(&mut self, on: &Path, action: &Action) -> Action {
         let mut action = action.clone();
         let order = self.alter_order();
         let mut skip: HashSet<StatusId> = HashSet::new();
@@ -38,7 +38,7 @@ impl Entity {
             for id in &order {
                 if skip.contains(id) { continue; }
                 let status = some_or!(self.status.get_mut(*id), continue);
-                match status.alter(&action) {
+                match status.alter(on, &action) {
                     Some(new) => {
                         action = new;
                         skip.insert(*id);

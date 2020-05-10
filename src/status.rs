@@ -1,5 +1,5 @@
 use crate::{
-    action::{Action, Event},
+    action::{Action, Event, Path},
     id_map::Id,
 };
 
@@ -8,8 +8,8 @@ pub trait Status: StatusClone + std::fmt::Debug {
     fn kind(&self) -> StatusKind;
     fn alter_order(&self) -> AlterOrder { AlterOrder::Misc }
     fn trigger_order(&self) -> TriggerOrder { TriggerOrder::Misc }
-    fn alter(&mut self, _action: &Action) -> Option<Action> { None }
-    fn trigger(&mut self, _event: &Event) -> (Vec<Action>, StatusDone) { (vec![], StatusDone::Continue) }
+    fn alter(&mut self, _on: &Path, _action: &Action) -> Option<Action> { None }
+    fn trigger(&mut self, _on: &Path, _event: &Event) -> (Vec<Action>, StatusDone) { (vec![], StatusDone::Continue) }
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]

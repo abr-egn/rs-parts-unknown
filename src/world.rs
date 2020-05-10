@@ -255,12 +255,7 @@ impl World {
         out
     }
 
-    fn entity_mut<T>(&mut self, meta: &Meta<T>, scope: Scope) -> Option<&mut Entity> {
-        let path = scope.path(meta)?;
-        self.path_entity_mut(&path).ok()
-    }
-
-    fn path_entity_mut(&mut self, path: &Path) -> Result<&mut Entity> {
+    fn entity_mut(&mut self, path: &Path) -> Result<&mut Entity> {
         match path {
             Path::Global => Ok(&mut self.entity),
             Path::Creature { cid } | Path::Card { cid, .. } => {
@@ -278,9 +273,9 @@ impl World {
     fn apply_alters(&mut self, action: &Action) -> Action {
         let mut action = action.clone();
         for scope in Scope::into_enum_iter() {
-            if let Some(entity) = self.entity_mut(&action, scope) {
-                action = entity.apply_alters(&action);
-            }
+            let path = some_or!(scope.path(&action), continue);
+            let entity = some_or!(self.entity_mut(&path).ok(), continue);
+            action = entity.apply_alters(&path, &action);
         }
 
         action
@@ -299,13 +294,13 @@ impl World {
     fn apply_triggers_ev(&mut self, skip: &HashSet<(Path, StatusId)>, event: &Event, scope: Scope) -> Vec<Event> {
         let mut out = vec![];
         let path = some_or!(scope.path(event), return vec![]);
-        let order = some_or!(self.entity_mut(event, scope).map(|e| e.trigger_order()), return out);
+        let order = some_or!(self.entity_mut(&path).map(|e| e.trigger_order()).ok(), return out);
         for sid in order {
             if skip.contains(&(path.clone(), sid)) { continue; }
             let (mut actions, done) = {
-                let entity = some_or!(self.entity_mut(&event, scope), continue);
+                let entity = some_or!(self.entity_mut(&path).ok(), continue);
                 let status = some_or!(entity.status.get_mut(sid), continue);
-                status.trigger(event)
+                status.trigger(&path, event)
             };
             if done == StatusDone::Expire {
                 actions.push(Action {
@@ -332,12 +327,12 @@ impl World {
             action::Fail { description } => return simple(event::Failed { description: description.clone() }),
             // Entity
             action::AddStatus { status } => {
-                let entity = self.path_entity_mut(&action.target)?;
+                let entity = self.entity_mut(&action.target)?;
                 let id = entity.status.add(status.clone());
                 return simple(event::StatusAdded { id });
             }
             action::RemoveStatus { id } => {
-                let entity = self.path_entity_mut(&action.target)?;
+                let entity = self.entity_mut(&action.target)?;
                 entity.status.remove(*id).ok_or(Error::NoSuchStatus)?;
                 return simple(event::StatusRemoved { id: *id });
             }

@@ -236,7 +236,7 @@ interface World {
 
     // Updates
 
-    finishPlay(inPlay: InPlay, target: Target): [World, Event[]];
+    finishPlay(inPlay: InPlay, target: Path): [World, Event[]];
     npcTurn(): [World, Event[]];
     movePlayer(to: Hex): [World, Event[]];
 

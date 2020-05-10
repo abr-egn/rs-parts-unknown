@@ -13,7 +13,7 @@ use crate::{
     id_map::Id,
     mod_stack::Mod,
     part::{Part, PartTag, TagMod},
-    status::{Status, StatusDone, StatusKind},
+    status::{AlterOrder, Status, StatusDone, StatusKind},
     world::World,
 };
 
@@ -143,7 +143,7 @@ impl<When> std::fmt::Debug for Expire<When> {
 impl<When: Fn(&Event) -> bool + Clone + 'static> Status for Expire<When> {
     fn name(&self) -> &'static str { "Expire" }
     fn kind(&self) -> StatusKind { StatusKind::Hidden }
-    fn trigger(&mut self, event: &Event) -> (Vec<Action>, StatusDone) {
+    fn trigger(&mut self, _on: &Path, event: &Event) -> (Vec<Action>, StatusDone) {
         if !(self.when)(event) { return (vec![], StatusDone::Continue); }
         (self.remove.clone(), StatusDone::Expire)
     }
@@ -265,6 +265,45 @@ impl card::Behavior for Heal {
             tags: HashSet::new(),
             data: action::Heal { hp: self.amount },
         })
+    }
+}
+
+pub fn rage() -> Card {
+    Card {
+        name: "Rage".into(),
+        ap_cost: 1,
+        start_play: |_, _| Box::new(Rage)
+    }
+}
+
+#[derive(Debug, Clone)]
+struct Rage;
+
+impl card::Behavior for Rage {
+    fn range(&self, _world: &World) -> Vec<Hex> { vec![] }
+    fn target_spec(&self) -> TargetSpec { TargetSpec::None }
+    fn target_check(&self, _world: &World, _source: &Path, _target: &Path) -> bool { true }
+    fn apply(&self, world: &mut World, source: Path, _target: Path) -> Vec<Event> {
+        let cid = source.creature().unwrap();
+        world.execute(&Action {
+            source,
+            target: Path::Creature { cid },
+            tags: HashSet::new(),
+            data: action::AddStatus { status: Box::new(Rage) },
+        })
+    }
+}
+
+impl Status for Rage {
+    fn name(&self) -> &'static str { "Rage" }
+    fn kind(&self) -> StatusKind { StatusKind::Buff }
+    fn alter_order(&self) -> AlterOrder { AlterOrder::Add }
+    fn alter(&mut self, on: &Path, action: &Action) -> Option<Action> {
+        if on.creature() != action.source.creature() { return None; }
+        match action.data {
+            action::Hit { damage } => Some(action.carry(action::Hit { damage: damage + 7 })),
+            _ => None
+        }
     }
 }
 

@@ -50,8 +50,8 @@ impl InPlay {
 const INPLAY_TS: &'static str = r#"
 interface InPlay {
     range(world: World): Hex[];
-    targetValid(world: World, target: Target): boolean;
-    preview(world: World, target: Target): Event[];
+    targetValid(world: World, target: Path): boolean;
+    preview(world: World, target: Path): Event[];
     getTargetSpec(): TargetSpec;
 }
 "#;
