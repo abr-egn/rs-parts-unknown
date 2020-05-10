@@ -232,7 +232,7 @@ impl World {
     fn execute_(
         &mut self,
         action: &Action,
-        skip: &HashSet<StatusId>,
+        skip: &HashSet<(Path, StatusId)>,
     ) -> Vec<Event> {
         let action = self.apply_alters(action);
         let mut out = vec![];
@@ -286,33 +286,39 @@ impl World {
         action
     }
 
-    fn apply_triggers(&mut self, skip: &HashSet<StatusId>, events: &[Event]) -> Vec<Event> {
+    fn apply_triggers(&mut self, skip: &HashSet<(Path, StatusId)>, events: &[Event]) -> Vec<Event> {
         let mut out = vec![];
         for event in events {
             for scope in Scope::into_enum_iter() {
-                if let Some(order) = self.entity_mut(&event, scope).map(|e| e.status_order()) {
-                    for sid in order {
-                        if skip.contains(&sid) { continue; }
-                        let (mut actions, done) = {
-                            let entity = self.entity_mut(&event, scope).unwrap();
-                            let status = some_or!(entity.status.get_mut(sid), continue);
-                            status.trigger(event)
-                        };
-                        if done == StatusDone::Expire {
-                            actions.push(Action {
-                                source: Path::Global,
-                                target: scope.path(&event).unwrap(),
-                                tags: HashSet::new(),
-                                data: action::RemoveStatus { id: sid },
-                            });
-                        }
-                        let mut sub_skip = skip.clone();
-                        sub_skip.insert(sid);
-                        for action in actions {
-                            out.extend(self.execute_(&action, &sub_skip))
-                        }
-                    }
-                }
+                out.extend(self.apply_triggers_ev(skip, event, scope));
+            }
+        }
+        out
+    }
+
+    fn apply_triggers_ev(&mut self, skip: &HashSet<(Path, StatusId)>, event: &Event, scope: Scope) -> Vec<Event> {
+        let mut out = vec![];
+        let path = some_or!(scope.path(event), return vec![]);
+        let order = some_or!(self.entity_mut(event, scope).map(|e| e.trigger_order()), return out);
+        for sid in order {
+            if skip.contains(&(path.clone(), sid)) { continue; }
+            let (mut actions, done) = {
+                let entity = self.entity_mut(&event, scope).unwrap();
+                let status = some_or!(entity.status.get_mut(sid), continue);
+                status.trigger(event)
+            };
+            if done == StatusDone::Expire {
+                actions.push(Action {
+                    source: Path::Global,
+                    target: scope.path(&event).unwrap(),
+                    tags: HashSet::new(),
+                    data: action::RemoveStatus { id: sid },
+                });
+            }
+            let mut sub_skip = skip.clone();
+            sub_skip.insert((path.clone(), sid));
+            for action in actions {
+                out.extend(self.execute_(&action, &sub_skip))
             }
         }
         out

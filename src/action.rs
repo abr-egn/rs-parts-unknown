@@ -46,7 +46,7 @@ impl<T> Meta<T> {
     }
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize, TsData)]
+#[derive(Debug, Clone, Serialize, Deserialize, TsData, PartialEq, Eq, Hash)]
 pub enum Path {
     #[serde(with="serde_empty")]
     Global,  // TODO: rename to World

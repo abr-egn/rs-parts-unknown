@@ -6,7 +6,8 @@ use crate::{
 pub trait Status: StatusClone + std::fmt::Debug {
     fn name(&self) -> &'static str;
     fn kind(&self) -> StatusKind;
-    fn order(&self) -> StatusOrder { StatusOrder::Misc }
+    fn alter_order(&self) -> AlterOrder { AlterOrder::Misc }
+    fn trigger_order(&self) -> TriggerOrder { TriggerOrder::Misc }
     fn alter(&mut self, _action: &Action) -> Option<Action> { None }
     fn trigger(&mut self, _event: &Event) -> (Vec<Action>, StatusDone) { (vec![], StatusDone::Continue) }
 }
@@ -19,7 +20,14 @@ pub enum StatusKind {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
-pub enum StatusOrder {
+pub enum AlterOrder {
+    Mul,
+    Add,
+    Misc,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub enum TriggerOrder {
     Misc,
 }
 
