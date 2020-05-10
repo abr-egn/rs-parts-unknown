@@ -48,7 +48,6 @@ button {
 .card {
     width: 150px;
     height: 240px;
-    border: 1px solid #006000;
     margin: 10px;
     color: black;
     background: #fffee8;
@@ -56,18 +55,22 @@ button {
     display: flex;
     flex-direction: column;
     justify-content: flex-start;
+    box-shadow: -1px 1px 2px #000,
+				  1px 1px 2px #000,
+				  1px -1px 0 #000,
+                  -1px -1px 0 #000;
 }
 
-.card .titlebar {
+.card .databar {
     display: flex;
     flex-direction: row;
     margin-left: 5px;
     margin-right: 5px;
+    justify-content: space-between;
 }
 
 .card .name {
-    align-self: center;
-    flex-grow: 1;
+    text-align: center;
 }
 
 .card .picture {
@@ -86,15 +89,22 @@ button {
 
 .card.playable:hover {
     cursor: default;
-    transform: translate(0, -100px) scale(1.5, 1.5);
+    animation-name: playAnim;
+    animation-duration: 0.25s;
+    animation-fill-mode: forwards;
+    z-index: 1;
+}
+
+@keyframes playAnim {
+    100% { transform: translate(0, -100px) scale(1.5, 1.5); }
 }
 
 .card.unplayable {
     background: #a09f91;
 }
 
-.unplayable.highlight {
-    border: 1px solid gray;
+.card.lit {
+    transform: translate(0, -25px);
 }
 
 /* UI Widgets */

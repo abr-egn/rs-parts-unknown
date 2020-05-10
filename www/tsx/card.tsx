@@ -34,20 +34,24 @@ export function Hand(props: {
     }
   
     const list = props.cards.map((card, ix) => {
+        let creature = world.getCreature(card.creatureId)!;
+        let part = creature.parts.get(card.partId)!;
         const playable = props.active && canPlay(card);
         let onClick = undefined;
         const classes = ["card"];
+        let lit = false;
         if (playable) {
             classes.push("playable");
             onClick = () => startPlay(card.creatureId, ix);
-            if (highlight?.static.parts.get(card.creatureId)?.has(card.partId)) {
-                classes.push("highlight");
-            }
+            lit = Boolean(highlight?.static.parts.get(card.creatureId)?.has(card.partId));
         } else {
             classes.push("unplayable");
-            if (highlight?.throb.parts.get(card.creatureId)?.has(card.partId)) {
-                classes.push("highlight");
-            }
+            lit = Boolean(highlight?.throb.parts.get(card.creatureId)?.has(card.partId));
+        }
+        let partclass = "cardpart";
+        if (lit) {
+            //partclass = partclass + " lit";
+            classes.push("lit");
         }
         return (
             <div key={cardKey(card)}
@@ -56,11 +60,14 @@ export function Hand(props: {
                 onMouseDown={onClick}
                 className={classes.join(" ")}
             >
-                <div className="titlebar">
+                <div className="databar">
                     <div className="name">{card.name}</div>
-                    <div className="cost">{card.apCost}</div>
                 </div>
                 <div className="picture"></div>
+                <div className="databar">
+                    <div className={partclass}>{part.name}</div>
+                    <div className="cost">{card.apCost}</div>
+                </div>
                 <div className="cardtext">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do...</div>
             </div>
         );
