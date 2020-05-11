@@ -1,4 +1,7 @@
-use std::collections::HashMap;
+use std::{
+    collections::{HashMap, HashSet},
+    iter::FromIterator,
+};
 
 use hex::Hex;
 use serde::{Serialize};
@@ -6,7 +9,7 @@ use ts_data_derive::TsData;
 use wasm_bindgen::prelude::*;
 
 use crate::{
-    action::{Event, Path},
+    action::{Action, Event, Path, Tag, action},
     creature::{Creature},
     error::{Error, Result},
     id_map::Id,
@@ -59,6 +62,28 @@ pub struct InPlay {
 impl InPlay {
     pub fn source(&self) -> Path {
         Path::Part { cid: self.creature_id, pid: self.part_id }
+    }
+
+    pub fn finish(self, world: &mut World, target: &Path) -> Vec<Event> {
+        let mut events = world.execute(&Action {
+            source: Path::Global,
+            target: Path::Card { cid: self.creature_id, pid: self.part_id, card: self.card_id },
+            tags: HashSet::new(),
+            data: action::Discard,
+        });
+        let ap = world.execute(&Action {
+            source: Path::Global,
+            target: Path::Creature { cid: self.creature_id },
+            tags: HashSet::from_iter(vec![Tag::Normal]),
+            data: action::SpendAP { ap: self.ap_cost },
+        });
+        let ap_failed = Event::is_failure(&ap);
+        events.extend(ap);
+        if !ap_failed {
+            let source = Path::Part { cid: self.creature_id, pid: self.part_id };
+            events.extend(self.behavior.apply(world, source, target.clone()));
+        }
+        events
     }
 }
 

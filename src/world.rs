@@ -14,7 +14,6 @@ use crate::{
         Action, Event, EventData, Meta, Path, Tag,
         action, event, to_creature,
     },
-    card,
     creature::{Creature},
     entity::{Entity},
     error::{Error, Result},
@@ -80,29 +79,6 @@ impl World {
 
     pub fn execute(&mut self, action: &Action) -> Vec<Event> {
         self.execute_(action, &HashSet::new())
-    }
-
-    // TODO: move to card.rs
-    pub fn finish_play(&mut self, in_play: card::InPlay, target: &Path) -> Vec<Event> {
-        let mut events = self.execute(&Meta {
-            source: Path::Global,
-            target: Path::Card { cid: in_play.creature_id, pid: in_play.part_id, card: in_play.card_id },
-            tags: HashSet::new(),
-            data: action::Discard,
-        });
-        let ap = self.execute(&Meta {
-            source: Path::Global,
-            target: Path::Creature { cid: in_play.creature_id },
-            tags: HashSet::from_iter(vec![Tag::Normal]),
-            data: action::SpendAP { ap: in_play.ap_cost },
-        });
-        let ap_failed = Event::is_failure(&ap);
-        events.extend(ap);
-        if !ap_failed {
-            let source = Path::Part { cid: in_play.creature_id, pid: in_play.part_id };
-            events.extend(in_play.behavior.apply(self, source, target.clone()));
-        }
-        events
     }
 
     pub fn npc_turn(&mut self) -> Vec<Event> {

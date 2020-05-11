@@ -204,7 +204,7 @@ impl World {
     pub fn finishPlay(&self, in_play: InPlay, target: JsValue) -> Array /* [World, Event[]] */ {
         let target: Path = from_js_value(target);
         let mut newWorld = self.wrapped.clone();
-        let events = newWorld.finish_play(in_play.wrapped, &target);
+        let events = in_play.wrapped.finish(&mut newWorld, &target);
         world_update(newWorld, &events)
     }
 
