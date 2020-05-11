@@ -30,7 +30,7 @@ impl HitPart {
         let range = if self.melee {
             position.neighbors().collect()
         } else {
-            world.map().los_from(position, cid)
+            world.map().los_of(cid).unwrap()
         };
         Box::new(HitPartBehavior {
             damage: self.damage,
@@ -300,18 +300,62 @@ impl Status for Rage {
     fn alter_order(&self) -> AlterOrder { AlterOrder::Add }
     fn alter(&mut self, on: &Path, action: &Action) -> Option<Action> {
         if on.creature() != action.source.creature() { return None; }
-        match action.data {
-            action::Hit { damage } => Some(action.carry(action::Hit { damage: damage + 7 })),
+        let mut action = action.clone();
+        match &mut action.data {
+            action::Hit { damage } => {
+                *damage = *damage + 7;
+                Some(action)
+            },
             _ => None
+        }
+    }
+    fn trigger(&mut self, _on: &Path, event: &Event) -> (Vec<Action>, StatusDone) {
+        match event.data {
+            event::PlayerTurnEnd => (vec![], StatusDone::Expire),
+            _ => (vec![], StatusDone::Continue),
         }
     }
 }
 
-/*
-#[derive(Debug, Clone)]
-struct Debuff;
-
-impl Card::Behavior for Debuff {
-    fn range(&self, world: &World) -> Vec<Hex> {}
+pub fn debug_debuff() -> Card {
+    Card {
+        name: "Debug Debuff".into(),
+        ap_cost: 0,
+        start_play: |_, _| Box::new(DebugDebuff),
+    }
 }
-*/
+
+#[derive(Debug, Clone)]
+struct DebugDebuff;
+
+impl card::Behavior for DebugDebuff {
+    fn range(&self, source: &Path, world: &World) -> Vec<Hex> {
+        let cid = source.creature().unwrap();
+        world.map().los_of(cid).unwrap().into_iter().collect()
+    }
+    fn target_spec(&self) -> TargetSpec { TargetSpec::Creature }
+    fn target_check(&self, _world: &World, _source: &Path, _target: &Path) -> bool { true }
+    fn apply(&self, world: &mut World, source: Path, target: Path) -> Vec<Event> {
+        world.execute(&Action {
+            source, target,
+            tags: HashSet::new(),
+            data: action::AddStatus { status: Box::new(DebugDebuff) }
+        })
+    }
+}
+
+impl Status for DebugDebuff {
+    fn name(&self) -> &'static str { "Debug" }
+    fn kind(&self) -> StatusKind { StatusKind::Debuff }
+    fn alter(&mut self, on: &Path, action: &Action) -> Option<Action> {
+        if action.source.creature() != on.creature() { return None; }
+        let mut action = action.clone();
+        match &mut action.data {
+            action::Hit { damage, .. } => {
+                *damage = *damage - 1;
+                Some(action)
+            },
+            _ => None,
+        }
+    }
+}

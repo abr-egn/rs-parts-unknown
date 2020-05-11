@@ -82,6 +82,11 @@ impl Map {
         out
     }
 
+    pub fn los_of(&self, id: Id<Creature>) -> Option<HashSet<Hex>> {
+        let start = self.creatures().get(&id)?;
+        Some(self.los_from(*start, id))
+    }
+
     pub fn path_to(&self, from: Hex, to: Hex) -> Result<Vec<Hex>> {
         let to_tile = self.tiles.get(&to).ok_or(Error::OutOfBounds)?;
         if !to_tile.is_open() {
