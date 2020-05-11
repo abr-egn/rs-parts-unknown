@@ -100,7 +100,7 @@ impl WorldExt for World {
             let mut mp_evs = self.execute(&Action {
                 source: Path::World,
                 target: Path::Creature { cid: creature_id },
-                tags: HashSet::from_iter(vec![Tag::Normal]),
+                tags: HashSet::from_iter(vec![Tag::NoRender]),
                 data: action::SpendMP { mp: 1 },
             });
             let failed = Event::is_failure(&mp_evs);

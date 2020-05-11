@@ -128,7 +128,7 @@ export namespace LevelState {
         }
         
         makeFloat(event: Readonly<wasm.Event>): FloatText.Item | undefined {
-            if (event.tags.includes("Normal")) {
+            if (event.tags.includes("NoRender")) {
                 return undefined;
             }
             let cid = pathCreature(event.target);

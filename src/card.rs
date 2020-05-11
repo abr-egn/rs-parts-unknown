@@ -74,7 +74,7 @@ impl InPlay {
         let ap = world.execute(&Action {
             source: Path::World,
             target: Path::Creature { cid: self.creature_id },
-            tags: HashSet::from_iter(vec![Tag::Normal]),
+            tags: HashSet::from_iter(vec![Tag::NoRender]),
             data: action::SpendAP { ap: self.ap_cost },
         });
         let ap_failed = Event::is_failure(&ap);

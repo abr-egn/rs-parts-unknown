@@ -81,7 +81,7 @@ impl Path {
 #[derive(Debug, Copy, Clone, PartialEq, Eq, Hash, Serialize, TsData)]
 pub enum Tag {
     Attack,
-    Normal,  // TODO: rename to NoRender
+    NoRender,
 }
 
 #[derive(Debug, Clone)]

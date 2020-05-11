@@ -63,7 +63,7 @@ impl card::Behavior for HitPartBehavior {
         out.extend(world.execute(&Action {
             source: Path::World,
             target: Path::Creature { cid: source_cid },
-            tags: HashSet::from_iter(vec![Tag::Normal]),
+            tags: HashSet::from_iter(vec![Tag::NoRender]),
             data: action::SpendMP { mp: source_mp },
         }));
         out.extend(world.execute(&Action {

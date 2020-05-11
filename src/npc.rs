@@ -1,11 +1,14 @@
-use std::collections::HashSet;
+use std::{
+    collections::HashSet,
+    iter::FromIterator,
+};
 
 use serde::{Serialize};
 use ts_data_derive::TsData;
 use wasm_bindgen::prelude::*;
 
 use crate::{
-    action::{Event, Meta, Path, Tag, action, event, to_creature},
+    action::{Action, Event, Path, Tag, action, event, to_creature},
     creature::{Creature},
     error::{Error, Result},
     id_map::Id,
@@ -59,7 +62,7 @@ impl Intent {
 
         // Execute cost
         let mut act = to_creature(source, action::SpendAP { ap: 1 });
-        act.tags.insert(Tag::Normal);
+        act.tags.insert(Tag::NoRender);
         let mut events = world.execute(&act);
         if Event::is_failure(&events) { return Ok(events); }
 
@@ -129,10 +132,10 @@ impl IntentKind {
                     let (pid, _) = open.first().unwrap();
                     *pid
                 };
-                world.execute(&Meta {
+                world.execute(&Action {
                     source: Path::Creature { cid: source },
                     target: Path::Part { cid: player_id, pid },
-                    tags: HashSet::new(), // TODO: attack
+                    tags: HashSet::from_iter(vec![Tag::Attack]),
                     data: action::Hit { damage: *damage },
                 })
             }

@@ -280,7 +280,7 @@ impl World {
             events.extend(self.execute(&Action {
                 source: Path::World,
                 target: Path::Creature{ cid: id },
-                tags: HashSet::from_iter(vec![Tag::Normal]),
+                tags: HashSet::from_iter(vec![Tag::NoRender]),
                 data: action::GainAP { ap: fill_ap }
             }));
         }
@@ -288,7 +288,7 @@ impl World {
             events.extend(self.execute(&Action {
                 source: Path::World,
                 target: Path::Creature{ cid: id },
-                tags: HashSet::from_iter(vec![Tag::Normal]),
+                tags: HashSet::from_iter(vec![Tag::NoRender]),
                 data: action::GainMP { mp: fill_mp }
             }));
         }
