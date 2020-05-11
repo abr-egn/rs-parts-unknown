@@ -3,6 +3,7 @@ use std::{
     iter::FromIterator,
 };
 
+use enum_iterator::IntoEnumIterator;
 use hex::Hex;
 use rand::prelude::*;
 
@@ -14,7 +15,8 @@ use crate::{
     mod_stack::Mod,
     part::{Part, PartTag, TagMod},
     status::{AlterOrder, Status, StatusDone, StatusKind},
-    world::World,
+    world::{Scope, World},
+    some_or,
 };
 
 struct HitPart {
@@ -80,9 +82,34 @@ fn no_ui(_world: &World, _source: &Path, _target: &Path) -> HashMap<String, Stri
 }
 
 fn attack_ui(world: &World, source: &Path, target: &Path, base: i32) -> HashMap<String, String> {
-    let mut out = HashMap::new();
-    out.insert("damage".into(), format!("[{} {:?}]", base, target));
-    out
+    let target = if source.creature() == target.creature() {
+        &Path::Global
+    } else {
+        target
+    };
+    let mut action = Action {
+        source: source.clone(),
+        target: target.clone(),
+        tags: HashSet::from_iter(vec![Tag::Attack]),
+        data: action::Hit { damage: base },
+    };
+    for scope in Scope::into_enum_iter() {
+        let path = some_or!(scope.path(&action), continue);
+        let entity = some_or!(world.path_entity(&path).ok(), continue);
+        let mut entity = entity.clone();
+        action = entity.apply_alters(&path, &action);
+    }
+    let damage = match action.data {
+        action::Hit { damage } => damage,
+        _ => base,
+    };
+    hash(vec![
+        ("damage", format!("{}", damage)),
+    ])
+}
+
+fn hash<'a, I: IntoIterator<Item=(&'a str, String)>>(i: I) -> HashMap<String, String> {
+    i.into_iter().map(|(k, v)| (k.into(), v)).collect()
 }
 
 pub fn throw_debris() -> Card {
