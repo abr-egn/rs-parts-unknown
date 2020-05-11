@@ -95,36 +95,10 @@ impl World {
         })
     }
 
-    pub fn path_entity(&self, path: &Path) -> Result<&Entity> {
-        match path {
-            Path::Global => Ok(&self.entity),
-            Path::Creature { cid } | Path::Card { cid, .. } => {
-                let creature = self.creatures.get(*cid).ok_or(Error::NoSuchCreature)?;
-                Ok(&creature.entity)
-            }
-            Path::Part { cid, pid } => {
-                let creature = self.creatures.get(*cid).ok_or(Error::NoSuchCreature)?;
-                let part = creature.parts.get(*pid).ok_or(Error::NoSuchPart)?;
-                Ok(&part.entity)
-            }
-        }
-    }
-
     // Mutators
 
     pub fn execute(&mut self, action: &Action) -> Vec<Event> {
         self.execute_(action, &HashSet::new())
-    }
-
-    pub fn execute_all(&mut self, actions: &[Action]) -> Vec<Event> {
-        let mut out = vec![];
-        for act in actions {
-            let events = self.execute(&act);
-            let failed = Event::is_failure(&events);
-            out.extend(events);
-            if failed { break; }
-        }
-        out
     }
 
     // TODO: move to card.rs
