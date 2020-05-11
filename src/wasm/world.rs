@@ -1,8 +1,3 @@
-use std::{
-    collections::HashSet,
-    iter::FromIterator,
-};
-
 use hex::Hex;
 use js_sys::Array;
 use wasm_bindgen::{
@@ -11,7 +6,7 @@ use wasm_bindgen::{
 };
 
 use crate::{
-    action::{self, Action, Event, Path},
+    action::{Action, Event, Path},
     creature,
     id_map::Id,
     map::{Space, Tile},
@@ -24,6 +19,7 @@ use crate::{
         from_js_value, to_js_value,
     },
     world,
+    world_ext::WorldExt,
     some_or,
 };
 
@@ -242,33 +238,22 @@ impl World {
     fn scaled_intent(&self, cid: Id<creature::Creature>) -> Option<npc::Intent> {
         let creature = self.wrapped.creatures().get(cid)?;
         let npc = creature.npc.as_ref()?;
-        match &npc.intent.kind {
-            npc::IntentKind::Stunned => Some(npc.intent.clone()),
-            npc::IntentKind::Attack { damage, range } => {
-                let damage = *damage;
+        let mut intent = npc.intent.clone();
+        match &mut intent.kind {
+            npc::IntentKind::Stunned => Some(intent),
+            npc::IntentKind::Attack { damage, .. } => {
                 let source = match npc.intent.from {
                     None => Path::Creature { cid },
                     Some(pid) => Path::Part { cid, pid },
                 };
-                let mut action = Action {
-                    source,
-                    target: Path::Part { cid: Id::invalid(), pid: Id::invalid() },
-                    tags: HashSet::from_iter(vec![action::Tag::Attack]),
-                    data: action::action::Hit { damage },
-                };
-                for &scope in &[world::Scope::SourcePart, world::Scope::SourceCreature, world::Scope::World] {
-                    let path = some_or!(scope.path(&action), continue);
-                    let entity = some_or!(self.wrapped.path_entity(&path).ok(), continue);
-                    let mut entity = entity.clone();
-                    action = entity.apply_alters(&path, &action);
-                }
-                match action.data {
-                    action::action::Hit { damage } => {
-                        let mut tmp = npc.intent.clone();
-                        tmp.kind = npc::IntentKind::Attack { damage, range: range.clone() };
-                        Some(tmp)
+                let target = Path::Part { cid: self.wrapped.player_id(), pid: Id::invalid() };
+                let scopes = vec![world::Scope::SourcePart, world::Scope::SourceCreature, world::Scope::World];
+                match self.wrapped.scale_damage(&source, &target, *damage, scopes) {
+                    Some(new_damage) => {
+                        *damage = new_damage;
+                        Some(intent)
                     }
-                    _ => None,  // TODO: some kind of "???" intent
+                    None => None,
                 }
             }
         }

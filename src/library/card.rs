@@ -16,7 +16,7 @@ use crate::{
     part::{Part, PartTag, TagMod},
     status::{AlterOrder, Status, StatusDone, StatusKind},
     world::{Scope, World},
-    some_or,
+    world_ext::WorldExt,
 };
 
 struct HitPart {
@@ -87,22 +87,8 @@ fn attack_ui(world: &World, source: &Path, target: &Path, base: i32) -> HashMap<
     } else {
         target
     };
-    let mut action = Action {
-        source: source.clone(),
-        target: target.clone(),
-        tags: HashSet::from_iter(vec![Tag::Attack]),
-        data: action::Hit { damage: base },
-    };
-    for scope in Scope::into_enum_iter() {
-        let path = some_or!(scope.path(&action), continue);
-        let entity = some_or!(world.path_entity(&path).ok(), continue);
-        let mut entity = entity.clone();
-        action = entity.apply_alters(&path, &action);
-    }
-    let damage = match action.data {
-        action::Hit { damage } => damage,
-        _ => base,
-    };
+    let damage = world.scale_damage(source, target, base, Scope::into_enum_iter())
+        .unwrap_or(base);
     hash(vec![
         ("damage", format!("{}", damage)),
     ])

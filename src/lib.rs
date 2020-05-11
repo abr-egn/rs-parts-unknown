@@ -13,6 +13,7 @@ mod serde_empty;
 mod status;
 mod wasm;
 mod world;
+mod world_ext;
 
 use log::{Level, info};
 use wasm_bindgen::prelude::*;
