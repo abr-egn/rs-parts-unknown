@@ -48,7 +48,7 @@ struct HitPartBehavior {
 }
 
 impl card::Behavior for HitPartBehavior {
-    fn range(&self, _world: &World) -> Vec<Hex> { self.range.iter().cloned().collect() }
+    fn range(&self, _source: &Path, _world: &World) -> Vec<Hex> { self.range.iter().cloned().collect() }
     fn target_spec(&self) -> TargetSpec { TargetSpec::Part { on_player: false, tags: self.tags.clone() } }
     fn target_check(&self, _world: &World, source: &Path, target: &Path) -> bool {
         target.creature().unwrap() != source.creature().unwrap()
@@ -161,7 +161,7 @@ pub fn guard() -> Card {
 struct Guard;
 
 impl card::Behavior for Guard {
-    fn range(&self, _world: &World) -> Vec<Hex> { vec![] }
+    fn range(&self, _source: &Path, _world: &World) -> Vec<Hex> { vec![] }
     fn target_spec(&self) -> TargetSpec {
         TargetSpec::Part { on_player: true, tags: vec![vec![PartTag::Open]] }
     }
@@ -194,7 +194,7 @@ pub fn stagger() -> Card {
 struct Stagger;
 
 impl card::Behavior for Stagger {
-    fn range(&self, world: &World) -> Vec<Hex> {
+    fn range(&self, _source: &Path, world: &World) -> Vec<Hex> {
         let pos = world.map().creatures().get(&world.player_id()).unwrap();
         pos.neighbors().collect()
     }
@@ -249,7 +249,7 @@ struct Heal {
 }
 
 impl card::Behavior for Heal {
-    fn range(&self, _world: &World) -> Vec<Hex> { vec![] }
+    fn range(&self, _source: &Path, _world: &World) -> Vec<Hex> { vec![] }
     fn target_spec(&self) -> TargetSpec {
         TargetSpec::Part { on_player: true, tags: vec![vec![PartTag::Flesh]] }
     }
@@ -280,7 +280,7 @@ pub fn rage() -> Card {
 struct Rage;
 
 impl card::Behavior for Rage {
-    fn range(&self, _world: &World) -> Vec<Hex> { vec![] }
+    fn range(&self, _source: &Path, _world: &World) -> Vec<Hex> { vec![] }
     fn target_spec(&self) -> TargetSpec { TargetSpec::None }
     fn target_check(&self, _world: &World, _source: &Path, _target: &Path) -> bool { true }
     fn apply(&self, world: &mut World, source: Path, _target: Path) -> Vec<Event> {
@@ -306,3 +306,12 @@ impl Status for Rage {
         }
     }
 }
+
+/*
+#[derive(Debug, Clone)]
+struct Debuff;
+
+impl Card::Behavior for Debuff {
+    fn range(&self, world: &World) -> Vec<Hex> {}
+}
+*/

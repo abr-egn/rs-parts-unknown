@@ -21,14 +21,13 @@ pub struct InPlay {
 impl InPlay {
     #[wasm_bindgen(skip_typescript)]
     pub fn range(&self, world: &World) -> Array /* Hex[] */ {
-        self.wrapped.behavior.range(&world.wrapped).iter()
+        self.wrapped.behavior.range(&self.wrapped.source(), &world.wrapped).iter()
             .map(to_js_value)
             .collect()
     }
     #[wasm_bindgen(skip_typescript)]
     pub fn targetValid(&self, world: &World, target: JsValue) -> bool {
-        let source = action::Path::Part { cid: self.wrapped.creature_id, pid: self.wrapped.part_id };
-        self.wrapped.behavior.target_valid(&world.wrapped, &source, &from_js_value::<action::Path>(target))
+        self.wrapped.behavior.target_valid(&world.wrapped, &self.wrapped.source(), &from_js_value::<action::Path>(target))
     }
     #[wasm_bindgen(skip_typescript)]
     pub fn preview(&self, world: &World, target: JsValue) -> Array /* Event[] */ {

@@ -31,6 +31,12 @@ pub struct InPlay {
     pub ap_cost: i32,
 }
 
+impl InPlay {
+    pub fn source(&self) -> Path {
+        Path::Part { cid: self.creature_id, pid: self.part_id }
+    }
+}
+
 impl std::fmt::Debug for Card {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.debug_struct("Card")
@@ -43,7 +49,7 @@ impl std::fmt::Debug for Card {
 
 // TASK: power scaling
 pub trait Behavior: BehaviorClone {
-    fn range(&self, world: &World) -> Vec<Hex>;
+    fn range(&self, source: &Path, world: &World) -> Vec<Hex>;
     // TASK: allow for multiple targets
     fn target_spec(&self) -> TargetSpec;
     fn target_check(&self, world: &World, source: &Path, target: &Path) -> bool;
@@ -58,7 +64,7 @@ pub trait Behavior: BehaviorClone {
 impl dyn Behavior {
     pub fn target_valid(&self, world: &World, source: &Path, target: &Path) -> bool {
         if !self.target_spec().matches(world, target) { return false; }
-        let range = self.range(world);
+        let range = self.range(source, world);
         if !range.is_empty() {
             let pos = some_or!(target.hex(world), return false);
             if !range.contains(&pos) { return false; }

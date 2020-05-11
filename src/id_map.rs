@@ -77,7 +77,6 @@ impl<T> Id<T> {
         if self.value == u32::MAX { panic!("maximum id reached"); }
         out
     }
-    fn check(&self) { if self.value == u32::MAX { panic!("invalid id"); } }
     pub fn invalid() -> Self { Id::new(u32::MAX) }
     pub fn synthesize(value: u32) -> Self { Id::new(value) }
 }

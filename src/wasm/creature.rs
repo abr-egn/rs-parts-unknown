@@ -7,7 +7,7 @@ use wasm_bindgen::prelude::*;
 use crate::{
     card, creature,
     id_map::Id,
-    npc::{self, Intent},
+    npc,
     part::{self, PartTag},
     wasm::{
         to_js_value,
