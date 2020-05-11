@@ -1,6 +1,6 @@
 import * as React from "react";
 
-export type CardText = (props: {}) => JSX.Element;
+export type CardText = (props: {ui: Map<string, string>}) => JSX.Element;
 
 export interface CardDisplay {
     icon: string,
@@ -20,7 +20,7 @@ export const CARDS: Readonly<CardData> = Object.freeze({
     },
     "Punch": {
         icon: "punch.svg",
-        text: () => <span>Hit an adjacent enemy for 10 damage.</span>,
+        text: (props) => <span>Hit an adjacent enemy for {props.ui.get("damage")} damage.</span>,
     },
     "Rage": {
         icon: "angry-eyes.svg",

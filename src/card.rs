@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use hex::Hex;
 use serde::{Serialize};
 use ts_data_derive::TsData;
@@ -20,6 +22,8 @@ pub struct Card {
     // Contract: the world will not change between start_play and Behavior methods.
     #[serde(skip)]
     pub start_play: fn(&World, &Path) -> Box<dyn Behavior>,
+    #[serde(skip)]
+    pub ui: fn(&World, &Path, &Path) -> HashMap<String, String>,
 }
 
 #[derive(Clone)]

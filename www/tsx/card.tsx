@@ -44,6 +44,14 @@ export function Card(props: {
     const playable = props.active && world.isPlayable(props.card);
     const creature = world.getCreature(props.card.creatureId)!;
     const part = creature.parts.get(props.card.partId)!;
+    let target: wasm.Path = {Global: {}};
+    if (focus?.currentPart != undefined) {
+        const [cid, pid] = focus.currentPart;
+        target = {Part: {cid, pid}};
+    } else if (focus?.currentCreature != undefined) {
+        target = {Creature: {cid: focus.currentCreature}};
+    }
+    let cardUI = world.cardUI(props.card, target);
     let display: CardDisplay;
     if (CARDS.hasOwnProperty(props.card.name)) {
         display = CARDS[props.card.name];
@@ -102,7 +110,7 @@ export function Card(props: {
                 <div className="cardpart">{part.name}</div>
                 <div className="cost">{props.card.apCost}</div>
             </div>
-            <div className="cardtext"><display.text></display.text></div>
+            <div className="cardtext"><display.text ui={cardUI}></display.text></div>
         </div>
     );
 }

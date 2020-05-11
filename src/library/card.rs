@@ -1,5 +1,5 @@
 use std::{
-    collections::HashSet,
+    collections::{HashMap, HashSet},
     iter::FromIterator,
 };
 
@@ -73,6 +73,18 @@ impl card::Behavior for HitPartBehavior {
     }
 }
 
+fn no_ui(_world: &World, _source: &Path, _target: &Path) -> HashMap<String, String> {
+    let mut out = HashMap::new();
+    out.insert("Test".into(), "Value".into());
+    out
+}
+
+fn attack_ui(world: &World, source: &Path, target: &Path, base: i32) -> HashMap<String, String> {
+    let mut out = HashMap::new();
+    out.insert("damage".into(), format!("[{} {:?}]", base, target));
+    out
+}
+
 pub fn throw_debris() -> Card {
     Card {
         name: "Throw Debris".into(),
@@ -82,6 +94,7 @@ pub fn throw_debris() -> Card {
             tags: vec![vec![PartTag::Open]],
             melee: false,
         }.behavior(world, source),
+        ui: |world, source, target| attack_ui(world, source, target, 5),
     }
 }
 
@@ -94,6 +107,7 @@ pub fn punch() -> Card {
             tags: vec![vec![PartTag::Open]],
             melee: true,
         }.behavior(world, source),
+        ui: |world, source, target| attack_ui(world, source, target, 10),
     }
 }
 
@@ -153,7 +167,8 @@ pub fn guard() -> Card {
     Card {
         name: "Guard".into(),
         ap_cost: 1,
-        start_play: |_, _| Box::new(Guard)
+        start_play: |_, _| Box::new(Guard),
+        ui: no_ui,
     }
 }
 
@@ -186,7 +201,8 @@ pub fn stagger() -> Card {
     Card {
         name: "Stagger".into(),
         ap_cost: 1,
-        start_play: |_, _| Box::new(Stagger)
+        start_play: |_, _| Box::new(Stagger),
+        ui: no_ui,
     }
 }
 
@@ -239,7 +255,8 @@ pub fn heal() -> Card {
     Card {
         name: "Heal".into(),
         ap_cost: 1,
-        start_play: |_, _| Box::new(Heal { amount: 5 })
+        start_play: |_, _| Box::new(Heal { amount: 5 }),
+        ui: no_ui,
     }
 }
 
@@ -272,7 +289,8 @@ pub fn rage() -> Card {
     Card {
         name: "Rage".into(),
         ap_cost: 1,
-        start_play: |_, _| Box::new(Rage)
+        start_play: |_, _| Box::new(Rage),
+        ui: no_ui,
     }
 }
 
@@ -322,6 +340,7 @@ pub fn debug_debuff() -> Card {
         name: "Debug Debuff".into(),
         ap_cost: 0,
         start_play: |_, _| Box::new(DebugDebuff),
+        ui: no_ui,
     }
 }
 

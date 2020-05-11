@@ -192,6 +192,15 @@ impl World {
         }
     }
 
+    #[wasm_bindgen(skip_typescript)]
+    pub fn cardUI(&self, js_card: JsValue, target: JsValue) -> JsValue {
+        let js_card: Card = from_js_value(js_card);
+        let target: Path = from_js_value(target);
+        let card = js_card.get(&self.wrapped).unwrap();
+        let ui = (card.ui)(&self.wrapped, &js_card.source(), &target);
+        to_js_value(&ui)
+    }
+
     // Updates
 
     #[wasm_bindgen(skip_typescript)]
@@ -286,6 +295,7 @@ interface World {
     simulateMove(to: Hex): Event[];
     shadeFrom(hex: Hex, id: Id<Creature>): Hex[];
     scaledIntent(cid: Id<Creature>): Intent | undefined;
+    cardUI(card: Card, target: Path): Map<string, string>;
 
     // Updates
 

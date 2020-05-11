@@ -26,8 +26,10 @@ export class TargetPartState extends State {
 
         this.update((draft) => {
             draft.set(TargetPartState.UI, this._hex, targets);
-            draft.build(Focus).part.onClick = ([cid, pid]) => {
-                window.game.stack.pop(new TargetPartState.Select(cid, pid));
+            draft.build(Focus).part = {
+                onClick: ([cid, pid]) => {
+                    window.game.stack.pop(new TargetPartState.Select(cid, pid));
+                }
             };
         });
     }

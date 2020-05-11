@@ -69,7 +69,7 @@ export class LevelState extends State {
         let creature = level.creatureAt(hex);
         if (creature) {
             let id = creature.id;
-            this.update(draft => this._selectCreature(draft, id));
+            this.stack.data.get(Focus)?.creature.onEnter?.(id);
         }
     }
 
@@ -78,7 +78,7 @@ export class LevelState extends State {
         let creature = level.creatureAt(hex);
         if (creature) {
             let id = creature.id;
-            this.update(draft => this._unselectCreature(draft, id));
+            this.stack.data.get(Focus)?.creature.onLeave?.(id);
         }
     }
 

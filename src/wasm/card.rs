@@ -3,9 +3,11 @@ use ts_data_derive::TsData;
 use wasm_bindgen::prelude::*;
 
 use crate::{
+    action::Path,
     card, creature,
     id_map::Id,
     part,
+    world::World,
 };
 
 #[derive(Serialize, Deserialize, TsData)]
@@ -31,5 +33,15 @@ impl Card {
             name: source.name.clone(),
             apCost: source.ap_cost,
         }
+    }
+
+    pub fn get<'a>(&self, world: &'a World) -> Option<&'a card::Card> {
+        let creature = world.creatures().get(self.creatureId)?;
+        let part = creature.parts.get(self.partId)?;
+        part.cards.get(self.id)
+    }
+
+    pub fn source(&self) -> Path {
+        Path::Part { cid: self.creatureId, pid: self.partId }
     }
 }
