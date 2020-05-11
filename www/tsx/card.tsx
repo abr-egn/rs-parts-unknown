@@ -4,7 +4,7 @@ import {Focus} from "../ts/stack/focus";
 import {Highlight} from "../ts/stack/highlight";
 import {PlayCardState} from "../ts/states/play_card";
 import * as wasm from "../wasm";
-import {Id} from "../wasm";
+import {CARDS, CardDisplay} from "./card_data";
 import {StackData} from "./index";
 import {WorldContext} from "./level";
 
@@ -44,6 +44,15 @@ export function Card(props: {
     const playable = props.active && world.isPlayable(props.card);
     const creature = world.getCreature(props.card.creatureId)!;
     const part = creature.parts.get(props.card.partId)!;
+    let display: CardDisplay;
+    if (CARDS.hasOwnProperty(props.card.name)) {
+        display = CARDS[props.card.name];
+    } else {
+        display = {
+            icon: "perspective-dice-six-faces-random.svg",
+            text: () => <span>Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do...</span>,
+        }
+    }
 
     const onEnter = () => {
         if (playable) {
@@ -88,12 +97,12 @@ export function Card(props: {
             <div className="databar">
                 <div className="name">{props.card.name}</div>
             </div>
-            <div className="picture"></div>
+            <img src={"icons/"+display.icon} className="picture"></img>
             <div className="databar">
                 <div className="cardpart">{part.name}</div>
                 <div className="cost">{props.card.apCost}</div>
             </div>
-            <div className="cardtext">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do...</div>
+            <div className="cardtext"><display.text></display.text></div>
         </div>
     );
 }

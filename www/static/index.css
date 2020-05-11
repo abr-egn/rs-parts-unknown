@@ -78,14 +78,17 @@ button {
 .card .picture {
     width: 130px;
     height: 100px;
-    border: 1px solid #006000;
     background: black;
     align-self: center;
+    flex-grow: 0;
+}
+
+.card.unplayable .picture {
+    filter: brightness(0.5);
 }
 
 .card .cardtext {
     margin: 10px;
-    height: 100px;
     font-size: small;
 }
 

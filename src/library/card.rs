@@ -306,16 +306,3 @@ impl Status for Rage {
         }
     }
 }
-
-/* 10 cards:
-arms:
-    [+] 2 melee heavy attack
-    [+] 2 ranged light attack
-    [+] 2 defense
-legs:
-    [+] 2 stagger
-torso:
-    [+] 1 heal
-head:
-    [ ] 1 utility (draw, ?)
-*/
