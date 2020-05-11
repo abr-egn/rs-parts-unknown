@@ -76,25 +76,6 @@ impl World {
         GameState::Play
     }
 
-    // TODO: move to card.rs
-    pub fn start_play(&self, creature_id: Id<Creature>, hand_ix: usize) -> Result<card::InPlay> {
-        let creature = self.creatures.get(creature_id).ok_or(Error::NoSuchCreature)?;
-        if hand_ix >= creature.hand.len() {
-            return Err(Error::NoSuchCard);
-        }
-        let (part_id, card_id) = creature.hand[hand_ix];
-        let part = creature.parts.get(part_id).ok_or(Error::NoSuchPart)?;
-        let card = part.cards.get(card_id).ok_or(Error::NoSuchCard)?;
-        let behavior = (card.start_play)(self, &Path::Part { cid: creature_id, pid: part_id });
-        Ok(card::InPlay {
-            creature_id,
-            part_id,
-            card_id,
-            behavior,
-            ap_cost: card.ap_cost,
-        })
-    }
-
     // Mutators
 
     pub fn execute(&mut self, action: &Action) -> Vec<Event> {

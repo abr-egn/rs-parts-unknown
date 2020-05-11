@@ -7,6 +7,7 @@ use wasm_bindgen::{
 
 use crate::{
     action::{Action, Event, Path},
+    card,
     creature,
     id_map::Id,
     map::{Space, Tile},
@@ -138,7 +139,7 @@ impl World {
     pub fn startPlay(&self, creature_id: JsValue, hand_ix: JsValue) -> Option<InPlay> {
         let creature_id: Id<creature::Creature> = from_js_value(creature_id);
         let hand_ix: usize = from_js_value(hand_ix);
-        self.wrapped.start_play(creature_id, hand_ix).ok()
+        card::Card::start_play(&self.wrapped, creature_id, hand_ix).ok()
             .map(|ip| InPlay { wrapped: ip })
     }
 

@@ -8,6 +8,7 @@ use wasm_bindgen::prelude::*;
 use crate::{
     action::{Event, Path},
     creature::{Creature},
+    error::{Error, Result},
     id_map::Id,
     part::{Part, PartTag},
     serde_empty,
@@ -24,6 +25,26 @@ pub struct Card {
     pub start_play: fn(&World, &Path) -> Box<dyn Behavior>,
     #[serde(skip)]
     pub ui: fn(&World, &Path, &Path) -> HashMap<String, String>,
+}
+
+impl Card {
+    pub fn start_play(world: &World, creature_id: Id<Creature>, hand_ix: usize) -> Result<InPlay> {
+        let creature = world.creatures().get(creature_id).ok_or(Error::NoSuchCreature)?;
+        if hand_ix >= creature.hand.len() {
+            return Err(Error::NoSuchCard);
+        }
+        let (part_id, card_id) = creature.hand[hand_ix];
+        let part = creature.parts.get(part_id).ok_or(Error::NoSuchPart)?;
+        let card = part.cards.get(card_id).ok_or(Error::NoSuchCard)?;
+        let behavior = (card.start_play)(world, &Path::Part { cid: creature_id, pid: part_id });
+        Ok(InPlay {
+            creature_id,
+            part_id,
+            card_id,
+            behavior,
+            ap_cost: card.ap_cost,
+        })
+    }        
 }
 
 #[derive(Clone)]
