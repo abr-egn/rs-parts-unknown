@@ -95,6 +95,21 @@ impl World {
         })
     }
 
+    pub fn path_entity(&self, path: &Path) -> Result<&Entity> {
+        match path {
+            Path::Global => Ok(&self.entity),
+            Path::Creature { cid } | Path::Card { cid, .. } => {
+                let creature = self.creatures.get(*cid).ok_or(Error::NoSuchCreature)?;
+                Ok(&creature.entity)
+            }
+            Path::Part { cid, pid } => {
+                let creature = self.creatures.get(*cid).ok_or(Error::NoSuchCreature)?;
+                let part = creature.parts.get(*pid).ok_or(Error::NoSuchPart)?;
+                Ok(&part.entity)
+            }
+        }
+    }
+
     // Mutators
 
     pub fn execute(&mut self, action: &Action) -> Vec<Event> {
@@ -461,7 +476,7 @@ impl Clone for Box<dyn Tracer> {
 }
 
 #[derive(Debug, Copy, Clone, PartialEq, Eq, PartialOrd, Ord, IntoEnumIterator)]
-enum Scope {
+pub enum Scope {
     SourcePart,
     SourceCreature,
     World,

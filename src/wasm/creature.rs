@@ -92,13 +92,11 @@ impl Part {
 
 #[derive(Debug, Serialize, TsData)]
 pub struct NPC {
-    intent: Intent,
 }
 
 impl NPC {
-    fn new(source: &npc::NPC) -> Self {
+    fn new(_source: &npc::NPC) -> Self {
         NPC {
-            intent: source.intent.clone(),
         }
     }
 }

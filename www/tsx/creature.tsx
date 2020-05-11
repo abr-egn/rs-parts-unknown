@@ -87,10 +87,9 @@ export function CreatureStats(props: {
 }
 
 export function CreatureIntent(props: {
-    creature: wasm.Creature,
+    intent: wasm.Intent,
     coords: DOMPointReadOnly,
 }): JSX.Element {
-    const npc = props.creature.npc!;
     const height = window.innerHeight;
     const style = {
         left: props.coords.x,
@@ -98,7 +97,7 @@ export function CreatureIntent(props: {
     };
     let intent: JSX.Element = <span>???</span>;
     let kind;
-    if (kind = npc.intent.kind.Attack) {
+    if (kind = props.intent.kind.Attack) {
         let intentIcon;
         switch (kind.range) {
             case "Melee": intentIcon = "icons/punch.svg";

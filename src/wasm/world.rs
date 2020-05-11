@@ -1,3 +1,8 @@
+use std::{
+    collections::HashSet,
+    iter::FromIterator,
+};
+
 use hex::Hex;
 use js_sys::Array;
 use wasm_bindgen::{
@@ -6,10 +11,11 @@ use wasm_bindgen::{
 };
 
 use crate::{
-    action::{Action, Event, Path},
+    action::{self, Action, Event, Path},
     creature,
     id_map::Id,
     map::{Space, Tile},
+    npc,
     part::{PartTag},
     wasm::{
         card::Card,
@@ -177,6 +183,15 @@ impl World {
             .collect()
     }
 
+    #[wasm_bindgen(skip_typescript)]
+    pub fn scaledIntent(&self, cid: JsValue) -> JsValue {
+        let cid: Id<creature::Creature> = from_js_value(cid);
+        match self.scaled_intent(cid) {
+            None => JsValue::undefined(),
+            Some(intent) => to_js_value(&intent),
+        }
+    }
+
     // Updates
 
     #[wasm_bindgen(skip_typescript)]
@@ -214,6 +229,43 @@ impl World {
     }
 }
 
+impl World {
+    fn scaled_intent(&self, cid: Id<creature::Creature>) -> Option<npc::Intent> {
+        let creature = self.wrapped.creatures().get(cid)?;
+        let npc = creature.npc.as_ref()?;
+        match &npc.intent.kind {
+            npc::IntentKind::Stunned => Some(npc.intent.clone()),
+            npc::IntentKind::Attack { damage, range } => {
+                let damage = *damage;
+                let source = match npc.intent.from {
+                    None => Path::Creature { cid },
+                    Some(pid) => Path::Part { cid, pid },
+                };
+                let mut action = Action {
+                    source,
+                    target: Path::Part { cid: Id::invalid(), pid: Id::invalid() },
+                    tags: HashSet::from_iter(vec![action::Tag::Attack]),
+                    data: action::action::Hit { damage },
+                };
+                for &scope in &[world::Scope::SourcePart, world::Scope::SourceCreature, world::Scope::World] {
+                    let path = some_or!(scope.path(&action), continue);
+                    let entity = some_or!(self.wrapped.path_entity(&path).ok(), continue);
+                    let mut entity = entity.clone();
+                    action = entity.apply_alters(&path, &action);
+                }
+                match action.data {
+                    action::action::Hit { damage } => {
+                        let mut tmp = npc.intent.clone();
+                        tmp.kind = npc::IntentKind::Attack { damage, range: range.clone() };
+                        Some(tmp)
+                    }
+                    _ => None,  // TODO: some kind of "???" intent
+                }
+            }
+        }
+    }
+}
+
 #[wasm_bindgen(typescript_custom_section)]
 const WORLD_TS: &'static str = r#"
 interface World {
@@ -233,6 +285,7 @@ interface World {
     state(): GameState;
     simulateMove(to: Hex): Event[];
     shadeFrom(hex: Hex, id: Id<Creature>): Hex[];
+    scaledIntent(cid: Id<Creature>): Intent | undefined;
 
     // Updates
 

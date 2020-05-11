@@ -184,13 +184,15 @@ export namespace LevelState {
             }
         }
 
-        getIntents(): [wasm.Creature, DOMPointReadOnly][] {
-            const intents: [wasm.Creature, DOMPointReadOnly][] = [];
+        getIntents(): [Id<wasm.Creature>, wasm.Intent, DOMPointReadOnly][] {
+            const intents: [Id<wasm.Creature>, wasm.Intent, DOMPointReadOnly][] = [];
             for (let creature of this.world.getCreatures()) {
                 if (creature.dead || !creature.npc) { continue; }
+                const intent = this.world.scaledIntent(creature.id);
+                if (intent == undefined) { continue; }
                 const point = this.board.creatureCoords(creature.id);
                 if (!point) { continue; }
-                intents.push([creature, point]);
+                intents.push([creature.id, intent, point]);
             }
             return intents;
         }

@@ -26,8 +26,8 @@ export function Level(props: {}): JSX.Element {
 
     let intents: JSX.Element[] = [];
     if (!data.get(UpdateState.UI)?.isEndTurn) {
-        intents = level.getIntents().map(([creature, point]) =>
-            <CreatureIntent key={creature.id} creature={creature} coords={point}></CreatureIntent>);
+        intents = level.getIntents().map(([cid, intent, point]) =>
+            <CreatureIntent key={cid} intent={intent} coords={point}></CreatureIntent>);
     }
 
     const floats: FloatText.ItemId[] = [];
