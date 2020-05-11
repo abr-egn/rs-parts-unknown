@@ -52,7 +52,9 @@ export function Hand(props: {
             onClick = () => startPlay(card.creatureId, ix);
             lit = Boolean(highlight?.static.parts.get(card.creatureId)?.has(card.partId));
         } else {
-            if (props.playing?.creatureId == card.creatureId && props.playing.id == card.id) {
+            if (props.playing?.creatureId == card.creatureId
+                && props.playing.partId == card.partId
+                && props.playing.id == card.id) {
                 classes.push("playing");
             } else {
                 classes.push("unplayable");

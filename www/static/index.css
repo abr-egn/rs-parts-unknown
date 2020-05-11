@@ -9,6 +9,7 @@ body {
     background-color: red;
     margin: 0;
     padding: 0;
+    overflow: hidden;
 }
 
 div.topleft {
@@ -96,7 +97,7 @@ button {
 
 .card.playing {
     transform: translate(0, -25px) scale(1.2, 1.2);
-    margin: 0px;
+    margin-bottom: 0px;
 }
 
 .card.unplayable {
@@ -172,6 +173,18 @@ button {
     background-color: rgba(0, 0, 0, 0.5);
     margin: 0px;
     padding: 5px;
+}
+
+.partTargetMenu .unplayable {
+    color: gray;
+}
+
+.partTargetMenu .playable {
+    border: 1px solid black;
+}
+
+.partTargetMenu .playable:hover {
+    border: 1px solid #00FF00;
 }
 
 /* Creature Stats */
