@@ -13,75 +13,87 @@ export function Hand(props: {
     cards: wasm.Card[],
     playing?: wasm.Card,
 }): JSX.Element {
+    const cardKey = (card: wasm.Card): string => {
+        return `(${card.creatureId},${card.partId},${card.id})`;
+    };
+  
+    const list = props.cards.map((card, ix) => {
+        return (<Card
+            key={cardKey(card)}
+            active={props.active}
+            card={card}
+            ix={ix}
+            playing={props.playing?.creatureId == card.creatureId
+                && props.playing.partId == card.partId
+                && props.playing.id == card.id}
+        ></Card>);
+    });
+    return <div className="hand">{list}</div>;
+}
+
+export function Card(props: {
+    active: boolean,
+    card: wasm.Card,
+    ix: number,
+    playing: boolean,
+}): JSX.Element {
     const world = React.useContext(WorldContext);
     const data = React.useContext(StackData);
     const focus = data.get(Focus);
     const highlight = data.get(Highlight);
+    const playable = props.active && world.isPlayable(props.card);
+    const creature = world.getCreature(props.card.creatureId)!;
+    const part = creature.parts.get(props.card.partId)!;
 
-    const startPlay = (creatureId: Id<wasm.Creature>, ix: number) => {
-        window.game.stack.push(new PlayCardState(creatureId, ix));
-    };
-    const canPlay = (card: wasm.Card): boolean => {
-        return world.isPlayable(card);
-    };
-    const cardKey = (card: wasm.Card): string => {
-        return `(${card.creatureId},${card.partId},${card.id})`;
-    };
-    const onCardEnter = (card: wasm.Card, event: React.MouseEvent) => {
-        const playable = props.active && canPlay(card);
+    const onEnter = () => {
         if (playable) {
-            focus?.part?.onEnter?.([card.creatureId, card.partId]);
+            focus?.part?.onEnter?.([props.card.creatureId, props.card.partId]);
         }
     };
-    const onCardLeave = (card: wasm.Card, event: React.MouseEvent) => {
-        const playable = props.active && canPlay(card);
+    const onLeave = () => {
         if (playable) {
-            focus?.part?.onLeave?.([card.creatureId, card.partId]);
+            focus?.part?.onLeave?.([props.card.creatureId, props.card.partId]);
         }
     }
-  
-    const list = props.cards.map((card, ix) => {
-        let creature = world.getCreature(card.creatureId)!;
-        let part = creature.parts.get(card.partId)!;
-        const playable = props.active && canPlay(card);
-        let onClick = undefined;
-        const classes = ["card"];
-        let lit = false;
+    const onClick = () => {
         if (playable) {
-            classes.push("playable");
-            onClick = () => startPlay(card.creatureId, ix);
-            lit = Boolean(highlight?.static.parts.get(card.creatureId)?.has(card.partId));
-        } else {
-            if (props.playing?.creatureId == card.creatureId
-                && props.playing.partId == card.partId
-                && props.playing.id == card.id) {
-                classes.push("playing");
-            } else {
-                classes.push("unplayable");
-            }
-            lit = Boolean(highlight?.throb.parts.get(card.creatureId)?.has(card.partId));
+            window.game.stack.push(new PlayCardState(props.card.creatureId, props.ix));
         }
-        if (lit) {
+    }
+
+    const classes = ["card"];
+    if (playable) {
+        classes.push("playable");
+        if (highlight?.static.parts.get(props.card.creatureId)?.has(props.card.partId)) {
             classes.push("lit");
         }
-        return (
-            <div key={cardKey(card)}
-                onMouseEnter={(ev) => onCardEnter(card, ev)}
-                onMouseLeave={(ev) => onCardLeave(card, ev)}
-                onMouseDown={onClick}
-                className={classes.join(" ")}
-            >
-                <div className="databar">
-                    <div className="name">{card.name}</div>
-                </div>
-                <div className="picture"></div>
-                <div className="databar">
-                    <div className="cardpart">{part.name}</div>
-                    <div className="cost">{card.apCost}</div>
-                </div>
-                <div className="cardtext">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do...</div>
+    } else {
+        if (props.playing) {
+            classes.push("playing");
+        } else {
+            classes.push("unplayable");
+        }
+        if (highlight?.throb.parts.get(props.card.creatureId)?.has(props.card.partId)) {
+            classes.push("lit");
+        }
+    }
+
+    return (
+        <div
+            onMouseEnter={onEnter}
+            onMouseLeave={onLeave}
+            onMouseDown={onClick}
+            className={classes.join(" ")}
+        >
+            <div className="databar">
+                <div className="name">{props.card.name}</div>
             </div>
-        );
-    });
-    return <div className="hand">{list}</div>;
-  }
+            <div className="picture"></div>
+            <div className="databar">
+                <div className="cardpart">{part.name}</div>
+                <div className="cost">{props.card.apCost}</div>
+            </div>
+            <div className="cardtext">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do...</div>
+        </div>
+    );
+}

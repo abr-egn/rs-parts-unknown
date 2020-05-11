@@ -90,7 +90,6 @@ export function CreatureIntent(props: {
     creature: wasm.Creature,
     coords: DOMPointReadOnly,
 }): JSX.Element {
-    const world = React.useContext(WorldContext);
     const npc = props.creature.npc!;
     const height = window.innerHeight;
     const style = {
