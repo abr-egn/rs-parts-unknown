@@ -3,8 +3,12 @@ use std::{
     iter::FromIterator,
 };
 
+use hex::Hex;
+
 use crate::{
     action::{Action, Event, Path, Tag, action},
+    creature::Creature,
+    id_map::Id,
     entity::Entity,
     error::{Error, Result},
     world::{Scope, World},
@@ -18,6 +22,7 @@ pub trait WorldExt {
 
     // Mutators
     fn execute_all(&mut self, actions: &[Action]) -> Vec<Event>;
+    fn move_creature(&mut self, creature_id: Id<Creature>, to: Hex) -> Vec<Event>;
 }
 
 impl WorldExt for World {
@@ -66,6 +71,47 @@ impl WorldExt for World {
             let failed = Event::is_failure(&events);
             out.extend(events);
             if failed { break; }
+        }
+        out
+    }
+
+    fn move_creature(&mut self, creature_id: Id<Creature>, to: Hex) -> Vec<Event> {
+        let from = match self.map().creatures().get(&creature_id) {
+            Some(h) => h,
+            None => return vec![Event::failed(Error::NoSuchCreature)],
+        };
+        let path = match self.map().path_to(*from, to) {
+            Ok(p) => p,
+            Err(e) => return vec![Event::failed(e)],
+        };
+        let mut out = vec![];
+        for (from, to) in path.iter().zip(path.iter().skip(1)) {
+            let actual = match self.map().creatures().get(&creature_id) {
+                Some(h) => h,
+                None => {
+                    out.push(Event::failed(Error::NoSuchCreature));
+                    return out;
+                }
+            };
+            if actual != from && actual.distance_to(*to) > 1 {
+                out.push(Event::failed(Error::Obstructed));
+                return out;
+            }
+            let mut mp_evs = self.execute(&Action {
+                source: Path::Global,
+                target: Path::Creature { cid: creature_id },
+                tags: HashSet::from_iter(vec![Tag::Normal]),
+                data: action::SpendMP { mp: 1 },
+            });
+            let failed = Event::is_failure(&mp_evs);
+            out.append(&mut mp_evs);
+            if failed { return out; }
+            out.append(&mut self.execute(&Action {
+                source: Path::Global,
+                target: Path::Creature { cid: creature_id },
+                tags: HashSet::new(),
+                data: action::Move { to: *to },
+            }));
         }
         out
     }

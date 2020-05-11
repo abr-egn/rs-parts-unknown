@@ -20,7 +20,6 @@ use crate::{
     id_map::{Id, IdMap},
     library,
     map::{Map},
-    npc::{IntentKind, Range},
     status::{StatusDone, StatusId},
     some_or,
 };
@@ -105,18 +104,13 @@ impl World {
 
         for (id, intent) in npc_plays {
             // Motion
-            // TODO: move this logic to npc.rs
-            let result = match intent.kind {
-                IntentKind::Attack { range: Range::Melee, .. } => self.move_to_melee(id),
-                IntentKind::Stunned => Ok(vec![]),
-            };
-            match result {
+            match intent.move_(self, id) {
                 Ok(es) => events.extend(es),
                 Err(e) => events.push(to_creature(id, event::FloatText { text: format!("{}!", e) })),
             }
 
             // Action
-            match intent.check_run(self, id) {
+            match intent.act(self, id) {
                 Ok(es) => events.extend(es),
                 Err(e) => events.push(to_creature(id, event::FloatText { text: format!("{}!", e) })),
             }
@@ -136,42 +130,6 @@ impl World {
         self.update_npc_plans();
 
         events
-    }
-
-    pub fn move_creature(&mut self, creature_id: Id<Creature>, to: Hex) -> Vec<Event> {
-        let from = match self.map.creatures().get(&creature_id) {
-            Some(h) => h,
-            None => return vec![Event::failed(Error::NoSuchCreature)],
-        };
-        let path = match self.map.path_to(*from, to) {
-            Ok(p) => p,
-            Err(e) => return vec![Event::failed(e)],
-        };
-        let mut out = vec![];
-        for (from, to) in path.iter().zip(path.iter().skip(1)) {
-            let actual = match self.map.creatures().get(&creature_id) {
-                Some(h) => h,
-                None => {
-                    out.push(Event::failed(Error::NoSuchCreature));
-                    return out;
-                }
-            };
-            if actual != from && actual.distance_to(*to) > 1 {
-                out.push(Event::failed(Error::Obstructed));
-                return out;
-            }
-            let mut mp_evs = self.execute(&Action {
-                source: Path::Global,
-                target: Path::Creature { cid: creature_id },
-                tags: HashSet::from_iter(vec![Tag::Normal]),
-                data: action::SpendMP { mp: 1 },
-            });
-            let failed = Event::is_failure(&mp_evs);
-            out.append(&mut mp_evs);
-            if failed { return out; }
-            out.append(&mut self.execute(&to_creature(creature_id, action::Move { to: *to })));
-        }
-        out
     }
 
     // Private
@@ -335,21 +293,6 @@ impl World {
             }));
         }
         events
-    }
-
-    // TODO: move to npc.rs
-    fn move_to_melee(&mut self, id: Id<Creature>) -> Result<Vec<Event>> {
-        let player_hex = self.map.creatures().get(&self.player_id)
-            .ok_or(Error::NoSuchCreature)?;
-        let from = self.map.creatures().get(&id)
-            .ok_or(Error::NoSuchCreature)?;
-        if from.distance_to(*player_hex) <= 1 { return Ok(vec![]); }
-        let mut near: Vec<_> = player_hex.neighbors()
-            .filter(|h| self.map.tiles().get(h).map_or(false, |t| t.is_open()))
-            .collect();
-        if near.is_empty() { return Err(Error::Obstructed); }
-        near.sort_by(|a, b| from.distance_to(*a).cmp(&from.distance_to(*b)));
-        Ok(self.move_creature(id, near[0]))
     }
 
     fn update_npc_plans(&mut self) {

@@ -12,6 +12,7 @@ use crate::{
     part::{Part, PartTag},
     serde_empty,
     world::World,
+    world_ext::WorldExt,
 };
 
 #[derive(Debug, Clone)]
@@ -48,7 +49,11 @@ pub struct Intent {
 }
 
 impl Intent {
-    pub fn check_run(&self, world: &mut World, source: Id<Creature>) -> Result<Vec<Event>> {
+    pub fn move_(&self, world: &mut World, source: Id<Creature>) -> Result<Vec<Event>> {
+        self.kind.move_(world, source)
+    }
+
+    pub fn act(&self, world: &mut World, source: Id<Creature>) -> Result<Vec<Event>> {
         self.check(world, source)?;
         self.kind.check(world, source)?;
 
@@ -59,7 +64,7 @@ impl Intent {
         if Event::is_failure(&events) { return Ok(events); }
 
         // Execute action
-        events.extend(self.kind.run(world, source, self.from));
+        events.extend(self.kind.act(world, source, self.from));
 
         Ok(events)
     }
@@ -105,7 +110,14 @@ impl IntentKind {
         }
     }
 
-    fn run(&self, world: &mut World, source: Id<Creature>, _part: Option<Id<Part>>) -> Vec<Event> {
+    fn move_(&self, world: &mut World, source: Id<Creature>) -> Result<Vec<Event>> {
+        match self {
+            IntentKind::Attack { range: Range::Melee, .. } => move_to_melee(world, source),
+            IntentKind::Stunned => Ok(vec![]),
+        }
+    }
+
+    fn act(&self, world: &mut World, source: Id<Creature>, _part: Option<Id<Part>>) -> Vec<Event> {
         match self {
             IntentKind::Attack { damage, .. } => {
                 let player_id = world.player_id();
@@ -153,4 +165,19 @@ where T: 'static + Behavior + Clone,
 
 impl Clone for Box<dyn Behavior> {
     fn clone(&self) -> Self { self.clone_box() }
+}
+
+fn move_to_melee(world: &mut World, id: Id<Creature>) -> Result<Vec<Event>> {
+    let map = world.map();
+    let player_hex = map.creatures().get(&world.player_id())
+        .ok_or(Error::NoSuchCreature)?;
+    let from = map.creatures().get(&id)
+        .ok_or(Error::NoSuchCreature)?;
+    if from.distance_to(*player_hex) <= 1 { return Ok(vec![]); }
+    let mut near: Vec<_> = player_hex.neighbors()
+        .filter(|h| map.tiles().get(h).map_or(false, |t| t.is_open()))
+        .collect();
+    if near.is_empty() { return Err(Error::Obstructed); }
+    near.sort_by(|a, b| from.distance_to(*a).cmp(&from.distance_to(*b)));
+    Ok(world.move_creature(id, near[0]))
 }
