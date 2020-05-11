@@ -32,6 +32,6 @@ export const CARDS: Readonly<CardData> = Object.freeze({
     },
     "Throw Debris": {
         icon: "thrown-charcoal.svg",
-        text: () => <span>Hit a visible enemy for 5 damage.</span>
+        text: (props) => <span>Hit a visible enemy for {props.ui.get("damage")} damage.</span>
     },
 });

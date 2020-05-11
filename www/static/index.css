@@ -2,6 +2,7 @@
 
 #mainCanvas {
     background-color: black;
+    outline: none;
 }
 
 body {
