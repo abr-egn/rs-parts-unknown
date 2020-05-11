@@ -119,7 +119,10 @@ export class PlayCardState extends State {
 
     onTileClicked(hex: Hex) {
         const level = this.stack.data.get(LevelState.Data)!;
-        if (!this._canTarget(hex)) { return; }
+        if (!this._canTarget(hex)) {
+            this.stack.pop();
+            return;
+        }
         const spec = this._inPlay!.getTargetSpec();
         if (spec.Part) {
             let creature = level.creatureAt(hex);

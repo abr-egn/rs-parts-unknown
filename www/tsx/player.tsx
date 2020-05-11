@@ -22,7 +22,6 @@ export function PlayerControls(props: {}): JSX.Element {
     const play = data.get(PlayCardState.UI);
     const toUpdate = data.get(PlayCardState.ToUpdate);
 
-    const cancelPlay = () => window.game.stack.pop();
     const movePlayer = () => window.game.stack.push(new MovePlayerState());
 
     const hasAp = player.curAp > 0;
@@ -30,7 +29,6 @@ export function PlayerControls(props: {}): JSX.Element {
 
     const baseActive = Boolean(active?.is(LevelState));
     const inPlay = Boolean(active?.is(PlayCardState) && !toUpdate);
-    const canCancel = Boolean(inPlay || active?.is(MovePlayerState));
 
     return (<div>
         <CreatureStats
@@ -48,7 +46,6 @@ export function PlayerControls(props: {}): JSX.Element {
         {inPlay && <div>Playing: {play?.card.name}</div>}
         {baseActive && <EndTurnButton/>}
         {baseActive && hasMp && <button onClick={movePlayer}>Move</button>}
-        {canCancel &&  <div><button onClick={cancelPlay}>Cancel</button></div>}
     </div>);
 }
 
