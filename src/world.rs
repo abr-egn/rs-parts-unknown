@@ -162,7 +162,7 @@ impl World {
 
     fn entity_mut(&mut self, path: &Path) -> Result<&mut Entity> {
         match path {
-            Path::Global => Ok(&mut self.entity),
+            Path::World => Ok(&mut self.entity),
             Path::Creature { cid } | Path::Card { cid, .. } => {
                 let creature = self.creatures.get_mut(*cid).ok_or(Error::NoSuchCreature)?;
                 Ok(&mut creature.entity)
@@ -217,7 +217,7 @@ impl World {
             };
             if done == StatusDone::Expire {
                 actions.push(Action {
-                    source: Path::Global,
+                    source: Path::World,
                     target: path.clone(),
                     tags: HashSet::new(),
                     data: action::RemoveStatus { id: sid },
@@ -278,7 +278,7 @@ impl World {
         };
         if fill_ap > 0 {
             events.extend(self.execute(&Action {
-                source: Path::Global,
+                source: Path::World,
                 target: Path::Creature{ cid: id },
                 tags: HashSet::from_iter(vec![Tag::Normal]),
                 data: action::GainAP { ap: fill_ap }
@@ -286,7 +286,7 @@ impl World {
         }
         if fill_mp > 0 {
             events.extend(self.execute(&Action {
-                source: Path::Global,
+                source: Path::World,
                 target: Path::Creature{ cid: id },
                 tags: HashSet::from_iter(vec![Tag::Normal]),
                 data: action::GainMP { mp: fill_mp }
@@ -314,7 +314,7 @@ impl World {
 
     fn all_entity_paths(&self) -> Vec<Path> {
         let mut out = vec![];
-        out.push(Path::Global);
+        out.push(Path::World);
         for (&cid, creature) in &self.creatures {
             out.push(Path::Creature { cid });
             for &pid in creature.parts.keys() {
@@ -369,7 +369,7 @@ impl Scope {
                 let cid = meta.source.creature()?;
                 Some(Path::Creature { cid })
             }
-            Scope::World => Some(Path::Global),
+            Scope::World => Some(Path::World),
             Scope::TargetCreature => {
                 let cid = meta.target.creature()?;
                 Some(Path::Creature { cid })

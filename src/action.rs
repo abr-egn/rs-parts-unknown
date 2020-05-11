@@ -29,8 +29,8 @@ pub struct Meta<T> {
 impl<T> Meta<T> {
     pub fn new(data: T) -> Self {
         Meta {
-            source: Path::Global,
-            target: Path::Global,
+            source: Path::World,
+            target: Path::World,
             tags: HashSet::new(),
             data,
         }
@@ -49,7 +49,7 @@ impl<T> Meta<T> {
 #[derive(Debug, Clone, Serialize, Deserialize, TsData, PartialEq, Eq, Hash)]
 pub enum Path {
     #[serde(with="serde_empty")]
-    Global,  // TODO: rename to World
+    World,
     Creature { cid: Id<Creature> },
     Part { cid: Id<Creature>, pid: Id<Part> },
     Card { cid: Id<Creature>, pid: Id<Part>, card: Id<Card> },
@@ -197,7 +197,7 @@ impl Event {
 
 pub fn to_creature<T>(cid: Id<Creature>, data: T) -> Meta<T> {
     Meta {
-        source: Path::Global,
+        source: Path::World,
         target: Path::Creature { cid },
         tags: HashSet::new(),
         data,

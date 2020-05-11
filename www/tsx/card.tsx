@@ -44,7 +44,7 @@ export function Card(props: {
     const playable = props.active && world.isPlayable(props.card);
     const creature = world.getCreature(props.card.creatureId)!;
     const part = creature.parts.get(props.card.partId)!;
-    let target: wasm.Path = {Global: {}};
+    let target: wasm.Path = {World: {}};
     if (focus?.currentPart != undefined) {
         const [cid, pid] = focus.currentPart;
         target = {Part: {cid, pid}};

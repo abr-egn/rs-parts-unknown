@@ -35,7 +35,7 @@ export class PlayCardState extends State {
         const targetSpec = this._inPlay.getTargetSpec();
         if (targetSpec.None) {
             // TASK: preview, confirm
-            const [nextWorld, events] = world.finishPlay(this._inPlay!, {Global: {}});
+            const [nextWorld, events] = world.finishPlay(this._inPlay!, {World: {}});
             this._inPlay = undefined;
             this.stack.swap(new UpdateState(events, nextWorld));
             return;

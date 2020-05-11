@@ -6,7 +6,7 @@ use std::{
 use hex::Hex;
 
 use crate::{
-    action::{Action, Event, Path, Tag, action},
+    action::{Action, Event, Path, Tag, action, to_creature},
     creature::Creature,
     id_map::Id,
     entity::Entity,
@@ -49,7 +49,7 @@ impl WorldExt for World {
 
     fn path_entity(&self, path: &Path) -> Result<&Entity> {
         match path {
-            Path::Global => Ok(&self.entity()),
+            Path::World => Ok(&self.entity()),
             Path::Creature { cid } | Path::Card { cid, .. } => {
                 let creature = self.creatures().get(*cid).ok_or(Error::NoSuchCreature)?;
                 Ok(&creature.entity)
@@ -98,7 +98,7 @@ impl WorldExt for World {
                 return out;
             }
             let mut mp_evs = self.execute(&Action {
-                source: Path::Global,
+                source: Path::World,
                 target: Path::Creature { cid: creature_id },
                 tags: HashSet::from_iter(vec![Tag::Normal]),
                 data: action::SpendMP { mp: 1 },
@@ -106,12 +106,7 @@ impl WorldExt for World {
             let failed = Event::is_failure(&mp_evs);
             out.append(&mut mp_evs);
             if failed { return out; }
-            out.append(&mut self.execute(&Action {
-                source: Path::Global,
-                target: Path::Creature { cid: creature_id },
-                tags: HashSet::new(),
-                data: action::Move { to: *to },
-            }));
+            out.append(&mut self.execute(&to_creature(creature_id, action::Move { to: *to })));
         }
         out
     }

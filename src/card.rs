@@ -66,13 +66,13 @@ impl InPlay {
 
     pub fn finish(self, world: &mut World, target: &Path) -> Vec<Event> {
         let mut events = world.execute(&Action {
-            source: Path::Global,
+            source: Path::World,
             target: Path::Card { cid: self.creature_id, pid: self.part_id, card: self.card_id },
             tags: HashSet::new(),
             data: action::Discard,
         });
         let ap = world.execute(&Action {
-            source: Path::Global,
+            source: Path::World,
             target: Path::Creature { cid: self.creature_id },
             tags: HashSet::from_iter(vec![Tag::Normal]),
             data: action::SpendAP { ap: self.ap_cost },
@@ -138,7 +138,7 @@ pub enum TargetSpec {
 impl TargetSpec {
     pub fn matches(&self, world: &World, target: &Path) -> bool {
         match (self, target) {
-            (TargetSpec::None, Path::Global) => true,
+            (TargetSpec::None, Path::World) => true,
             (TargetSpec::Part { on_player, tags }, Path::Part { cid, pid }) => {
                 if *on_player != (*cid == world.player_id()) { return false; }
                 let creature = some_or!(world.creatures().get(*cid), return false);

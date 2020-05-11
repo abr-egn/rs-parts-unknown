@@ -61,7 +61,7 @@ impl card::Behavior for HitPartBehavior {
         let source_mp = source_creature.cur_mp;
         let mut out = vec![];
         out.extend(world.execute(&Action {
-            source: Path::Global,
+            source: Path::World,
             target: Path::Creature { cid: source_cid },
             tags: HashSet::from_iter(vec![Tag::Normal]),
             data: action::SpendMP { mp: source_mp },
@@ -83,7 +83,7 @@ fn no_ui(_world: &World, _source: &Path, _target: &Path) -> HashMap<String, Stri
 
 fn attack_ui(world: &World, source: &Path, target: &Path, base: i32) -> HashMap<String, String> {
     let target = if source.creature() == target.creature() {
-        &Path::Global
+        &Path::World
     } else {
         target
     };
@@ -133,7 +133,7 @@ struct Expire<When> {
 impl<When: Fn(&Event) -> bool + Clone + 'static> Expire<When> {
     fn tag_mod(world: &mut World, target: &Path, m: TagMod, when: When) -> Vec<Event> {
         let mut out = world.execute(&Action {
-            source: Path::Global, target: target.clone(),
+            source: Path::World, target: target.clone(),
             tags: HashSet::new(),
             data: action::AddTagMod { m },
         });
@@ -142,12 +142,12 @@ impl<When: Fn(&Event) -> bool + Clone + 'static> Expire<When> {
             _ => return out,
         };
         out.extend(world.execute(&Action {
-            source: Path::Global, target: target.clone(),
+            source: Path::World, target: target.clone(),
             tags: HashSet::new(),
             data: action::AddStatus {
                 status: Box::new(Self {
                     remove: vec![Action {
-                        source: Path::Global,
+                        source: Path::World,
                         target: target.clone(),
                         tags: HashSet::new(),
                         data: action::ClearTagMod { id: mod_id },
