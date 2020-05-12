@@ -178,7 +178,7 @@ impl<When: Fn(&Event) -> bool + Clone + 'static> Status for Expire<When> {
 
 pub fn guard() -> Card {
     Card {
-        name: "Guard".into(),
+        name: "Block".into(),
         ap_cost: 1,
         start_play: |_, _| Box::new(Guard),
         ui: no_ui,
@@ -266,7 +266,7 @@ impl Stagger {
 
 pub fn heal() -> Card {
     Card {
-        name: "Heal".into(),
+        name: "Regenerate".into(),
         ap_cost: 1,
         start_play: |_, _| Box::new(Heal { amount: 5 }),
         ui: no_ui,

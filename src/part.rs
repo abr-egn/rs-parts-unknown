@@ -104,7 +104,6 @@ impl Part {
                 return simple(event::ChangeHP { delta: -damage });
             }
             action::Heal { hp } => {
-                if self.tags().contains(&PartTag::Broken) { return Err(Error::BrokenPart); }
                 let hp = std::cmp::min(hp, self.max_hp - self.cur_hp);
                 if hp <= 0 { return simple(event::ChangeHP { delta: 0 }) }
                 if self.cur_hp == 0 && hp > 0 {

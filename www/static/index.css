@@ -113,12 +113,14 @@ button {
 }
 
 .card .keyword {
+    color: blue;
     font-weight: bold;
     display: inline-block;
     position: relative;
 }
 
 .card .tooltip {
+    color: black;
     display: none;
     background-color: white;
     border: 1px solid black;
@@ -135,6 +137,10 @@ button {
 
 .keyword:hover .tooltip {
     display: block;
+}
+
+.card .tag {
+    font-weight: bold;
 }
 
 /* UI Widgets */
