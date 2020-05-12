@@ -76,8 +76,25 @@ impl card::Behavior for HitPartBehavior {
 }
 
 fn no_ui(_world: &World, _source: &Path, _target: &Path) -> HashMap<String, String> {
+    hash(vec![
+        ("test", "value".into()),
+    ])
+}
+
+fn scaled(prefix: &str, base: i32, new: Option<i32>) -> HashMap<String, String> {
+    let (value, delta) = match new {
+        None => (base, "unknown"),
+        Some(value) => (value, if value > base {
+            "increase"
+        } else if value < base {
+            "decrease"
+        } else {
+            "same"
+        })
+    };
     let mut out = HashMap::new();
-    out.insert("Test".into(), "Value".into());
+    out.insert(format!("{}_value", prefix), format!("{}", value));
+    out.insert(format!("{}_delta", prefix), delta.into());
     out
 }
 
@@ -87,11 +104,7 @@ fn attack_ui(world: &World, source: &Path, target: &Path, base: i32) -> HashMap<
     } else {
         target
     };
-    let damage = world.scale_damage(source, target, base, Scope::into_enum_iter())
-        .unwrap_or(base);
-    hash(vec![
-        ("damage", format!("{}", damage)),
-    ])
+    scaled("damage", base, world.scale_damage(source, target, base, Scope::into_enum_iter()))
 }
 
 fn hash<'a, I: IntoIterator<Item=(&'a str, String)>>(i: I) -> HashMap<String, String> {
@@ -99,28 +112,30 @@ fn hash<'a, I: IntoIterator<Item=(&'a str, String)>>(i: I) -> HashMap<String, St
 }
 
 pub fn throw_debris() -> Card {
+    static DAMAGE: i32 = 5;
     Card {
         name: "Throw Debris".into(),
         ap_cost: 1,
         start_play: |world, source| HitPart {
-            damage: 5,
+            damage: DAMAGE,
             tags: vec![vec![PartTag::Open]],
             melee: false,
         }.behavior(world, source),
-        ui: |world, source, target| attack_ui(world, source, target, 5),
+        ui: |world, source, target| attack_ui(world, source, target, DAMAGE),
     }
 }
 
 pub fn punch() -> Card {
+    static DAMAGE: i32 = 10;
     Card {
         name: "Punch".into(),
         ap_cost: 1,
         start_play: |world, source| HitPart {
-            damage: 10,
+            damage: DAMAGE,
             tags: vec![vec![PartTag::Open]],
             melee: true,
         }.behavior(world, source),
-        ui: |world, source, target| attack_ui(world, source, target, 10),
+        ui: |world, source, target| attack_ui(world, source, target, DAMAGE),
     }
 }
 
@@ -265,11 +280,12 @@ impl Stagger {
 }
 
 pub fn heal() -> Card {
+    static AMOUNT: i32 = 5;
     Card {
         name: "Regenerate".into(),
         ap_cost: 1,
-        start_play: |_, _| Box::new(Heal { amount: 5 }),
-        ui: no_ui,
+        start_play: |_, _| Box::new(Heal { amount: AMOUNT }),
+        ui: |_, _, _| { scaled("heal", AMOUNT, Some(AMOUNT)) }
     }
 }
 
@@ -299,16 +315,17 @@ impl card::Behavior for Heal {
 }
 
 pub fn rage() -> Card {
+    static AMOUNT: i32 = 7;
     Card {
         name: "Rage".into(),
         ap_cost: 1,
-        start_play: |_, _| Box::new(Rage),
-        ui: no_ui,
+        start_play: |_, _| Box::new(Rage { amount: AMOUNT }),
+        ui: |_, _, _| { scaled("added", AMOUNT, Some(AMOUNT)) }
     }
 }
 
 #[derive(Debug, Clone)]
-struct Rage;
+struct Rage { amount: i32 }
 
 impl card::Behavior for Rage {
     fn range(&self, _source: &Path, _world: &World) -> Vec<Hex> { vec![] }
@@ -320,7 +337,7 @@ impl card::Behavior for Rage {
             source,
             target: Path::Creature { cid },
             tags: HashSet::new(),
-            data: action::AddStatus { status: Box::new(Rage) },
+            data: action::AddStatus { status: Box::new(self.clone()) },
         })
     }
 }
@@ -334,7 +351,7 @@ impl Status for Rage {
         let mut action = action.clone();
         match &mut action.data {
             action::Hit { damage } => {
-                *damage = *damage + 7;
+                *damage = *damage + self.amount;
                 Some(action)
             },
             _ => None

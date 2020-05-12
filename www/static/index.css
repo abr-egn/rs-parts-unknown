@@ -143,6 +143,10 @@ button {
     font-weight: bold;
 }
 
+.card .scaled {
+    font-weight: bold;
+}
+
 /* UI Widgets */
 
 .uibox {

@@ -12,27 +12,43 @@ export type CardData = { [key: string]: CardDisplay };
 export const CARDS: Readonly<CardData> = Object.freeze({
     "Block": {
         icon: "shield.svg",
-        text: () => <span><Expose/> this part to <Guard/> another until your next turn.</span>
+        text: () => (<span>
+            <Expose/> this part to <Guard/> another until your next turn.
+        </span>),
     },
     "Punch": {
         icon: "punch.svg",
-        text: (props) => <span><span className="tag">Hit</span> an adjacent enemy for {props.ui.get("damage")} damage.</span>,
+        text: (props) => (<span>
+            <span className="tag">Hit</span> an adjacent enemy for
+            {' '}<Scaled name="damage" ui={props.ui}/> damage.
+        </span>),
     },
     "Rage": {
         icon: "angry-eyes.svg",
-        text: () => <span>Add 7 damage to your <span className="tag">Hit</span>s until end of turn.</span>
+        text: (props) => (<span>
+            Add <Scaled name="added" ui={props.ui}/> damage to your
+            {' '}<span className="tag">Hit</span>s until end of turn.
+        </span>),
     },
     "Regenerate": {
         icon: "healing.svg",
-        text: () => <span><Heal/> a damaged <span className="tag">Flesh</span> part for 5 HP.</span>
+        text: (props) => (<span>
+            <Heal/> a damaged <span className="tag">Flesh</span> part for 
+            {' '}<Scaled name="heal" ui={props.ui}/> HP.
+        </span>),
     },
     "Stagger": {
         icon: "foot-trip.svg",
-        text: () => <span><Expose/> a random part on an adjacent enemy until end of turn.</span>
+        text: () => (<span>
+            <Expose/> a random part on an adjacent enemy until end of turn.
+        </span>),
     },
     "Throw Debris": {
         icon: "thrown-charcoal.svg",
-        text: (props) => <span><span className="tag">Hit</span> a visible enemy for {props.ui.get("damage")} damage.</span>
+        text: (props) => (<span>
+            <span className="tag">Hit</span> a visible enemy for 
+            {' '}<Scaled name="damage" ui={props.ui}/> damage.
+        </span>),
     },
 });
 
@@ -62,4 +78,12 @@ function Heal(): JSX.Element {
             Restore hitpoints, and remove <span className="keyword">Broken</span>.
         </span>
     </div>;
+}
+
+function Scaled(props: {
+    name: string,
+    ui: Map<string, string>,
+}): JSX.Element {
+    const classes = ["scaled", props.ui.get(props.name + "_delta")!];
+    return <span className={classes.join(" ")}>{props.ui.get(props.name + "_value")}</span>
 }
