@@ -147,6 +147,18 @@ button {
     font-weight: bold;
 }
 
+.scaled.increase {
+    color: green;
+}
+
+.scaled.decrease {
+    color: red;
+}
+
+.scaled.unknown {
+    color: gray;
+}
+
 /* UI Widgets */
 
 .uibox {
