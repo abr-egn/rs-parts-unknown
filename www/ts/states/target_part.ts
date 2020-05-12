@@ -26,11 +26,12 @@ export class TargetPartState extends State {
 
         this.update((draft) => {
             draft.set(TargetPartState.UI, this._hex, targets);
-            draft.build(Focus).part = {
-                onClick: ([cid, pid]) => {
-                    window.game.stack.pop(new TargetPartState.Select(cid, pid));
-                }
+            const oldFocus = draft.get(Focus)?.part;
+            const focus: Focus.PartHandler = Object.create(oldFocus || null);
+            focus.onClick = ([cid, pid]) => {
+                window.game.stack.pop(new TargetPartState.Select(cid, pid));
             };
+            draft.build(Focus).part = focus;
         });
     }
 

@@ -11,23 +11,23 @@ export class Focus {
     private _creature: HandlerWrap<Id<wasm.Creature>> = new HandlerWrap();
     private _part: HandlerWrap<[Id<wasm.Creature>, Id<wasm.Part>]> = new HandlerWrap();
 
-    get creature(): Readonly<Focus.Handler<Id<wasm.Creature>>> {
+    get creature(): Readonly<Focus.CreatureHandler> {
         return this._creature;
     }
-    set creature(value: Readonly<Focus.Handler<Id<wasm.Creature>>>) {
-        this._creature.wrapped = value;
+    set creature(value: Readonly<Focus.CreatureHandler>) {
+        this._creature = new HandlerWrap(value);
     }
-    get part(): Readonly<Focus.Handler<[Id<wasm.Creature>, Id<wasm.Part>]>> {
+
+    get part(): Readonly<Focus.PartHandler> {
         return this._part;
     }
-    set part(value: Readonly<Focus.Handler<[Id<wasm.Creature>, Id<wasm.Part>]>>) {
-        this._part.wrapped = value;
+    set part(value: Readonly<Focus.PartHandler>) {
+        this._part = new HandlerWrap(value);
     }
 
     get currentCreature(): Id<wasm.Creature> | undefined {
         return this._creature.current;
     }
-
     get currentPart(): [Id<wasm.Creature>, Id<wasm.Part>] | undefined {
         return this._part.current;
     }
@@ -38,6 +38,8 @@ export namespace Focus {
         onLeave?: (value: T) => void;
         onClick?: (value: T) => void;
     }
+    export type CreatureHandler = Handler<Id<wasm.Creature>>;
+    export type PartHandler = Handler<[Id<wasm.Creature>, Id<wasm.Part>]>;
 }
 
 class HandlerWrap<T> implements Focus.Handler<T> {
