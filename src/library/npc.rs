@@ -24,7 +24,7 @@ impl Monopod {
                 20)
         });
         let foot = parts.add(Part {
-            mp: 3,
+            mp: 2,
             ..Part::new(
                 "Fut", 
                 &[PartTag::Limb, PartTag::Flesh, PartTag::Leg, PartTag::Open],
