@@ -112,6 +112,31 @@ button {
     transform: translate(0, -25px);
 }
 
+.card .keyword {
+    font-weight: bold;
+    display: inline-block;
+    position: relative;
+}
+
+.card .tooltip {
+    display: none;
+    background-color: white;
+    border: 1px solid black;
+    border-radius: 5px;
+    padding: 2px;
+    position: absolute;
+    font-weight: normal;
+    bottom: 100%;
+    min-width: 100px;
+    text-align: center;
+    font-size: smaller;
+    /*transform: translate(-100%, -100%);*/
+}
+
+.keyword:hover .tooltip {
+    display: block;
+}
+
 /* UI Widgets */
 
 .uibox {
