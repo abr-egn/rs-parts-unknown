@@ -19,14 +19,12 @@ use crate::{
     some_or,
 };
 
-#[derive(Clone, Serialize)]
+#[derive(Clone)]
 pub struct Card {
     pub name: String,
     pub ap_cost: i32,
     // Contract: the world will not change between start_play and Behavior methods.
-    #[serde(skip)]
     pub start_play: fn(&World, &Path) -> Box<dyn Behavior>,
-    #[serde(skip)]
     pub ui: fn(&World, &Path, &Path) -> HashMap<String, String>,
 }
 
