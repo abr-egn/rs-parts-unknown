@@ -17,7 +17,7 @@ use crate::{
 
 pub trait WorldExt {
     // Queries
-    fn scale_damage<I: IntoIterator<Item=Scope>>(&self, source: &Path, target: &Path, base: i32, scopes: I) -> Option<i32>;
+    fn scale_damage<I: IntoIterator<Item=Scope>>(&self, source: &Path, target: &Path, base: i32, scopes: I) -> (Option<i32>, Action);
     fn path_entity(&self, path: &Path) -> Result<&Entity>;
 
     // Mutators
@@ -28,7 +28,7 @@ pub trait WorldExt {
 impl WorldExt for World {
     // Queries
 
-    fn scale_damage<I: IntoIterator<Item=Scope>>(&self, source: &Path, target: &Path, base: i32, scopes: I) -> Option<i32> {
+    fn scale_damage<I: IntoIterator<Item=Scope>>(&self, source: &Path, target: &Path, base: i32, scopes: I) -> (Option<i32>, Action) {
         let mut action = Action {
             source: source.clone(),
             target: target.clone(),
@@ -41,10 +41,11 @@ impl WorldExt for World {
             let mut entity = entity.clone();
             action = entity.apply_alters(&path, &action);    
         }
-        match action.data {
+        let damage = match action.data {
             action::Hit { damage } => Some(damage),
             _ => None,
-        }
+        };
+        (damage, action)
     }
 
     fn path_entity(&self, path: &Path) -> Result<&Entity> {

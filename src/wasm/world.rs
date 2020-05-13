@@ -249,7 +249,7 @@ impl World {
                 };
                 let target = Path::Part { cid: self.wrapped.player_id(), pid: Id::invalid() };
                 let scopes = vec![world::Scope::SourcePart, world::Scope::SourceCreature, world::Scope::World];
-                match self.wrapped.scale_damage(&source, &target, *damage, scopes) {
+                match self.wrapped.scale_damage(&source, &target, *damage, scopes).0 {
                     Some(new_damage) => {
                         *damage = new_damage;
                         Some(intent)

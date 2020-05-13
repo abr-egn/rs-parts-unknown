@@ -104,7 +104,10 @@ fn attack_ui(world: &World, source: &Path, target: &Path, base: i32) -> HashMap<
     } else {
         target
     };
-    scaled("damage", base, world.scale_damage(source, target, base, Scope::into_enum_iter()))
+    let (damage, action) = world.scale_damage(source, target, base, Scope::into_enum_iter());
+    let mut out = scaled("damage", base, damage);
+    // TODO: tags
+    out
 }
 
 fn hash<'a, I: IntoIterator<Item=(&'a str, String)>>(i: I) -> HashMap<String, String> {
