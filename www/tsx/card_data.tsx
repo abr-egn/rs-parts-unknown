@@ -1,6 +1,6 @@
 import * as React from "react";
 
-export type CardText = (props: {ui: Map<string, string>}) => JSX.Element;
+export type CardText = (props: {ui: any}) => JSX.Element;
 
 export interface CardDisplay {
     icon: string,
@@ -20,13 +20,14 @@ export const CARDS: Readonly<CardData> = Object.freeze({
         icon: "punch.svg",
         text: (props) => (<span>
             <span className="tag">Hit</span> an adjacent enemy for
-            {' '}<Scaled name="damage" ui={props.ui}/> damage.
+            {' '}<Scaled data={props.ui.damage}/> <Tags tags={props.ui.tags}/>
+            {' '}damage.
         </span>),
     },
     "Rage": {
         icon: "angry-eyes.svg",
         text: (props) => (<span>
-            Add <Scaled name="added" ui={props.ui}/> damage to your
+            Add <Scaled data={props.ui.added}/> damage to your
             {' '}<span className="tag">Hit</span>s until end of turn.
         </span>),
     },
@@ -34,7 +35,7 @@ export const CARDS: Readonly<CardData> = Object.freeze({
         icon: "healing.svg",
         text: (props) => (<span>
             <Heal/> a damaged <span className="tag">Flesh</span> part for 
-            {' '}<Scaled name="heal" ui={props.ui}/> HP.
+            {' '}<Scaled data={props.ui.heal}/> HP.
         </span>),
     },
     "Stagger": {
@@ -47,7 +48,8 @@ export const CARDS: Readonly<CardData> = Object.freeze({
         icon: "thrown-charcoal.svg",
         text: (props) => (<span>
             <span className="tag">Hit</span> a visible enemy for 
-            {' '}<Scaled name="damage" ui={props.ui}/> damage.
+            {' '}<Scaled data={props.ui.damage}/> <Tags tags={props.ui.tags}/>
+            {' '}damage.
         </span>),
     },
 });
@@ -81,9 +83,15 @@ function Heal(): JSX.Element {
 }
 
 function Scaled(props: {
-    name: string,
-    ui: Map<string, string>,
+    data: {delta: string, value: number},
 }): JSX.Element {
-    const classes = ["scaled", props.ui.get(props.name + "_delta")!];
-    return <span className={classes.join(" ")}>{props.ui.get(props.name + "_value")}</span>
+    const classes = ["scaled", props.data.delta];
+    return <span className={classes.join(" ")}>{props.data.value}</span>
+}
+
+function Tags(props: {
+    tags: string[],
+}): JSX.Element {
+    const tags = props.tags.map(tag => <b>{tag}</b>);
+    return <>{tags}</>;
 }

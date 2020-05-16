@@ -1,10 +1,11 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{HashSet},
     iter::FromIterator,
 };
 
 use hex::Hex;
 use serde::{Serialize};
+use serde_json;
 use ts_data_derive::TsData;
 use wasm_bindgen::prelude::*;
 
@@ -25,7 +26,7 @@ pub struct Card {
     pub ap_cost: i32,
     // Contract: the world will not change between start_play and Behavior methods.
     pub start_play: fn(&World, &Path) -> Box<dyn Behavior>,
-    pub ui: fn(&World, &Path, &Path) -> HashMap<String, String>,
+    pub ui: fn(&World, &Path, &Path) -> serde_json::Value,
 }
 
 impl Card {

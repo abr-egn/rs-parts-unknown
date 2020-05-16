@@ -195,7 +195,7 @@ impl World {
         let target: Path = from_js_value(target);
         let card = js_card.get(&self.wrapped).unwrap();
         let ui = (card.ui)(&self.wrapped, &js_card.source(), &target);
-        to_js_value(&ui)
+        JsValue::from_serde(&ui).unwrap()
     }
 
     // Updates
@@ -281,7 +281,7 @@ interface World {
     simulateMove(to: Hex): Event[];
     shadeFrom(hex: Hex, id: Id<Creature>): Hex[];
     scaledIntent(cid: Id<Creature>): Intent | undefined;
-    cardUI(card: Card, target: Path): Map<string, string>;
+    cardUI(card: Card, target: Path): any;
 
     // Updates
 

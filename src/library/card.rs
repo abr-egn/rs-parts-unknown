@@ -1,11 +1,12 @@
 use std::{
-    collections::{HashMap, HashSet},
+    collections::{HashSet},
     iter::FromIterator,
 };
 
 use enum_iterator::IntoEnumIterator;
 use hex::Hex;
 use rand::prelude::*;
+use serde_json::{self, json};
 
 use crate::{
     action::{Action, Event, Path, Tag, action, event, to_creature},
@@ -75,13 +76,13 @@ impl card::Behavior for HitPartBehavior {
     }
 }
 
-fn no_ui(_world: &World, _source: &Path, _target: &Path) -> HashMap<String, String> {
-    hash(vec![
-        ("test", "value".into()),
-    ])
+fn no_ui(_world: &World, _source: &Path, _target: &Path) -> serde_json::Value {
+    json!({
+        "test": "value",
+    })
 }
 
-fn scaled(prefix: &str, base: i32, new: Option<i32>) -> HashMap<String, String> {
+fn scaled(name: &str, base: i32, new: Option<i32>) -> serde_json::Value {
     let (value, delta) = match new {
         None => (base, "unknown"),
         Some(value) => (value, if value > base {
@@ -92,13 +93,15 @@ fn scaled(prefix: &str, base: i32, new: Option<i32>) -> HashMap<String, String> 
             "same"
         })
     };
-    let mut out = HashMap::new();
-    out.insert(format!("{}_value", prefix), format!("{}", value));
-    out.insert(format!("{}_delta", prefix), delta.into());
-    out
+    json!({
+        name: {
+            "value": value,
+            "delta": delta,
+        }
+    })
 }
 
-fn attack_ui(world: &World, source: &Path, target: &Path, base: i32) -> HashMap<String, String> {
+fn attack_ui(world: &World, source: &Path, target: &Path, base: i32) -> serde_json::Value {
     let target = if source.creature() == target.creature() {
         &Path::World
     } else {
@@ -106,12 +109,10 @@ fn attack_ui(world: &World, source: &Path, target: &Path, base: i32) -> HashMap<
     };
     let (damage, action) = world.scale_damage(source, target, base, Scope::into_enum_iter());
     let mut out = scaled("damage", base, damage);
-    // TODO: tags
+    out["tags"] = action.tags.into_iter()
+        .map(|tag| format!("{:?}", tag))
+        .collect();
     out
-}
-
-fn hash<'a, I: IntoIterator<Item=(&'a str, String)>>(i: I) -> HashMap<String, String> {
-    i.into_iter().map(|(k, v)| (k.into(), v)).collect()
 }
 
 pub fn throw_debris() -> Card {

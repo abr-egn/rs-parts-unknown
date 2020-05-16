@@ -11,6 +11,7 @@ mod npc;
 mod part;
 mod serde_empty;
 mod status;
+mod util;
 mod wasm;
 mod world;
 mod world_ext;
@@ -30,11 +31,4 @@ pub fn wasm_start() {
 
     info!("Parts Unknown WASM initialized.");
     js_greet("User");
-}
-
-#[macro_export]
-macro_rules! some_or {
-    ($opt:expr, $els:expr) => {
-        { if let Some(v) = $opt { v } else { $els } }
-    };
 }
