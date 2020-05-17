@@ -58,8 +58,8 @@ function Expose(): JSX.Element {
     return <div className="keyword">
         Expose
         <span className="tooltip">
-            Remove <span className="keyword">Guard</span> from the part, making
-            it targetable by attacks.
+            The part gains <span className="tag">Open</span>, making it
+            targetable by attacks.
         </span>
     </div>;
 }
@@ -68,7 +68,8 @@ function Guard(): JSX.Element {
     return <div className="keyword">
         Guard
         <span className="tooltip">
-            Prevent this part from being targeted by attacks.
+            The part loses <span className="tag">Open</span>, making it
+            untargetable by most attacks.
         </span>
     </div>;
 }
