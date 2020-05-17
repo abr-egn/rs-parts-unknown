@@ -19,35 +19,7 @@ export function CreatureStats(props: {
     sorted.sort((a, b) => a.id - b.id);
     let parts = [];
     for (let part of sorted) {
-        let classNames = ["part"];
-        if (part.tags.includes("Open")) {
-            classNames.push("partOpen");
-        }
-        if (highlight?.static.parts.get(part.creatureId)?.has(part.id)) {
-            classNames.push("highlight");
-        }
-        if (highlight?.throb.parts.get(part.creatureId)?.has(part.id)) {
-            classNames.push("throb");
-        }
-        let hpDelta = stats?.hpDelta.get(part.id) || 0;
-        const hpStyle: React.CSSProperties = {};
-        if (hpDelta < 0) {
-            hpStyle.color = "red";
-        } else if (hpDelta > 0) {
-            hpStyle.color = "green";
-        }
-        parts.push(
-            <div
-                key={part.id}
-                onMouseEnter={() => focus?.part.onEnter?.([part.creatureId, part.id])}
-                onMouseLeave={() => focus?.part.onLeave?.([part.creatureId, part.id])}
-                onMouseDown={() => focus?.part.onClick?.([part.creatureId, part.id])}
-                className={classNames.join(" ")}
-                >
-                {part.name}<br/>
-                <span style={hpStyle}>HP: {part.curHp + hpDelta}/{part.maxHp}</span>
-            </div>
-        );
+        parts.push(<PartStats part={part}/>);
     }
 
     let apDelta = stats?.statDelta.get("AP") || 0;
@@ -84,6 +56,46 @@ export function CreatureStats(props: {
         <div style={mpStyle}>MP: {props.creature.curMp + mpDelta}</div>
         {parts}
     </div>);
+}
+
+function PartStats(props: {
+    part: wasm.Part,
+}): JSX.Element {
+    const data = React.useContext(StackData);
+    const focus = data.get(Focus);
+    const highlight = data.get(Highlight);
+    const stats = data.get(Preview)?.stats.get(props.part.creatureId);
+
+    const classNames = ["part"];
+    /*
+    if (part.tags.includes("Open")) {
+        classNames.push("partOpen");
+    }
+    */
+    if (highlight?.static.parts.get(props.part.creatureId)?.has(props.part.id)) {
+        classNames.push("highlight");
+    }
+    if (highlight?.throb.parts.get(props.part.creatureId)?.has(props.part.id)) {
+        classNames.push("throb");
+    }
+    const hpDelta = stats?.hpDelta.get(props.part.id) || 0;
+    const hpStyle: React.CSSProperties = {};
+    if (hpDelta < 0) {
+        hpStyle.color = "red";
+    } else if (hpDelta > 0) {
+        hpStyle.color = "green";
+    }
+
+    return <div
+        key={props.part.id}
+        onMouseEnter={() => focus?.part.onEnter?.([props.part.creatureId, props.part.id])}
+        onMouseLeave={() => focus?.part.onLeave?.([props.part.creatureId, props.part.id])}
+        onMouseDown={() => focus?.part.onClick?.([props.part.creatureId, props.part.id])}
+        className={classNames.join(" ")}
+        >
+        {props.part.name}<br/>
+        <span style={hpStyle}>HP: {props.part.curHp + hpDelta}/{props.part.maxHp}</span>
+    </div>
 }
 
 export function CreatureIntent(props: {

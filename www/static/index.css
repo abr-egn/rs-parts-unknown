@@ -241,14 +241,9 @@ button {
 /* Creature Stats */
 
 .part {
-    border: 1px solid black;
-    border-radius: 10px;
-    padding: 5px;
-}
-
-.partOpen {
     border: 1px solid #006000;
     border-radius: 10px;
+    padding: 5px;
 }
 
 /* Title Screen */
