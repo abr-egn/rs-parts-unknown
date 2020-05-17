@@ -240,10 +240,31 @@ button {
 
 /* Creature Stats */
 
+.creature {
+    width: 200;
+}
+
 .part {
     border: 1px solid #006000;
     border-radius: 10px;
     padding: 5px;
+    display: flex;
+    flex-direction: column;
+}
+
+.part .name {
+    display: flex;
+    justify-content: space-between;
+}
+
+.part .tagIcon {
+    width: 16;
+    height: 16;
+    border: 1px solid black;
+}
+
+.tagIcon.dynamic {
+    border: 1px solid #006000;
 }
 
 /* Title Screen */

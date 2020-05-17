@@ -19,7 +19,7 @@ export function CreatureStats(props: {
     sorted.sort((a, b) => a.id - b.id);
     let parts = [];
     for (let part of sorted) {
-        parts.push(<PartStats part={part}/>);
+        parts.push(<PartStats key={part.id} part={part}/>);
     }
 
     let apDelta = stats?.statDelta.get("AP") || 0;
@@ -37,7 +37,7 @@ export function CreatureStats(props: {
         mpStyle.color = "green";
     }
 
-    let className = "uibox";
+    let className = "creature uibox";
     if (highlight?.static.creatures.has(props.creature.id)) {
         className = className + " highlight";
     }
@@ -67,11 +67,6 @@ function PartStats(props: {
     const stats = data.get(Preview)?.stats.get(props.part.creatureId);
 
     const classNames = ["part"];
-    /*
-    if (part.tags.includes("Open")) {
-        classNames.push("partOpen");
-    }
-    */
     if (highlight?.static.parts.get(props.part.creatureId)?.has(props.part.id)) {
         classNames.push("highlight");
     }
@@ -86,16 +81,70 @@ function PartStats(props: {
         hpStyle.color = "green";
     }
 
+    const sortedTags = [...props.part.tags];
+    sortedTags.sort((a, b) => tagIx(a) - tagIx(b));
+    const tagIcons = sortedTags.map(tag => <TagIcon tag={tag}/>);
+
     return <div
-        key={props.part.id}
-        onMouseEnter={() => focus?.part.onEnter?.([props.part.creatureId, props.part.id])}
-        onMouseLeave={() => focus?.part.onLeave?.([props.part.creatureId, props.part.id])}
-        onMouseDown={() => focus?.part.onClick?.([props.part.creatureId, props.part.id])}
-        className={classNames.join(" ")}
+            onMouseEnter={() => focus?.part.onEnter?.([props.part.creatureId, props.part.id])}
+            onMouseLeave={() => focus?.part.onLeave?.([props.part.creatureId, props.part.id])}
+            onMouseDown={() => focus?.part.onClick?.([props.part.creatureId, props.part.id])}
+            className={classNames.join(" ")}
         >
-        {props.part.name}<br/>
-        <span style={hpStyle}>HP: {props.part.curHp + hpDelta}/{props.part.maxHp}</span>
+        <div className="name">
+            <span>{props.part.name}</span>
+            <span>{tagIcons}</span>
+        </div>
+        <div style={hpStyle}>HP: {props.part.curHp + hpDelta}/{props.part.maxHp}</div>
     </div>
+}
+
+const DYNAMIC_TAGS: Readonly<wasm.PartTag[]> = [
+    "Broken", "Open",
+];
+
+function tagIx(tag: wasm.PartTag): number {
+    if (DYNAMIC_TAGS.includes(tag)) {
+        return -1;
+    }
+    switch (tag) {
+        // State
+        case "Vital": return 0; break;
+        // Material
+        case "Flesh":
+        case "Machine": return 1; break;
+        // Universal shape
+        case "Head":
+        case "Torso":
+        case "Limb": return 2; break;
+        // Specialized shape
+        case "Arm":
+        case "Leg": return 3; break;
+        // Other
+        default: return 4;
+    }
+}
+
+function TagIcon(props: {tag: wasm.PartTag}): JSX.Element {
+    let icon;
+    switch (props.tag) {
+        case "Vital": icon = "hearts.svg"; break;
+        case "Broken": icon = "broken-bone.svg"; break;
+        case "Open": icon = "convergence-target.svg"; break;
+        case "Head": icon = "dinosaur-rex.svg"; break;
+        case "Torso": icon = "muscular-torso.svg"; break;
+        case "Limb": icon = "lost-limb.svg"; break;
+        case "Flesh": icon = "internal-organ.svg"; break;
+        case "Machine": icon = "gears.svg"; break;
+        case "Arm": icon = "arm.svg"; break;
+        case "Leg": icon = "leg.svg"; break;
+        default: icon = "perspective-dice-six-faces-random.svg"; break;
+    }
+    const classes = ["tagIcon"];
+    if (DYNAMIC_TAGS.includes(props.tag)) {
+        classes.push("dynamic");
+    }
+    return <img className={classes.join(" ")} src={"icons/"+icon} title={props.tag}/>
 }
 
 export function CreatureIntent(props: {
