@@ -19,9 +19,8 @@ export const CARDS: Readonly<CardData> = Object.freeze({
     "Punch": {
         icon: "punch.svg",
         text: (props) => (<span>
-            <span className="tag">Hit</span> an adjacent enemy for
-            {' '}<Scaled data={props.ui.damage}/> <Tags tags={props.ui.tags}/>
-            {' '}damage.
+            <Attack/> an adjacent enemy for <Scaled data={props.ui.damage}/>
+            {' '}<Tags tags={props.ui.tags} skip={["Attack"]}/> damage.
         </span>),
     },
     "Rage": {
@@ -47,9 +46,8 @@ export const CARDS: Readonly<CardData> = Object.freeze({
     "Throw Debris": {
         icon: "thrown-charcoal.svg",
         text: (props) => (<span>
-            <span className="tag">Hit</span> a visible enemy for 
-            {' '}<Scaled data={props.ui.damage}/> <Tags tags={props.ui.tags}/>
-            {' '}damage.
+            <Attack/> a visible enemy for <Scaled data={props.ui.damage}/>
+            {' '}<Tags tags={props.ui.tags} skip={["Attack"]}/> damage.
         </span>),
     },
 });
@@ -78,9 +76,18 @@ function Heal(): JSX.Element {
     return <div className="keyword">
         Heal
         <span className="tooltip">
-            Restore hitpoints, and remove <span className="keyword">Broken</span>.
+            Restore hitpoints, and remove <span className="tag">Broken</span>.
         </span>
     </div>;
+}
+
+function Attack(): JSX.Element {
+    return <div className="keyword">
+        Attack
+        <span className="tooltip">
+            <span className="tag">Hit</span> a targeted <span className="tag">Open</span> part.
+        </span>
+    </div>
 }
 
 function Scaled(props: {
@@ -92,7 +99,12 @@ function Scaled(props: {
 
 function Tags(props: {
     tags: string[],
+    skip?: string[],
 }): JSX.Element {
-    const tags = props.tags.map(tag => <b>{tag}</b>);
+    const tags = [];
+    for (let tag of props.tags) {
+        if (props.skip?.includes(tag)) { continue; }
+        tags.push(<b>{tag}</b>)
+    }
     return <>{tags}</>;
 }
