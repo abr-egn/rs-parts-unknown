@@ -138,6 +138,7 @@ impl TranslateType {
             "Card" => (),
             "Creature" => (),
             "Direction" => (),
+            "Entity" => (),
             "Event" => (),
             "Hex" => (),
             "Intent" => (),

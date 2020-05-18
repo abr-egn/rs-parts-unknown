@@ -12,6 +12,7 @@ use crate::{
     wasm::{
         to_js_value,
         card::Card,
+        entity::Entity,
     },
 };
 
@@ -28,6 +29,7 @@ pub struct Creature {
     hand: Vec<Card>,
     draw: Vec<Card>,
     discard: Vec<Card>,
+    entity: Entity,
 }
 
 impl Creature {
@@ -51,6 +53,7 @@ impl Creature {
             curMp: source.cur_mp,
             dead: source.dead,
             npc: source.npc.as_ref().map(NPC::new),
+            entity: Entity::new(&source.entity),
         }
     }
     pub fn js(&self) -> JsValue { to_js_value(&self) }
