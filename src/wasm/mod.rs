@@ -5,6 +5,7 @@ use wasm_bindgen::prelude::JsValue;
 mod boundary;
 mod card;
 mod creature;
+mod entity;
 mod extern_ts;
 mod in_play;
 mod world;

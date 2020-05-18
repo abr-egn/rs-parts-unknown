@@ -1,7 +1,7 @@
 extern crate proc_macro;
 
 use crate::proc_macro::TokenStream;
-use quote::{quote, quote_spanned};
+use quote::{ToTokens, quote, quote_spanned};
 use syn::{
     self,
     parse_macro_input,
@@ -49,6 +49,7 @@ fn derive_impl(ast: syn::DeriveInput) -> Result<String, Error> {
     Ok(output)
 }
 
+#[derive(Debug, Clone)]
 struct Error {
     text: String,
     span: proc_macro2::Span,
@@ -125,11 +126,12 @@ struct TranslateType {
     flag_optional: bool,
     is_optional: bool,
     error: Option<Error>,
+    log: bool,
 }
 
 impl TranslateType {
     fn new() -> Self {
-        TranslateType { out: vec![], flag_optional: false, is_optional: false, error: None }
+        TranslateType { out: vec![], flag_optional: false, is_optional: false, error: None, log: false }
     }
     fn is_passthrough(s: &str) -> bool {
         match s {
@@ -148,6 +150,7 @@ impl TranslateType {
             "Path" => (),
             "Range" => (),
             "Space" => (),
+            "Status" => (),
             "Tag" => (),
             "Target" => (),
             "TargetSpec" => (),
@@ -162,6 +165,15 @@ impl TranslateType {
 
 impl<'ast> Visit<'ast> for TranslateType {
     fn visit_path(&mut self, path: &'ast syn::Path) {
+        if let Err(err) = self.visit_path_(path) {
+            self.error = Some(err);
+        }
+    }
+}
+
+impl TranslateType {
+    fn visit_path_<'ast>(&mut self, path: &'ast syn::Path) -> Result<(), Error> {
+        if self.log { println!("{:}", path.to_token_stream().to_string()); }
         let name = path_name(path);
         let span = path.segments.first().expect("first").ident.span();
         match &name as &str {
@@ -170,29 +182,23 @@ impl<'ast> Visit<'ast> for TranslateType {
             "HashMap" => {
                 let mut tmp = TranslateType::new();
                 visit::visit_path(&mut tmp, path);
-                match &tmp.out as &[String] {
+                match &tmp.out()? {
                     [k, v] => self.out.push(format!("Map<{}, {}>", k, v)),
-                    _ => {
-                        self.error = Some(Error {
-                            text: format!("invalid HashMap args {:?}", &tmp.out),
+                    _ => return Err(Error {
+                            text: format!("invalid HashMap args {:?} ({:})", &tmp.out, path.to_token_stream().to_string()),
                             span,
-                        });
-                        return;
-                    }
+                        }),
                 }
             }
             "Id" => {
                 let mut tmp = TranslateType::new();
                 visit::visit_path(&mut tmp, path);
-                match &tmp.out as &[String] {
+                match &tmp.out()? {
                     [s] => self.out.push(format!("Id<{}>", s)),
-                    _ => {
-                        self.error = Some(Error {
+                    _ => return Err(Error {
                             text: format!("invalid Id args {:?}", &tmp.out),
                             span,
-                        });
-                        return;
-                    }
+                        }),
                 }
             }
             "Option" => {
@@ -202,30 +208,24 @@ impl<'ast> Visit<'ast> for TranslateType {
                 } else {
                     let mut tmp = TranslateType::new();
                     visit::visit_path(&mut tmp, path);
-                    match &tmp.out as &[String] {
+                    match &tmp.out()? {
                         [s] => self.out.push(format!("{} | undefined", s)),
-                        _ => {
-                            self.error = Some(Error {
+                        _ => return Err(Error {
                                 text: format!("invalid Option args {:?}", &tmp.out),
                                 span,
-                            });
-                            return;
-                        }
+                            }),
                     }
                 }
             }
             "Vec" | "HashSet" => {
                 let mut tmp = TranslateType::new();
                 visit::visit_path(&mut tmp, path);
-                match &tmp.out as &[String] {
+                match &tmp.out()? {
                     [s] => self.out.push(format!("{}[]", s)),
-                    _ => {
-                        self.error = Some(Error {
+                    _ => return Err(Error {
                             text: format!("invalid Vec args {:?}", &tmp.out),
                             span,
-                        });
-                        return;
-                    }
+                        }),
                 }
             }
             // Native types
@@ -244,14 +244,17 @@ impl<'ast> Visit<'ast> for TranslateType {
                 self.push_str(s);
             }
             // Error
-            _ => {
-                self.error = Some(Error {
+            _ => return Err(Error {
                     text: format!("unhandled type {}", name),
                     span,
-                });
-                return;
-            },
+                }),
         }
+        Ok(())
+    }
+
+    fn out(&self) -> Result<&[String], Error> {
+        if let Some(error) = self.error.clone() { return Err(error); }
+        Ok(&self.out)
     }
 }
 

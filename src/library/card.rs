@@ -15,7 +15,7 @@ use crate::{
     id_map::Id,
     mod_stack::Mod,
     part::{Part, PartTag, TagMod},
-    status::{AlterOrder, Status, StatusDone, StatusKind},
+    status::{AlterOrder, Status, StatusDone},
     world::{Scope, World},
     world_ext::WorldExt,
 };
@@ -188,7 +188,6 @@ impl<When> std::fmt::Debug for Expire<When> {
 
 impl<When: Fn(&Event) -> bool + Clone + 'static> Status for Expire<When> {
     fn name(&self) -> &'static str { "Expire" }
-    fn kind(&self) -> StatusKind { StatusKind::Hidden }
     fn trigger(&mut self, _on: &Path, event: &Event) -> (Vec<Action>, StatusDone) {
         if !(self.when)(event) { return (vec![], StatusDone::Continue); }
         (self.remove.clone(), StatusDone::Expire)
@@ -348,7 +347,6 @@ impl card::Behavior for Rage {
 
 impl Status for Rage {
     fn name(&self) -> &'static str { "Rage" }
-    fn kind(&self) -> StatusKind { StatusKind::Buff }
     fn alter_order(&self) -> AlterOrder { AlterOrder::Add }
     fn alter(&mut self, on: &Path, action: &Action) -> Option<Action> {
         if on.creature() != action.source.creature() { return None; }
@@ -399,7 +397,6 @@ impl card::Behavior for DebugDebuff {
 
 impl Status for DebugDebuff {
     fn name(&self) -> &'static str { "Debug" }
-    fn kind(&self) -> StatusKind { StatusKind::Debuff }
     fn alter(&mut self, on: &Path, action: &Action) -> Option<Action> {
         if action.source.creature() != on.creature() { return None; }
         let mut action = action.clone();

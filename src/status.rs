@@ -5,18 +5,10 @@ use crate::{
 
 pub trait Status: StatusClone + std::fmt::Debug {
     fn name(&self) -> &'static str;
-    fn kind(&self) -> StatusKind;
     fn alter_order(&self) -> AlterOrder { AlterOrder::Misc }
     fn trigger_order(&self) -> TriggerOrder { TriggerOrder::Misc }
     fn alter(&mut self, _on: &Path, _action: &Action) -> Option<Action> { None }
     fn trigger(&mut self, _on: &Path, _event: &Event) -> (Vec<Action>, StatusDone) { (vec![], StatusDone::Continue) }
-}
-
-#[derive(Debug, Copy, Clone, PartialEq, Eq)]
-pub enum StatusKind {
-    Buff,
-    Debuff,
-    Hidden,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
