@@ -5,7 +5,6 @@ import {Highlight} from "../ts/stack/highlight";
 import {Preview} from "../ts/stack/preview";
 import * as wasm from "../wasm";
 import {StackData} from "./index";
-import {WorldContext} from "./level";
 
 export function CreatureStats(props: {
     creature: wasm.Creature,
@@ -83,7 +82,7 @@ function PartStats(props: {
 
     const sortedTags = [...props.part.tags];
     sortedTags.sort((a, b) => tagIx(a) - tagIx(b));
-    const tagIcons = sortedTags.map(tag => <TagIcon tag={tag}/>);
+    const tagIcons = sortedTags.map(tag => <TagIcon key={tag} tag={tag}/>);
 
     return <div
             onMouseEnter={() => focus?.part.onEnter?.([props.part.creatureId, props.part.id])}
