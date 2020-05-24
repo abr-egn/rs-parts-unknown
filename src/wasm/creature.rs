@@ -70,6 +70,7 @@ pub struct Part {
     curHp: i32,
     thought: i32,
     tags: Vec<PartTag>,
+    entity: Entity,
 }
 
 #[allow(non_snake_case)]
@@ -89,6 +90,7 @@ impl Part {
             maxHp: source.max_hp,
             curHp: source.cur_hp,
             tags: source.tags().into_iter().collect(),
+            entity: Entity::new(&source.entity),
         }
     }
 }

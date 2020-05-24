@@ -97,6 +97,7 @@ function PartStats(props: {
             <span>{tagIcons}</span>
         </div>
         <div style={hpStyle}>HP: {props.part.curHp + hpDelta}/{props.part.maxHp}</div>
+        <Entity entity={props.part.entity}/>
     </div>
 }
 
