@@ -28,13 +28,18 @@ export function PlayerControls(props: {}): JSX.Element {
 
     const baseActive = Boolean(active?.is(LevelState));
 
+    const pileClasses = ["card pile"];
+    if (play != undefined) {
+        pileClasses.push("unplayable");
+    }
+
     return (<div>
         <CreatureStats
             creature={player}
         />
         <RootPortal>
             <div className="bottomleft player">
-                <div className="card pile">
+                <div className={pileClasses.join(" ")}>
                     <div>Draw</div>
                     {player.draw.length}
                 </div>
@@ -49,7 +54,7 @@ export function PlayerControls(props: {}): JSX.Element {
             </div>
             <div className="bottomright player">
                 {baseActive && <EndTurnButton/>}
-                <div className="card pile">
+                <div className={pileClasses.join(" ")}>
                     <div>Discard</div>
                     {player.discard.length}
                 </div>
