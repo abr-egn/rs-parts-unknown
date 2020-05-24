@@ -367,6 +367,7 @@ impl Status for Rage {
     }
 }
 
+#[allow(unused)]
 pub fn debug_debuff() -> Card {
     Card {
         name: "Debug Debuff".into(),

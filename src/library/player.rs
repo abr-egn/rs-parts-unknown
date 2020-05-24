@@ -11,7 +11,7 @@ pub fn player() -> Creature {
     let head = Part {
         cards: IdMap::from_iter(vec![
             library::card::rage(),
-            library::card::debug_debuff(),
+            //library::card::debug_debuff(),
         ]),
         thought: 3,
         memory: 5,
