@@ -4,6 +4,7 @@ import {Focus} from "../ts/stack/focus";
 import {Highlight} from "../ts/stack/highlight";
 import {Preview} from "../ts/stack/preview";
 import * as wasm from "../wasm";
+import {Entity} from "./entity";
 import {StackData} from "./index";
 
 export function CreatureStats(props: {
@@ -53,6 +54,7 @@ export function CreatureStats(props: {
         <div>{props.creature.name}</div>
         <div style={apStyle}>AP: {props.creature.curAp + apDelta}</div>
         <div style={mpStyle}>MP: {props.creature.curMp + mpDelta}</div>
+        <Entity entity={props.creature.entity}/>
         {parts}
     </div>);
 }
