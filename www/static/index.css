@@ -32,6 +32,18 @@ div.bottom {
     transform: translate(-50%, 0);
 }
 
+div.bottomleft {
+    position: absolute;
+    bottom: 10px;
+    left: 10px;
+}
+
+div.bottomright {
+    position: absolute;
+    bottom: 10px;
+    right: 10px;
+}
+
 button {
     color: #00A000;
     background-color: black;
@@ -157,6 +169,16 @@ button {
 
 .scaled.unknown {
     color: gray;
+}
+
+.card.pile {
+    width: 75px;
+    height: 120px;
+    margin-bottom: 0px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
 }
 
 /* UI Widgets */

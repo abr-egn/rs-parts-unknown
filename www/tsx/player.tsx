@@ -35,12 +35,24 @@ export function PlayerControls(props: {}): JSX.Element {
             creature={player}
         />
         <RootPortal>
+            <div className="bottomleft">
+                <div className="card pile">
+                    <div>Draw</div>
+                    {player.draw.length}
+                </div>
+            </div>
             <div className="bottom">
                 <Hand
                     active={hasAp && baseActive}
                     cards={player.hand}
                     playing={play?.card}
                 />
+            </div>
+            <div className="bottomright">
+                <div className="card pile">
+                    <div>Discard</div>
+                    {player.discard.length}
+                </div>
             </div>
         </RootPortal>
         {inPlay && <div>Playing: {play?.card.name}</div>}
