@@ -267,6 +267,15 @@ button {
     border: 1px solid #006000;
 }
 
+.entity {
+    display: flex;
+}
+
+.entity .status {
+    border: 1px solid #006000;
+    margin: 2px;
+}
+
 /* Title Screen */
 
 .title {

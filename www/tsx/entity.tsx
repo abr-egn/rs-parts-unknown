@@ -6,6 +6,6 @@ export function Entity(props: {
     entity: wasm.Entity,
 }): JSX.Element {
     let status = Array.from(props.entity.status.values())
-        .map(s => <span className="uibox" key={s.name}>{s.name}</span>);
-    return <div>{status}</div>;
+        .map(s => <div className="status" key={s.name}>{s.name}</div>);
+    return <div className="entity">{status}</div>;
 }
