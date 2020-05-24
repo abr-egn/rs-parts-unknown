@@ -20,7 +20,6 @@ export function PlayerControls(props: {}): JSX.Element {
     const data = React.useContext(StackData);
     const active = data.get(Stack.Active);
     const play = data.get(PlayCardState.UI);
-    const toUpdate = data.get(PlayCardState.ToUpdate);
 
     const movePlayer = () => window.game.stack.push(new MovePlayerState());
 
@@ -28,18 +27,18 @@ export function PlayerControls(props: {}): JSX.Element {
     const hasMp = player.curMp > 0;
 
     const baseActive = Boolean(active?.is(LevelState));
-    const inPlay = Boolean(active?.is(PlayCardState) && !toUpdate);
 
     return (<div>
         <CreatureStats
             creature={player}
         />
         <RootPortal>
-            <div className="bottomleft">
+            <div className="bottomleft player">
                 <div className="card pile">
                     <div>Draw</div>
                     {player.draw.length}
                 </div>
+                {baseActive && hasMp && <button onClick={movePlayer}>Move</button>}
             </div>
             <div className="bottom">
                 <Hand
@@ -48,16 +47,14 @@ export function PlayerControls(props: {}): JSX.Element {
                     playing={play?.card}
                 />
             </div>
-            <div className="bottomright">
+            <div className="bottomright player">
+                {baseActive && <EndTurnButton/>}
                 <div className="card pile">
                     <div>Discard</div>
                     {player.discard.length}
                 </div>
             </div>
         </RootPortal>
-        {inPlay && <div>Playing: {play?.card.name}</div>}
-        {baseActive && <EndTurnButton/>}
-        {baseActive && hasMp && <button onClick={movePlayer}>Move</button>}
     </div>);
 }
 

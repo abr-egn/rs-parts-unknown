@@ -51,6 +51,10 @@ button {
     border-radius: 15px;
 }
 
+button:hover {
+    border-color: #00FF00;
+}
+
 /* Cards */
 
 .hand {
@@ -258,6 +262,16 @@ button {
 
 .partTargetMenu .playable:hover {
     border: 1px solid #00FF00;
+}
+
+.bottomleft.player {
+    display: flex;
+    align-items: flex-end;
+}
+
+.bottomright.player {
+    display: flex;
+    align-items: flex-end;
 }
 
 /* Creature Stats */
